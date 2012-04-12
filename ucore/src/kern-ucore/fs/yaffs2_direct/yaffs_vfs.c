@@ -325,9 +325,11 @@ next:
       goto next;
     }
     if (strcmp(path, "..") == 0) {
+      if(d_obj->parent == NULL){
+        path = subpath;
+        goto next;
+      }
       d_obj = d_obj->parent;
-      if(d_obj->obj_id == YAFFS_OBJECTID_ROOT)
-        return -E_NOTDIR;
     }
     else {
       if (strlen(path) > FS_MAX_FNAME_LEN) {

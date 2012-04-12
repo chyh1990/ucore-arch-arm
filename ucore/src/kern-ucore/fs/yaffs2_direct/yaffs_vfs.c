@@ -589,6 +589,69 @@ yaffs_vop_openfile(struct inode *node, uint32_t open_flags) {
     return 0;
 }
 
+static int
+yaffs_vop_truncfile(struct inode *node, off_t len)
+{
+  if(len>=YAFFS_MAX_FILE_SIZE || len<0)
+    return -E_INVAL;
+  struct yaffs_obj *obj = yaffs_inode_to_obj(node);
+  if(obj->variant_type != YAFFS_OBJECT_TYPE_FILE)
+    return -E_INVAL;
+  int ret = yaffs_resize_file(obj, len);
+  return (ret==YAFFS_OK)?0:-E_INVAL;
+}
+
+static int
+yaffs_vop_tryseek(struct inode *node, off_t pos) {
+    if (pos < 0 || pos>=YAFFS_MAX_FILE_SIZE) {
+        return -E_INVAL;
+    }
+    struct yaffs_obj *obj = yaffs_inode_to_obj(node);
+    if (pos > yaffs_get_obj_length(obj)) {
+        return vop_truncate(node, pos);
+    }
+    return 0;
+}
+
+static int
+yaffs_vop_read(struct inode *node, struct iobuf *iob) {
+  size_t alen = iob->io_resid;
+  off_t  offset = iob->io_offset;
+  if(alen > YAFFS_MAX_FILE_SIZE){
+    return -E_INVAL;
+  }
+  struct yaffs_obj *obj = yaffs_inode_to_obj(node);
+  
+  loff_t maxRead ; 
+  if(yaffs_get_obj_length(obj) > offset)
+    maxRead = yaffs_get_obj_length(obj) - offset;
+  else
+    maxRead = 0;
+  if(alen > maxRead)
+			alen = maxRead;
+  int nRead = yaffs_file_rd(obj, iob->io_base, offset, alen);
+  if (nRead > 0) {
+    iobuf_skip(iob, nRead);
+  } 
+  return 0;
+}
+
+static int
+yaffs_vop_write(struct inode *node, struct iobuf *iob) {
+  size_t alen = iob->io_resid;
+  off_t  offset = iob->io_offset;
+  if(alen > YAFFS_MAX_FILE_SIZE){
+    return -E_INVAL;
+  }
+  if( offset<0 || offset > YAFFS_MAX_FILE_SIZE)
+    return -E_INVAL;
+  struct yaffs_obj *obj = yaffs_inode_to_obj(node);
+  int nWritten = yaffs_wr_file(obj, iob->io_base, offset , alen,0);
+  if(nWritten > 0)
+    iobuf_skip(iob, nWritten);
+  return 0;
+}
+
 static const struct inode_ops yaffs_node_dirops = {
   .vop_magic                      = VOP_MAGIC,
   .vop_open                       = yaffs_vop_opendir,
@@ -619,8 +682,8 @@ static const struct inode_ops yaffs_node_fileops = {
   .vop_magic                      = VOP_MAGIC,
   .vop_open                       = yaffs_vop_openfile,
   .vop_close                      = yaffs_vop_close,
-  .vop_read                       = NULL_VOP_UNIMP,
-  .vop_write                      = NULL_VOP_UNIMP,
+  .vop_read                       = yaffs_vop_read,
+  .vop_write                      = yaffs_vop_write,
   .vop_fstat                      = yaffs_vop_fstat,
   .vop_fsync                      = yaffs_vop_fsync,
   .vop_mkdir                      = NULL_VOP_NOTDIR,
@@ -633,8 +696,8 @@ static const struct inode_ops yaffs_node_fileops = {
   .vop_reclaim                    = yaffs_vop_reclaim,
   .vop_ioctl                      = NULL_VOP_INVAL,
   .vop_gettype                    = yaffs_vop_gettype,
-  .vop_tryseek                    = NULL_VOP_UNIMP,
-  .vop_truncate                   = NULL_VOP_UNIMP,
+  .vop_tryseek                    = yaffs_vop_tryseek,
+  .vop_truncate                   = yaffs_vop_truncfile,
   .vop_create                     = NULL_VOP_NOTDIR,
   .vop_unlink                     = NULL_VOP_NOTDIR,
   .vop_lookup                     = NULL_VOP_NOTDIR,

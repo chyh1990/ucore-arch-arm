@@ -35,7 +35,7 @@ $(KERNEL_IMG): $(T_OBJ)/$(KERNEL_INITRD_FILENAME) $(T_OBJ)/$(BOOTLOADER_FILENAME
 ${SWAPIMG}:
 	@echo $@ NOT impl
 
-${FSIMG}: 
+${FSIMG}: mod-user-ucore
 	@echo "Making FS IMG"
 	dd if=/dev/zero of=$@ bs=1M count=10
 	$(T_OBJ)/tools-mksfs $@ $(T_OBJ)/user-sfs

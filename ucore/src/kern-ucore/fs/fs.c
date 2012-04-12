@@ -19,6 +19,7 @@ fs_init(void) {
 
 void
 fs_cleanup(void) {
+    vfs_unmount_all();
     vfs_cleanup();
 }
 

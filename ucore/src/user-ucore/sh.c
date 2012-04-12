@@ -237,6 +237,8 @@ main(int argc, char **argv) {
         printf("\n");
         shcwd[0] = '\0';
         int pid;
+        if (interactive && !strncmp(buffer, "!halt", 10))
+          return 0;
         if ((pid = fork()) == 0) {
             ret = runcmd(buffer);
             exit(ret);

@@ -38,17 +38,18 @@
 static const struct inode_ops yaffs_node_dirops;
 static const struct inode_ops yaffs_node_fileops;
 
-static char yaffs_name_buf[YAFFS_MAX_NAME_LENGTH+1];
 
 static const char *mount_partition = "/data";
 
 #define yaffs_inode_to_obj_lv(iptr) (vop_info(node, yaffs2_inode)->obj)
 #define yaffs_inode_to_obj(iptr)\
 	((struct yaffs_obj *)(yaffs_inode_to_obj_lv(iptr)))
+#define yaffs_get_namebuf() (fsop_info((node->in_fs), yaffs2)->yaffs_name_buf)
 
 static int yaffs_vfs_do_sync(struct fs *fs)
 {
   int ret;
+  kprintf("yaffs_vfs_do_sync: sync disk\n");
   ret = yaffs_sync(mount_partition);
   if(ret)
       kprintf("yaffs_vfs_do_sync: faild to sync %s\n", mount_partition);
@@ -76,8 +77,10 @@ static void yaffs_fill_inode(struct inode *node, struct yaffs_obj* obj)
 static struct inode *yaffs_get_inode(struct fs *fs, struct yaffs_obj* obj)
 {
   struct inode *nnode;
-  yaffs_get_obj_name(obj, yaffs_name_buf, FS_MAX_FNAME_LEN); 
-  kprintf("@@ create inode %d %s\n", obj->obj_id, yaffs_name_buf);
+  char *namebuf = fsop_info(fs, yaffs2)->yaffs_name_buf; 
+  yaffs_get_obj_name(obj, namebuf, FS_MAX_FNAME_LEN); 
+  yaffs_trace(YAFFS_TRACE_OS,
+      "yaffs_get_inode %d:%s", obj->obj_id, namebuf);
   if ((nnode = alloc_inode(yaffs2_inode)) != NULL) {
     vop_init(nnode, yaffs_get_ops(obj->variant_type), fs);
     yaffs_fill_inode(nnode, obj);
@@ -109,13 +112,11 @@ static struct inode *yaffs_iget(struct fs *fs, unsigned long ino)
 
 struct inode * yaffs_vfs_do_get_root(struct fs *fs)
 {
-  //TODO
   struct inode *node;
   struct yaffs2_fs *yfs = fsop_info(fs, yaffs2);
   if ((node = alloc_inode(yaffs2_inode)) != NULL) {
     vop_init(node, yaffs_get_ops(YAFFS_OBJECT_TYPE_DIRECTORY), fs);
     node = yaffs_get_inode(fs, yaffs_root(yfs->ydev));
-    kprintf("DDD %d\n",yaffs_root(yfs->ydev)->obj_id);
     return node;
   }
   return NULL;
@@ -123,17 +124,20 @@ struct inode * yaffs_vfs_do_get_root(struct fs *fs)
 
 static int yaffs_vfs_do_unmount(struct fs *fs)
 {
-  kprintf("yaffs_vfs_do_mount:  unmount %s", mount_partition);
+  kprintf("yaffs_vfs_do_unmount:  unmount %s\n", mount_partition);
   int ret = yaffs_unmount(mount_partition);
-  if(ret)
-    kprintf("yaffs_vfs_do_unmount: faild to sync %s\n", mount_partition);
+  if(ret){
+    kprintf("yaffs_vfs_do_unmount: faild to unmount %s\n", mount_partition);
+    return -1;
+  }
+  /* release struct fs */
+  kfree(fs);
   return 0;
 }
 
 static void yaffs_vfs_do_cleanup(struct fs *fs)
 {
-  kprintf("yaffs_vfs_do_cleanup: unmount all\n");
-  yaffs_vfs_do_unmount(fs);
+  kprintf("yaffs_vfs_do_cleanup: \n");
   return;
 }
 
@@ -148,7 +152,6 @@ yaffs_vfs_do_mount(struct device *dev, struct fs **fs_store)
 
   struct yaffs2_fs *yfs = fsop_info(fs, yaffs2);
   yfs->dev = dev;
-  list_init(&(yfs->inode_list));
 
   //TODO mount vfs here
   kprintf("yaffs_vfs_do_mount:  mount %s", mount_partition);
@@ -195,7 +198,11 @@ yaffs_vfs_init(void) {
 
 static int yaffs_vop_reclaim(struct inode *node)
 {
-  kprintf("TODO reclian\n");
+  struct yaffs_obj *obj = yaffs_inode_to_obj(node);
+  //kprintf("TODO reclaim %d \n", obj->obj_id );
+  yaffs_trace(YAFFS_TRACE_OS,
+      "yaffs_vop_reclaim: %d", obj->obj_id);
+  vop_kill(node); 
   return 0;
 }
 
@@ -290,7 +297,7 @@ next:
 			yaffs_trace(YAFFS_TRACE_OS, "yaffs_lookup dentry");
 			/* return dentry; */
       *node_store = nnode;
-      vop_ref_inc(nnode);
+      //vop_ref_inc(nnode);
       return 0;
     }
     return -E_NO_MEM;
@@ -343,7 +350,7 @@ found:
     struct inode *inode = yaffs_get_inode(node->in_fs, d_obj);
     if(!inode)
       return -E_NO_MEM;
-    vop_ref_inc(inode);
+    //vop_ref_inc(inode);
     *endp = path;
     *node_store = inode;
     return 0;
@@ -389,13 +396,13 @@ int yaffs_vop_namefile(struct inode *node, struct iobuf *iob)
 
   while (d_obj->obj_id != YAFFS_OBJECTID_ROOT) {
       
-    int name_len = yaffs_get_obj_name(d_obj,yaffs_name_buf, FS_MAX_FNAME_LEN );
+    int name_len = yaffs_get_obj_name(d_obj,yaffs_get_namebuf(), FS_MAX_FNAME_LEN );
 
     if ((alen = name_len + 1) > resid) {
       return -E_NO_MEM;
     }
     resid -= alen, ptr -= alen;
-    memcpy(ptr, yaffs_name_buf, alen - 1);
+    memcpy(ptr, yaffs_get_namebuf(), alen - 1);
     ptr[alen - 1] = '/';
 
     d_obj = d_obj->parent;
@@ -475,19 +482,19 @@ yaffs_vop_getdirentry(struct inode *node, struct iobuf *iob)
   int ret, slot = offset / (FS_MAX_FNAME_LEN);
   switch (slot) {
     case 0:
-      strcpy(yaffs_name_buf, ".");
+      strcpy(yaffs_get_namebuf(), ".");
       break;
     case 1:
-      strcpy(yaffs_name_buf, "..");
+      strcpy(yaffs_get_namebuf(), "..");
       break;
     default:
       {
         struct yaffs_obj *item = yaffs_helper_get_nth_direntry(obj, slot-2);
         if(!item) return -E_NOENT;
-        yaffs_get_obj_name(item, yaffs_name_buf, FS_MAX_FNAME_LEN);
+        yaffs_get_obj_name(item, yaffs_get_namebuf(), FS_MAX_FNAME_LEN);
       }
   }
-  ret = iobuf_move(iob, yaffs_name_buf, FS_MAX_FNAME_LEN+1, 1, NULL);
+  ret = iobuf_move(iob, yaffs_get_namebuf(), FS_MAX_FNAME_LEN+1, 1, NULL);
   return ret;
 }
 

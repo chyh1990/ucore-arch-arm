@@ -34,7 +34,7 @@ unsigned yaffs_trace_mask =
 	YAFFS_TRACE_ALLOCATE |
 	YAFFS_TRACE_BAD_BLOCKS |
 	YAFFS_TRACE_VERIFY |
-  YAFFS_TRACE_OS|
+  //YAFFS_TRACE_OS|
 	0;
 int yaffs_errno;
 static semaphore_t yaffs_sem;

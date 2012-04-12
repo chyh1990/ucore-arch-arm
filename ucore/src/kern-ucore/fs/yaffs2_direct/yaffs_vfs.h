@@ -34,7 +34,7 @@ struct yaffs_dev;
 struct yaffs2_fs {
     struct device *dev;                             /* device mounted on */
     struct yaffs_dev *ydev;
-    list_entry_t inode_list;                        /* inode linked-list */
+    char yaffs_name_buf[FS_MAX_FNAME_LEN+1];
 };
 
 struct yaffs2_inode{

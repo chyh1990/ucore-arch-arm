@@ -100,7 +100,7 @@ sfs_get_root(struct fs *fs) {
  */
 
 static int
-sfs_unmount(struct fs *fs) {
+sfs_cleanup(struct fs *fs) {
     struct sfs_fs *sfs = fsop_info(fs, sfs);
     if (!list_empty(&(sfs->inode_list))) {
         return -E_BUSY;
@@ -114,10 +114,10 @@ sfs_unmount(struct fs *fs) {
 }
 
 static void
-sfs_cleanup(struct fs *fs) {
+sfs_unmount(struct fs *fs) {
     struct sfs_fs *sfs = fsop_info(fs, sfs);
     uint32_t blocks = sfs->super.blocks, unused_blocks = sfs->super.unused_blocks;
-    kprintf("sfs: cleanup: '%s' (%d/%d/%d)\n", sfs->super.info,
+    kprintf("sfs: unmount: '%s' (%d/%d/%d)\n", sfs->super.info,
             blocks - unused_blocks, unused_blocks, blocks);
     int i, ret;
     for (i = 0; i < 32; i ++) {

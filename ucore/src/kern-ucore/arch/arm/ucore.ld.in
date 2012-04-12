@@ -1,0 +1,69 @@
+/* Simple linker script for the ucore kernel.
+   See the GNU ld 'info' manual ("info ld") to learn the syntax. */
+
+OUTPUT_FORMAT("elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(kern_entry)
+
+SECTIONS {
+    /* Load the kernel at this address: "." means the current address */
+    . = TEXT_START;
+
+    .text : {
+        *(.text .stub .text.* .gnu.linkonce.t.*)
+    }
+
+    PROVIDE(etext = .); /* Define the 'etext' symbol to this value */
+
+    .rodata : {
+        *(.rodata .rodata.* .gnu.linkonce.r.*)
+    }
+
+    /* Include debugging information in kernel memory */
+    .stab : {
+        PROVIDE(__STAB_BEGIN__ = .);
+        *(.stab);
+        PROVIDE(__STAB_END__ = .);
+        BYTE(0)     /* Force the linker to allocate space
+                   for this section */
+    }
+
+    .stabstr : {
+        PROVIDE(__STABSTR_BEGIN__ = .);
+        *(.stabstr);
+        PROVIDE(__STABSTR_END__ = .);
+        BYTE(0)     /* Force the linker to allocate space
+                   for this section */
+    }
+
+    /* Adjust the address for the data segment to the next page */
+    . = ALIGN(0x1000);
+
+    /* The data segment */
+    /* We don't link .initrd into another section because
+     * QEMU only load .text and .data
+     * However, our own loader will load all sections.
+     */
+    .data : {
+        *(.data)
+        . = ALIGN(4096);
+    PROVIDE(initrd_begin = .);
+        *(.initrd)
+    }
+    . = ALIGN(4096); 
+    PROVIDE(initrd_end = .);
+
+    PROVIDE(edata = .);
+
+    .bss : {
+        *(.bss)
+    }
+
+
+
+    PROVIDE(end = .);
+
+    /DISCARD/ : {
+        *(.eh_frame .note.GNU-stack)
+    }
+}

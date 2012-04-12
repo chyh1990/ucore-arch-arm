@@ -1,0 +1,178 @@
+%        File: ucore_arm.tex
+%     Created: Fri Apr 06 12:00 PM 2012 C
+% Last Change: Fri Apr 06 12:00 PM 2012 C
+%
+\documentclass[a4paper]{article}
+\usepackage{graphicx}
+\usepackage{indentfirst}
+\begin{document}
+\title{UCORE Porting on ARM9}
+\author{Chen Yuheng \\ Yang Yang}
+\maketitle
+
+\section{Introduction}
+This report gives a brief introduction to our OS cource project -- 
+\emph{UCORE} porting onto ARM9 platform, including the kernel, limited
+device drivers as well as the user-lib. \emph{UCORE} is an experimental 
+modern operating system that includes a basic memory manager, a limited process/
+thread scheduler, linux-like VFS and incomplete POSIX-compatible syscall 
+interface. Thanks to Mao Junjie
+\footnote{http://code.google.com/p/ucore-x64-smp/} and Yu Kuanlong
+\footnote{http://gitorious.org/ucorearm}, we are enabled to finish our
+ work as fast as possible. Currently, the following platforms are supported:
+ \begin{itemize}
+   \item \emph{Versatilepb}, which is simulated with qemu-arm-system.
+     The hardware configuration is available in qemu's source code,
+     several important components of which is summarized in
+     Table. \ref{tab:versatile1}.
+     \begin{table}[h]
+       \centering
+       \begin{tabular}{|r|rrr|}
+         \hline
+         Component & Type & Base Address &  IRQ \\
+         \hline
+         Core     &  ARM9EJ-S & -- & -- \\
+         Interrupt Controller & P1190 & 0x10140000 & IRQ/FIQ \\
+         Timer    &  SP804    & 0x101e2000 & 4 \\
+         UART     &  PL011  & 0x101f1000 & 12  \\
+         \hline
+       \end{tabular}
+       \caption{Versatilepb Hardware Configuration}
+       \label{tab:versatile1}
+     \end{table}
+
+   \item \emph{Atmel AT91SAM} hardware platform.
+ \end{itemize}
+
+Our code is available on Google Code
+\footnote{http://code.google.com/p/ucore-arch-arm/} with no warranty and
+is kept updating. Any bug reports are welcomed.
+
+\section{Source Code Organization}
+This section introduces the source code orginazation of ucore-arch-arm 
+and explains several Makefile tricks.
+\subsection{Source Tree}
+Since our work is based on ucore-x64-smp project, our code is mainly placed
+in \emph{src/kern-ucore/arch/arm}, with a small amount of ARM-specific 
+code mixed in the originally machine-independent code. Important directories are listed in Table. \ref{tab:dir}.
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|l|}
+    \hline
+    Directory & Description \\
+    \hline
+    debug  &     debug console after a kernel panic \\
+    driver &     device driver interface definition \\
+    include &    useful macros for ARM9              \\
+    init   &     kernel entry point and initialization code \\
+    libs   &     utilities for eabi compiler and optimized memcpy/memset \\
+    mach-xxx &   machine-dependent code, driver implementation \\
+    mm     &     low-level memory management \\
+    process   &  context switch             \\
+    sync   &     atomic operation           \\
+    syscall &     ARM-specific syscall machanism \\
+    trap   &     exception handling  \\
+    \hline
+  \end{tabular}
+  \caption{ucore-arch-arm directories}
+  \label{tab:dir}
+\end{table}
+
+\subsection{Makefile}
+UCore does not have a configuration system yet, thus hardware specific
+definition is defined in a Makefille called \emph{config-arm.mk} and
+more detailed configuration is defined in \emph{board.h} in the 
+corresponding machine directory.
+\begin{enumerate}
+  \item Options in \emph{config-arm.mk}:
+    \begin{table}[h]
+      \centering
+      \begin{tabular}{|l|l|}
+        \hline
+        Item & Description \\
+        \hline
+        ARCH\_ARM\_CPU  & CPU Type \\
+        ARCH\_ARM\_BOOTLOADER\_BASE & Physical address of bootloader(not used in simulation) \\
+        ARCH\_ARM\_BOARD & board type, corresponding to mach-xxx \\
+        ARCH\_ARM\_KERNEL\_BASE & Linking address of kernel \\
+        PLATFORM\_DEF  &  predefined C macros \\
+        \hline
+        TARGET\_CC\_SYSTEM\_LIB & system library of cross-compiler \\
+        TARGET\_CC\_PREFIX & cross-compiler prefix \\
+        \hline
+      \end{tabular}
+      \caption{config-arm.hk}
+      \label{tab:configarm.mk}
+    \end{table}
+
+  \item Options in \emph{board.h}
+    \begin{table}[h]
+      \centering
+      \begin{tabular}{|l|l|}
+        \hline
+        Item & Description \\
+        \hline
+        SDRAM0\_START & Physical base address of RAM \\
+        SDRAM0\_SIZE  & RAM size \\
+        IO\_SPACE\_START & Physical address of memory-map IO \\
+        IO\_SPACE\_SIZE  & Size of memory-map IO space \\
+        HAS\_RAMDISK     & use ramdisk if defined \\
+        HAS\_NANDFLASH   & use nandflash driver if defined \\
+        \hline
+      \end{tabular}
+      \caption{board.h}
+      \label{tab:board.h}
+    \end{table}
+\end{enumerate}
+
+More detailed memory layout is defined in memlayout.h in the corresponding
+machine directory, see Section. \ref{sec:mm}.
+
+\section{Implementation Details}
+\subsection{Booting}
+Bootstrap diverses on different platforms: on hardware platforms, a ELF
+loader is needed, while on the simulator, qemu-system-arm, no bootloader
+is needed, since qemu can load a ELF kernel automatically.
+A bootable kernel image  comprises  the following parts:
+
+
+
+\subsection{Exception Handling}
+\subsection{Memory Management}
+\label{sec:mm}
+\subsection{Context Switch}
+\subsection{System Call}
+The syscall mechanism is borrowed from Linux2.6. In ARM, a special 
+instruction \emph{swi} handles user mode to supervisor mode transition.
+
+In ucore, we employ the following system calling convention:
+\begin{enumerate}
+  \item \emph{r0 - r3}, arguments(from left to right)
+  \item \emph{swi [syscall nr]}
+  \item return value in \emph{r0}
+\end{enumerate}
+
+Syscall is wrapped in user mode library and can be called as a normal 
+C function. This wrapper is generated automatically by 
+\emph{misc/arm\_gensyscall.py}.
+
+\subsection{Developer Caveat}
+More efforts needed to improve the usability and stability of ucore-arch-arm. Here is a TODO list:
+\begin{itemize}
+  \item High memory kernel. MMU must be enabled as soon as possible.
+  \item Multiply ARM-architecture support. Our work currently supports
+    ARMv5 architecture, but it should be easy to support ARMv4 and ARMv7
+    with minor modifications.
+  \item Performance issues, e.g., D-cache management.
+\end{itemize}
+
+\section{Demonstration}
+
+\section{Conclusion}
+
+
+
+\end{document}
+
+

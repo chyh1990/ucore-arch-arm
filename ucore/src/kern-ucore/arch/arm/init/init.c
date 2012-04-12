@@ -125,7 +125,7 @@ kern_init(void) {
 
 #ifdef HAS_NANDFLASH
   yaffs_start_up();
-  test_yaffs();
+  //test_yaffs();
   yaffs_vfs_init();
 #elif defined HAS_SIM_YAFFS 
   kprintf("init: using yramsim\n");

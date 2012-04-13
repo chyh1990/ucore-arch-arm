@@ -307,7 +307,7 @@ static int yaffs_vop_lookup_parent(struct inode *node, char *path,
     struct inode **node_store, char **endp)
 {
   struct yaffs_obj *d_obj;
-  kprintf("TODO lookup parent %s\n", path);
+  //kprintf("TODO lookup parent %s\n", path);
   d_obj = yaffs_inode_to_obj(node);
   while (1) {
     if (d_obj->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {

@@ -1,11 +1,11 @@
 export ARCH_ARM_CPU := arm926ej-s
 export ARCH_ARM_BOOTLOADER_BASE :=0x72f00000
 
-export ARCH_ARM_BOARD := versatilepb
-export ARCH_ARM_KERNEL_BASE :=0x00008000  #versatilepb
+#export ARCH_ARM_BOARD := versatilepb
+#export ARCH_ARM_KERNEL_BASE :=0x00008000  #versatilepb
 
-#export ARCH_ARM_BOARD := at91
-#export ARCH_ARM_KERNEL_BASE :=0x70008000   #at91 board
+export ARCH_ARM_BOARD := at91
+export ARCH_ARM_KERNEL_BASE :=0x70008000   #at91 board
 
 export PLATFORM_DEF := -DPLATFORM_$(shell echo $(ARCH_ARM_BOARD) | tr 'a-z' 'A-Z') -DCONFIG_NO_SWAP
 

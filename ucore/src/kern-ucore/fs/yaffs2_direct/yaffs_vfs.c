@@ -77,10 +77,12 @@ static void yaffs_fill_inode(struct inode *node, struct yaffs_obj* obj)
 static struct inode *yaffs_get_inode(struct fs *fs, struct yaffs_obj* obj)
 {
   struct inode *nnode;
+  /*  
   char *namebuf = fsop_info(fs, yaffs2)->yaffs_name_buf; 
   yaffs_get_obj_name(obj, namebuf, FS_MAX_FNAME_LEN); 
   yaffs_trace(YAFFS_TRACE_OS,
       "yaffs_get_inode %d:%s", obj->obj_id, namebuf);
+  */
   if ((nnode = alloc_inode(yaffs2_inode)) != NULL) {
     vop_init(nnode, yaffs_get_ops(obj->variant_type), fs);
     yaffs_fill_inode(nnode, obj);

@@ -305,6 +305,13 @@ pmm_init(void) {
     kprintf("mapping nandflash to 0x%08x\n", NAND_FS_VBASE);
   }
 #endif
+#ifdef HAS_SDS
+  if(check_sds()){
+    boot_map_segment(boot_pgdir, SDS_VBASE, 0x10000000, AT91C_BASE_EBI2
+        ,PTE_W|PTE_IOMEM);
+    kprintf("mapping sds to 0x%08x\n", SDS_VBASE);
+  }
+#endif
   // ramdisk for swap
   //boot_map_segment(boot_pgdir, RAMDISK_START, 0x10000000, 0x10000000, PTE_W); // fixed address
   // high kernel WIP

@@ -534,10 +534,10 @@ found:
 /* \fn    nandflash_hw_init							*/
 /* \brief NandFlash HW init							*/
 /*------------------------------------------------------------------------------*/
-void nandflash_hw_init(void)
+int nandflash_hw_init(void)
 {
    if(nandflash_init)
-     return ;
+     return 0;
 
 
    unsigned long csa = inw(AT91C_BASE_MATRIX+AT91_MATRIX_EBICSA);
@@ -583,6 +583,7 @@ void nandflash_hw_init(void)
 
     NAND_DISABLE_CE();
 
+    return 0;
 
 #if 0
     if(nandinfo){

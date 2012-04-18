@@ -123,7 +123,6 @@ struct mtd_partition{
 #define NAND_BUS_WIDTH_16BITS		0x1
 
 extern int check_nandflash();
-extern void nandflash_hw_init(void);
 extern struct nand_chip* get_nand_chip();
 extern struct mtd_partition* get_mtd_partition();
 extern int    get_mtd_partition_cnt();

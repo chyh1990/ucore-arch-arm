@@ -80,7 +80,7 @@
 /* end IO */
 
 /* For check routines */
-#define TEST_PAGE 0xD0000000
+//#define TEST_PAGE 0xD0000000
 
 /* *
  * Virtual page table. Entry PDX[VPT] in the PD (Page Directory) contains
@@ -114,6 +114,9 @@
 #endif
 #ifdef HAS_NANDFLASH
 #define NAND_FS_VBASE             0xC0000000
+#endif
+#ifdef HAS_SDS
+#define SDS_VBASE                 0xD0000000
 #endif
 
 #include <memlayout_common.h>

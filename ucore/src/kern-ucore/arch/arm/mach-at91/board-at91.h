@@ -35,6 +35,8 @@
 
 #define AT91C_BASE_PIT           (0xFFFFFD30) // (PIT) Base Address
 
+#define AT91C_BASE_EBI2          (0x30000000)  //EBI Chip Select 2
+
 #define AT91C_SMARTMEDIA_BASE	0x40000000
 
 // *****************************************************************************
@@ -99,6 +101,7 @@
 
 #define HAS_RAMDISK
 #define HAS_NANDFLASH
+#define HAS_SDS
 
 //#define KERNEL_PHY_BASE 0x70100000
 

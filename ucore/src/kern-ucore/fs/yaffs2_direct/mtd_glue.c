@@ -130,6 +130,10 @@ static  ynandif_Geometry geo;
 
 int yaffs_start_up(void)
 {
+  if(!check_nandflash()){
+    kprintf("yaffs_start_up: no nandflash\n");
+    return -1;
+  }
 	static int start_up_called = 0;
 
 	if(start_up_called)

@@ -219,6 +219,7 @@ extern int AT91F_NandEraseBlock0(void);
 
 extern int read_nandflash(unsigned char *dst, unsigned long offset, int len);
 
+extern int nandflash_hw_init(void);
 
 struct sam9_nand_config{
   uint32_t smc_setup;

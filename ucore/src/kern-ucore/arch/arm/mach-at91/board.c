@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <kio.h>
 #include <at91-nandflash.h>
+#include <intel_sds.h>
 
 static const char* message = "Initializing AT91 Board...\n";
 
@@ -77,5 +78,8 @@ board_init(){
   print_clock_info(12000000); //12Mhz
 #ifdef HAS_NANDFLASH
   nandflash_hw_init(); 
+#endif
+#ifdef HAS_SDS
+  sds_hw_init();
 #endif
 }

@@ -41,7 +41,7 @@ static yaffsfs_DeviceConfiguration yaffsfs_config[] = {
 
 static struct mtd_partition partition[] = {
   { "boot", 0, 9 },
-  { "data", 10, 0x100},
+  { "data", 10, 0x400}, //128M = 0x400*64*2K
 };
 
 struct mtd_partition* get_mtd_partition()

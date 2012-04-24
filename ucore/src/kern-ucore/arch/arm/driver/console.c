@@ -6,6 +6,7 @@
 #include <sync.h>
 #include <board.h>
 #include <serial.h>
+#include <intel_sds.h>
 
 /* *
  * Here we manage the console input buffer, where we stash characters
@@ -46,6 +47,16 @@ serial_intr(void) {
         cons_intr(serial_proc_data);
     }
 }
+
+#ifdef HAS_SDS
+static void
+sds_intr(void) {
+    if (check_sds()) {
+        cons_intr(sds_proc_data);
+    }
+}
+#endif
+
 // Originally in i386: Keyboard section
 // Not implemented
 
@@ -66,6 +77,9 @@ cons_putc(int c) {
     local_intr_save(intr_flag);
     {
         serial_putc(c);
+#ifdef HAS_SDS
+        sds_putc(c);
+#endif
     }
     local_intr_restore(intr_flag);
 }
@@ -84,6 +98,9 @@ cons_getc(void) {
         // so that this function works even when interrupts are disabled
         // (e.g., when called from the kernel monitor).
         serial_intr();
+#ifdef HAS_SDS
+        sds_intr();
+#endif
         //kbd_intr();
 
         // grab the next character from the input buffer.

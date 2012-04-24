@@ -50,7 +50,7 @@ int kern_init(void) __attribute__((noreturn));
 
 static void test_yaffs()
 {
-  //mtd_erase_partition(get_nand_chip(),"data");
+  mtd_erase_partition(get_nand_chip(),"data");
   yaffs_mount("/data");
   kprintf("DUMP\n");
   yaffs_dump_dir("/data");

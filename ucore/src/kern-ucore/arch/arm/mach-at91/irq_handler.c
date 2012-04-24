@@ -27,6 +27,8 @@
 #include <clock.h>
 #include <serial.h>
 
+extern void dev_stdin_write(char c);
+
 void irq_handler(void)
 {
   // panic("NOT imple");
@@ -38,12 +40,29 @@ void irq_handler(void)
     //kprintf("#");
     if(inw(AT91C_BASE_PIT+PIT_SR)&0x01){ //PIT
       ticks++;
+      /* hw polling */
+#ifdef HAS_SDS
+      extern int sds_poll_proc();
+      if(check_sds()){
+        sds_poll_proc();
+        //drain buffer
+        //char c;
+        //while(1){
+        char  c = cons_getc();
+        //if(c <= 0) break;
+        if(c > 0)
+          dev_stdin_write(c);
+        //}
+      }
+#endif
+
+      //schedule
+      if(ticks % 5 == 0)
+        run_timer_list();
       clock_clear();
-      run_timer_list();
     }
     status = inw(AT91SAM_DBGU_BASE+US_CSR);
     if(status & AT91C_US_RXRDY){
-      extern void dev_stdin_write(char c);
       char c = cons_getc();
       dev_stdin_write(c);
       //kprintf("#");

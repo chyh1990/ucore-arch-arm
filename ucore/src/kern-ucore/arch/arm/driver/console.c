@@ -1,12 +1,15 @@
 #include <types.h>
 #include <arm.h>
+#include <board.h>
 #include <stdio.h>
 #include <kio.h>
 #include <string.h>
 #include <sync.h>
-#include <board.h>
 #include <serial.h>
+
+#ifdef HAS_SDS
 #include <intel_sds.h>
+#endif
 
 /* *
  * Here we manage the console input buffer, where we stash characters

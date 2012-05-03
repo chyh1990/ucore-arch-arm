@@ -83,6 +83,71 @@ Our code is available on Google Code
 \footnote{http://code.google.com/p/ucore-arch-arm/} with no warranty and
 is kept updating. Any bug reports are welcomed.
 
+\section{Development Environment}
+This section is a guide to setup the cross-compile development environment for
+ARM.
+
+\subsection{Toolchain}
+The selection of ARM cross-compiler is tricky, in order to compile ucore for ARM
+, you will need arm-linux-gcc 4.4. We use arm-linux-gcc 4.4.3 EABI from 
+http://www.friendlyarm.net/downloads. This is a 32bit precompiled version,
+and if you are using 64bit Linux, you will have to install i386 libraris to run
+it (e.g. install ia32-libs package on 64bit Ubuntu 10.04)
+
+Another place to get a free ARM toolchain is on CodeSourcery
+\footnote{http://www.mentor.com/embedded-software/sourcery-tools/sourcery-codebench/editions/lite-edition/}
+.
+Make sure you download the 4.4 EABI version!
+
+Note: NEVER try to build the toolchain yourself!
+
+\subsection{Simulator}
+You can use arm-system-qemu to run and debug your ucore-arm build. This software is
+available in most Linux distribution. In Ubuntu, you can install it by:
+\begin{verbatim}
+  sudo apt-get install qemu-kvm-extras
+\end{verbatim}
+
+Make sure you are using the configuration for simulation in config-arm.mk:
+\begin{verbatim}
+  1 export ARCH_ARM_CPU := arm926ej-s
+  2 export ARCH_ARM_BOOTLOADER_BASE :=0x72f00000
+  3 
+  4 export ARCH_ARM_BOARD :=versatilepb
+  5 export ARCH_ARM_KERNEL_BASE :=0x00008000  #versatilepb
+\end{verbatim}
+
+You can simulate it now:
+\begin{verbatim}
+  make 
+  make sim
+\end{verbatim}
+
+\subsection{Debugger}
+You may want to debug your ucore-arm with gdb, but 
+ARM architecture is not supported by the gdb
+included in most Linux distributions. So you will
+have to compile your own arm-linux-gdb. Luckily,
+it is easy:
+\begin{verbatim}
+  wget http://ftp.gnu.org/gnu/gdb/gdb-6.8a.tar.bz2
+  tar vjxf gdb-6.8a.tar.bz2
+  cd gdb-6.8
+  ./configure --target=arm-linux
+  make && make install
+\end{verbatim}
+
+You will come across several compile errors, just
+delete the \emph{-Werror} flags in the corresponding Makefile.
+
+Now use the \emph{versatilepb} configuration, and type:
+\begin{verbatim}
+  make 
+  make debug
+\end{verbatim}
+
+to debug your build.
+
 \section{Source Code Organization}
 This section introduces the source code orginazation of ucore-arch-arm 
 and explains several Makefile tricks.
@@ -232,6 +297,29 @@ The MMU of ARM9 is very different from X86's, leading to some hacks in src/mm/pm
 which should be architecture-independent. These changes are marked with a macro
 \emph{ARCH\_ARM}, defined in config-arm.mk.
 
+ARM9's MMU supports several PDT/PTE configuration, ucore uses the following 
+configuration (which is the most similar to X86's VA layout) :
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+PDT Index & PTE Index & Offset \\
+\hline
+12 & 8 & 12 \\
+\hline
+\end{tabular}
+\caption{Virtual Address in ucore}
+\label{tab:va_layout}
+\end{table}
+
+This layout suggests that every page directory is 16kB, and every page
+table is 1kB. In Linux, each 4kB page contains two page tables, including
+512 hardware entries and 512 software entries\footnote{see Linux source code
+ arch/arm/include/asm/pgtable.h}. However, in order to keep compatibility
+ with legacy code in ucore, each page only contains 256 hardware entries
+ and 256 software entries, which means that the other half page is wasted. 
+
 
 \subsection{Context Switch and System Call}
 The syscall mechanism is borrowed from Linux2.6. In ARM, a special 
@@ -247,6 +335,44 @@ In ucore, we employ the following system calling convention:
 Syscall is wrapped in user mode library and can be called as a normal 
 C function. This wrapper is generated automatically by 
 \emph{misc/arm\_gensyscall.py}.
+
+\subsection{User Library and Application}
+The code in \emph{libs-user-ucore} and \emph{user-ucore}
+should works without modification. However, since \emph{libs-user-ucore/syscall.c} is not compatible with ARM's 
+system calling convetion, we use some macros from Linux
+to create our own system call entries.
+
+\begin{algorithm}[h]
+ \begin{lstlisting}[language={C++}]
+#define __syscall_return(type, res)\                                  
+do {                               \                                  
+return (type) (res);               \                                  
+} while (0)
+
+#define _syscall3(type,name,type1,arg1,type2,arg2,type3,arg3) \       
+type sys_##name(type1 arg1,type2 arg2,type3 arg3) {  \                
+  long __res;       \                                                 
+  __asm__ __volatile__ (  \                                           
+  "mov\tr0,%1\n\t"     \                                              
+  "mov\tr1,%2\n\t"     \                                              
+  "mov\tr2,%3\n\t"     \                                              
+  __syscall(name)      \                                              
+  "mov\t%0,r0"         \                                              
+        : "=r" (__res) \                                              
+        : "r" ((long)(arg1)),"r" ((long)(arg2)),"r" ((long)(arg3))\   
+        : "r0","r1","r2","lr");   \                                   
+  __syscall_return(type,__res);   \                                   
+}
+/* ... */
+
+_syscall3(int, exec,const char *, name, int , argc, const char **, argv);
+
+\end{lstlisting}
+\caption{User Mode System Calling Convetion}
+\end{algorithm}
+
+Another modification is \emph{src/libs-user-ucore/arch/arm/user.ld}.
+The .text section of user application is located at  0x30800000.
 
 \subsection{Developer Caveat}
 More efforts needed to improve the usability and stability of ucore-arch-arm. Here is a TODO list:
@@ -264,10 +390,15 @@ can share identical (or nearly identical) memory layout. But currently you might
 the kernel memory layout (in memlayout.h) and the user mode application's linker script 
 according to your platform.
 
-\section{Demonstration}
 
 \section{Conclusion}
+In our project, we work out a basically working version of ucore for ARM9.
+However, just as what items listed on the TODO list imply,
+much work remains for making ucore for ARM9 a pratically usable
+operating system.
 
+In addition to porting ucore to ARM9, we are working on Nandflash Filesystem and 
+writing device drivers for ucore. Their information is available in other documents.
 
 
 \end{document}

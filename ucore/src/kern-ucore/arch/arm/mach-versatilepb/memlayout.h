@@ -113,6 +113,10 @@
 #ifdef HAS_RAMDISK
 #define DISK_FS_VBASE             0xB0000000 
 #endif
+#ifdef HAS_SHARED_KERNMEM
+#define SHARED_KERNMEM_VBASE 0xD0008000
+#define SHARED_KERNMEM_PAGES 256 /* 1M */
+#endif
 
 
 #include <memlayout_common.h>

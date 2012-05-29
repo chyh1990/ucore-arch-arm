@@ -312,6 +312,17 @@ pmm_init(void) {
     kprintf("mapping sds to 0x%08x\n", SDS_VBASE);
   }
 #endif
+#ifdef HAS_SHARED_KERNMEM
+  struct Page *kshm_page = alloc_pages(SHARED_KERNMEM_PAGES);
+  void * kern_shm_pbase = page2kva(kshm_page);
+  assert(kern_shm_pbase);
+  boot_map_segment(boot_pgdir, SHARED_KERNMEM_VBASE, 
+    SHARED_KERNMEM_PAGES*PGSIZE, (uintptr_t)kern_shm_pbase, 
+    PTE_W|PTE_U);
+  kprintf("mapping kern_shm 0x%08x to 0x%08x, size: %d Pages\n", 
+    kern_shm_pbase, SHARED_KERNMEM_VBASE, SHARED_KERNMEM_PAGES);
+
+#endif
   // ramdisk for swap
   //boot_map_segment(boot_pgdir, RAMDISK_START, 0x10000000, 0x10000000, PTE_W); // fixed address
   // high kernel WIP

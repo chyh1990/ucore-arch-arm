@@ -56,6 +56,7 @@
 
 #define HAS_RAMDISK
 #define HAS_SIM_YAFFS
+#define HAS_SHARED_KERNMEM
 //#define KERNEL_PHY_BASE 0x100000
 
 #ifndef __ASSEMBLY__

@@ -23,126 +23,124 @@ void irq_handler(void);
 
 #if 0
 static void print_ticks() {
-    //kprintf("%d ticks\n",ticks);
-	kprintf(".");
-#ifdef DEBUG_GRADE
-    kprintf("End of Test.\n");
-    panic("EOT: kernel seems ok.");
-#endif
+  //kprintf("%d ticks\n",ticks);
+  kprintf(".");
+  kprintf("End of Test.\n");
+  panic("EOT: kernel seems ok.");
 }
 #endif
 
 static const char *
 trapname(int trapno) {
-    static const char * const excnames[] = {
-        "Reset",
-        "Undefined instruction",
-        "Software interrupt",
-        "Prefetch abort",
-        "Data abort",
-        "Reserved",
-        "Interrupt request",
-        "Fast interrupt request"
-    };
-	
-    if (trapno < sizeof(excnames)/sizeof(const char * const)) {
-        return excnames[trapno];
-    }
-    if (trapno == T_SYSCALL) {
-        return "System call";
-    }
-	if (trapno >= IRQ_OFFSET && trapno <= IRQ_OFFSET + IRQ_MAX_RANGE) {
-		return "Hardware Interrupt";
-    }
-    return "(unknown trap)";
+  static const char * const excnames[] = {
+    "Reset",
+    "Undefined instruction",
+    "Software interrupt",
+    "Prefetch abort",
+    "Data abort",
+    "Reserved",
+    "Interrupt request",
+    "Fast interrupt request"
+  };
+
+  if (trapno < sizeof(excnames)/sizeof(const char * const)) {
+    return excnames[trapno];
+  }
+  if (trapno == T_SYSCALL) {
+    return "System call";
+  }
+  if (trapno >= IRQ_OFFSET && trapno <= IRQ_OFFSET + IRQ_MAX_RANGE) {
+    return "Hardware Interrupt";
+  }
+  return "(unknown trap)";
 }
 
 static const char * const modenames[] = {
-	"User",
-	"FIQ",
-	"IRQ",
-	"Supervisor",
-	"","","",
-	"Abort",
-	"","","",
-	"Undefined",
-	"","","",
-	"System"
+  "User",
+  "FIQ",
+  "IRQ",
+  "Supervisor",
+  "","","",
+  "Abort",
+  "","","",
+  "Undefined",
+  "","","",
+  "System"
 };
 
 /* trap_in_kernel - test if trap happened in kernel */
 bool
 trap_in_kernel(struct trapframe *tf) {
-    //return (tf->tf_cs == (uint16_t)KERNEL_CS);
-	//kprintf("trap_in_kernel: at pc:0x%08x\n", tf->tf_epc);
-	return (tf->tf_epc >= KERNBASE && tf->tf_epc <= KERNTOP);
+  //return (tf->tf_cs == (uint16_t)KERNEL_CS);
+  //kprintf("trap_in_kernel: at pc:0x%08x\n", tf->tf_epc);
+  return (tf->tf_epc >= KERNBASE && tf->tf_epc <= KERNTOP);
 }
 
 void
 print_trapframe(struct trapframe *tf) {
-    kprintf("trapframe at %p\n", tf);
-    print_regs(&tf->tf_regs);
-	kprintf("  sp   0x%08x\n", tf->tf_esp);
-	kprintf("  lr   0x%08x\n", tf->tf_epc);
-	kprintf("  spsr 0x%08x %s\n", tf->tf_sr, modenames[tf->tf_sr & 0xF]);
-    kprintf("  trap 0x%08x %s\n", tf->tf_trapno, trapname(tf->tf_trapno));
-    kprintf("  err  0x%08x\n", tf->tf_err);
+  kprintf("trapframe at %p\n", tf);
+  print_regs(&tf->tf_regs);
+  kprintf("  sp   0x%08x\n", tf->tf_esp);
+  kprintf("  lr   0x%08x\n", tf->tf_epc);
+  kprintf("  spsr 0x%08x %s\n", tf->tf_sr, modenames[tf->tf_sr & 0xF]);
+  kprintf("  trap 0x%08x %s\n", tf->tf_trapno, trapname(tf->tf_trapno));
+  kprintf("  err  0x%08x\n", tf->tf_err);
 }
 
 void
 print_regs(struct pushregs *regs) {
-	int i;
-	for (i = 0; i < 11; i++) {
-		kprintf("  r%02d  0x%08x\n", i, regs->reg_r[i]);
-	}
-	kprintf("  fp   0x%08x\n", regs->reg_r[11]);
-	kprintf("  ip   0x%08x\n", regs->reg_r[12]);
+  int i;
+  for (i = 0; i < 11; i++) {
+    kprintf("  r%02d  0x%08x\n", i, regs->reg_r[i]);
+  }
+  kprintf("  fp   0x%08x\n", regs->reg_r[11]);
+  kprintf("  ip   0x%08x\n", regs->reg_r[12]);
 }
 
 static inline void
 print_pgfault(struct trapframe *tf) {
-	//print_trapframe(tf);
-	uint32_t ttb = 0;
-	asm volatile("MRC p15, 0, %0, c2, c0, 0" :"=r" (ttb));
-	kprintf("%s page fault at (0x%08x) 0x%08x 0x%03x: %s-%s %s PID=%d\n", 
-		tf->tf_trapno == T_PABT ? "instruction" : tf->tf_trapno == T_DABT ? "data" : "unknown",
-		ttb, far(), tf->tf_err & 0xFFF,
-		tf->tf_err & 0x2 ? "Page" : "Section",
-		(tf->tf_err & 0xC) == 0xC ? "Permission" : 
-		(tf->tf_err & 0xC) == 0x8 ? "Domain" :
-		(tf->tf_err & 0xC) == 0x4 ? "Translation" :
-		"Alignment",
-		//((fsr_v & 0xC) == 0) || ((fsr_v & 0xE) == 0x4) ? "Domain invalid" : "Domain valid",
-		(tf->tf_err & 1<<11) ? "W" : "R", pls_read(current)?pls_read(current)->pid:-1);
-	/* error_code:
-     * bit 0 == 0 means no page found, 1 means protection fault // translation or domain/permission
-     * bit 1 == 0 means read, 1 means write // permission
-     * bit 2 == 0 means kernel, 1 means user // can't know
-     * */
-    //~ kprintf("page fault at 0x%08x: %c/%c [%s].\n", rcr2(),
-            //~ (tf->tf_err & 4) ? 'U' : 'K',
-            //~ (tf->tf_err & 2) ? 'W' : 'R',
-            //~ (tf->tf_err & 1) ? "protection fault" : "no page found");
+  //print_trapframe(tf);
+  uint32_t ttb = 0;
+  asm volatile("MRC p15, 0, %0, c2, c0, 0" :"=r" (ttb));
+  kprintf("%s page fault at (0x%08x) 0x%08x 0x%03x: %s-%s %s PID=%d\n", 
+      tf->tf_trapno == T_PABT ? "instruction" : tf->tf_trapno == T_DABT ? "data" : "unknown",
+      ttb, far(), tf->tf_err & 0xFFF,
+      tf->tf_err & 0x2 ? "Page" : "Section",
+      (tf->tf_err & 0xC) == 0xC ? "Permission" : 
+      (tf->tf_err & 0xC) == 0x8 ? "Domain" :
+      (tf->tf_err & 0xC) == 0x4 ? "Translation" :
+      "Alignment",
+      //((fsr_v & 0xC) == 0) || ((fsr_v & 0xE) == 0x4) ? "Domain invalid" : "Domain valid",
+      (tf->tf_err & 1<<11) ? "W" : "R", pls_read(current)?pls_read(current)->pid:-1);
+  /* error_code:
+   * bit 0 == 0 means no page found, 1 means protection fault // translation or domain/permission
+   * bit 1 == 0 means read, 1 means write // permission
+   * bit 2 == 0 means kernel, 1 means user // can't know
+   * */
+  //~ kprintf("page fault at 0x%08x: %c/%c [%s].\n", rcr2(),
+  //~ (tf->tf_err & 4) ? 'U' : 'K',
+  //~ (tf->tf_err & 2) ? 'W' : 'R',
+  //~ (tf->tf_err & 1) ? "protection fault" : "no page found");
 }
 
 static int
 pgfault_handler(struct trapframe *tf) {
-    extern struct mm_struct *check_mm_struct;
-    struct mm_struct *mm;
-    if (check_mm_struct != NULL) {
-        //assert(current == idleproc);
-        assert(pls_read(current) == pls_read(idleproc));
-        mm = check_mm_struct;
+  extern struct mm_struct *check_mm_struct;
+  struct mm_struct *mm;
+  if (check_mm_struct != NULL) {
+    //assert(current == idleproc);
+    assert(pls_read(current) == pls_read(idleproc));
+    mm = check_mm_struct;
+  }
+  else {
+    if (pls_read(current) == NULL) {
+      print_trapframe(tf);
+      print_pgfault(tf);
+      panic("unhandled page fault.\n");
     }
-    else {
-        if (pls_read(current) == NULL) {
-            print_trapframe(tf);
-            print_pgfault(tf);
-            panic("unhandled page fault.\n");
-        }
-        mm = pls_read(current)->mm;
-    }
-	//print_pgfault(tf);
+    mm = pls_read(current)->mm;
+  }
+  //print_pgfault(tf);
   /* convert ARM error code to kernel error code */
   machine_word_t error_code = 0;
   if(tf->tf_err & (1<<11)) error_code |= 0x02;  //write
@@ -154,70 +152,75 @@ pgfault_handler(struct trapframe *tf) {
 /* trap_dispatch - dispatch based on what type of trap occurred */
 static void
 trap_dispatch(struct trapframe *tf) {
-    char c;
+  char c;
 
-    int ret;
+  int ret;
 
-	//kprintf("Trap [%03d %03d]\n", tf->tf_trapno, tf->tf_trapsubno);
-	
-    switch (tf->tf_trapno) {
-	// Prefetch Abort service routine
-	// Data Abort service routine
-	case T_PABT:
-	case T_DABT:
-		if ((ret = pgfault_handler(tf)) != 0) {
-            print_pgfault(tf);
-            print_trapframe(tf);
-            if (pls_read(current) == NULL) {
-                panic("handle pgfault failed. %e\n", ret);
-            }
-            else {
-                if (trap_in_kernel(tf)) {
-                    panic("handle pgfault failed in kernel mode. %e\n", ret);
-                }
-                kprintf("killed by kernel.\n");
-                do_exit(-E_KILLED);
-            }
-        }
-        break;
-    case T_SWI:
-        syscall();
-        break;
-	// IRQ Service Routine
-/* 	case IRQ_OFFSET + INT_TIMER4:
-		ticks ++;
-		if (ticks % TICK_NUM == 0) {
-			print_ticks();
-			//print_trapframe(tf);
-		}
-		break;
-	case IRQ_OFFSET + INT_UART0:
-		c = cons_getc();
-		kprintf("serial [%03d] %c\n", c, c);
-		break;
-        */
-	// SWI Service Routine
-  case T_SWITCH_TOK: // a random System call
-		kprintf("Random system call\n") ;
-		print_cur_status();
-		//print_stackframe();
-        break;
-  case T_IRQ:
-        irq_handler();
-        break;
-	case T_PANIC: // System call
-		kprintf("Game over\n") ;
-		print_cur_status();
-		//print_stackframe();
-        break;
-    default:
+  //kprintf("Trap [%03d %03d]\n", tf->tf_trapno, tf->tf_trapsubno);
+
+  switch (tf->tf_trapno) {
+    // Prefetch Abort service routine
+    // Data Abort service routine
+    case T_PABT:
+    case T_DABT:
+      if ((ret = pgfault_handler(tf)) != 0) {
+        print_pgfault(tf);
         print_trapframe(tf);
-        if (pls_read(current) != NULL) {
-            kprintf("unhandled trap.\n");
-            do_exit(-E_KILLED);
+        if (pls_read(current) == NULL) {
+          panic("handle pgfault failed. %e\n", ret);
         }
-        panic("unexpected trap in kernel.\n");
-    }
+        else {
+          if (trap_in_kernel(tf)) {
+            panic("handle pgfault failed in kernel mode. %e\n", ret);
+          }
+          kprintf("killed by kernel.\n");
+          do_exit(-E_KILLED);
+        }
+      }
+      break;
+    case T_SWI:
+      syscall();
+      break;
+      // IRQ Service Routine
+      /* 	case IRQ_OFFSET + INT_TIMER4:
+          ticks ++;
+          if (ticks % TICK_NUM == 0) {
+          print_ticks();
+      //print_trapframe(tf);
+      }
+      break;
+      case IRQ_OFFSET + INT_UART0:
+      c = cons_getc();
+      kprintf("serial [%03d] %c\n", c, c);
+      break;
+      */
+      // SWI Service Routine
+    case T_SWITCH_TOK: // a random System call
+      kprintf("Random system call\n") ;
+      print_cur_status();
+      //print_stackframe();
+      break;
+    case T_IRQ:
+      irq_handler();
+      break;
+    case T_PANIC: // System call
+      kprintf("Game over\n") ;
+      print_cur_status();
+      //print_stackframe();
+      break;
+      /* for debugging */
+    case T_UNDEF:
+      print_trapframe(tf);
+      panic("undefined handler");
+      break;
+    default:
+      print_trapframe(tf);
+      if (pls_read(current) != NULL) {
+        kprintf("unhandled trap.\n");
+        do_exit(-E_KILLED);
+      }
+      panic("unexpected trap in kernel.\n");
+  }
 }
 
 /* *
@@ -226,27 +229,27 @@ trap_dispatch(struct trapframe *tf) {
  * */
 void
 trap(struct trapframe *tf) {
-    // used for previous projects
-    if (pls_read(current) == NULL) {
-        trap_dispatch(tf);
+  // used for previous projects
+  if (pls_read(current) == NULL) {
+    trap_dispatch(tf);
+  }
+  else {
+    // keep a trapframe chain in stack
+    struct trapframe *otf = pls_read(current)->tf;
+    pls_read(current)->tf = tf;
+
+    bool in_kernel = trap_in_kernel(tf);
+
+    trap_dispatch(tf);
+
+    pls_read(current)->tf = otf;
+    if (!in_kernel) {
+      may_killed();
+      if (pls_read(current)->need_resched) {
+        schedule();
+      }
     }
-    else {
-        // keep a trapframe chain in stack
-        struct trapframe *otf = pls_read(current)->tf;
-        pls_read(current)->tf = tf;
-
-        bool in_kernel = trap_in_kernel(tf);
-
-        trap_dispatch(tf);
-
-        pls_read(current)->tf = otf;
-        if (!in_kernel) {
-			      may_killed();
-            if (pls_read(current)->need_resched) {
-                schedule();
-            }
-        }
-    }
+  }
 }
 
 /* eabi compiler */

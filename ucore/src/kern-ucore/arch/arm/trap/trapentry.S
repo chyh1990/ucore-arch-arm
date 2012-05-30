@@ -39,6 +39,37 @@ __switrap:
 	
 	b __trapret
 
+.global __undtrap
+__undtrap:
+	# Mode: UND, I: disabled
+	
+	# store context
+	# Beware of stack overflow
+	stmfd sp!, {lr}
+	mrs r14, spsr
+	and r14, r14, #0xF
+	cmp r14, #0
+	bleq __save_user
+	ldr lr, [sp]
+	sub sp, sp, #4
+	stmfd sp!, {r0-r12}
+
+	# Error code
+	LDR r0, [lr, #-4]
+	# Mask off top 8 bits
+	bic r0, r0, #0xff000000
+	stmfd sp!, {r0}
+	
+  ldr r0, =T_UNDEF
+	# Put trap number in stack (T_SWI)
+	# Trap_no
+	stmfd sp!, {r0}
+	
+	bl __alltraps
+	
+	b __trapret
+
+
 .global __irqtrap
 __irqtrap:
 	# Mode: IRQ, I: disabled

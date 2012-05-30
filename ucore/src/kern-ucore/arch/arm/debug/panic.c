@@ -1,5 +1,6 @@
 #include <types.h>
 #include <kio.h>
+#include <kdebug.h>
 #include <stdio.h>
 #include <intr.h>
 #include <monitor.h>
@@ -16,6 +17,7 @@ __panic(const char *file, int line, const char *fmt, ...) {
         goto panic_dead;
     }
     is_panic = 1;
+    start_debug();
 
     // print the 'message'
     va_list ap;

@@ -3,6 +3,7 @@
 #include <board.h>
 #include <stdio.h>
 #include <kio.h>
+#include <kdebug.h>
 #include <string.h>
 #include <sync.h>
 #include <serial.h>
@@ -81,6 +82,8 @@ cons_putc(int c) {
     {
         serial_putc(c);
 #ifdef HAS_SDS
+        if(is_debugging())
+          sds_poll_proc();
         sds_putc(c);
 #endif
     }
@@ -102,6 +105,8 @@ cons_getc(void) {
         // (e.g., when called from the kernel monitor).
         serial_intr();
 #ifdef HAS_SDS
+        if(is_debugging())
+          sds_poll_proc();
         sds_intr();
 #endif
         //kbd_intr();

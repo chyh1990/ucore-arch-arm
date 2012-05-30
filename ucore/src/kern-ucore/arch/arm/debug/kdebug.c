@@ -334,3 +334,22 @@ print_cur_status(void) {
     kprintf("%d:  cpsr = %x\n", round, reg4);
     round ++;
 }
+
+static bool __is_debugging = 0;
+
+bool is_debugging()
+{
+  return __is_debugging;
+}
+
+void start_debug()
+{
+  __is_debugging = 1;
+}
+void end_debug()
+{
+  __is_debugging = 0;
+}
+
+
+

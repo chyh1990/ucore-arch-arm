@@ -22,6 +22,7 @@ static struct command commands[] = {
     {"kerninfo", "Display information about the kernel.", mon_kerninfo},
     {"backtrace", "Print backtrace of stack frame.", mon_backtrace},
     {"dump", "Dump memory.", mon_dump},
+    {"trapframe", "Print trapframe", mon_trapframe},
 };
 
 #define NCOMMANDS (sizeof(commands)/sizeof(struct command))
@@ -125,6 +126,12 @@ mon_kerninfo(int argc, char **argv, struct trapframe *tf) {
 int
 mon_backtrace(int argc, char **argv, struct trapframe *tf) {
     print_stackframe();
+    return 0;
+}
+
+int
+mon_trapframe(int argc, char **argv, struct trapframe *tf) {
+    kprintf("unimpl\n");
     return 0;
 }
 

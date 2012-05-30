@@ -86,7 +86,7 @@ __vector_reset:
 .globl irq_proc
 # Exception modes
 __vector_undefined:
-	b __vector_undefined
+	b __undtrap
 __vector_swi:
 	b __switrap
 __vector_prefetch_abort:

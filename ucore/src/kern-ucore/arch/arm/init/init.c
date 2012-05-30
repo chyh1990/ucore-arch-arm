@@ -76,6 +76,18 @@ static void test_yaffs()
 
 }
 
+void __test_bp()
+{
+  __asm__ volatile(".word 0xe7fddefe");
+}
+
+void check_bp()
+{
+  kprintf("check bp...\n");
+  __test_bp();
+  kprintf("check bp done...\n");
+}
+
 int
 kern_init(void) {
   extern char edata[], end[];
@@ -137,6 +149,8 @@ kern_init(void) {
   yaffs_vfs_init();
 
 #endif
+
+  check_bp();
 
   intr_enable();              // enable irq interrupt
 

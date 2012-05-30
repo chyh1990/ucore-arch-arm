@@ -39,16 +39,18 @@ AT91C_AIC_SRCTYPE_EXT_HIGH_LEVEL	at91-aic.h	50;"	d
 AT91C_AIC_SRCTYPE_EXT_POSITIVE_EDGE	at91-aic.h	51;"	d
 AT91C_AIC_SRCTYPE_INT_EDGE_TRIGGERED	at91-aic.h	49;"	d
 AT91C_AIC_SRCTYPE_INT_LEVEL_SENSITIVE	at91-aic.h	48;"	d
-AT91C_ALL_INT	board-at91.h	74;"	d
-AT91C_BASE_AIC	board-at91.h	29;"	d
-AT91C_BASE_MATRIX	board-at91.h	26;"	d
-AT91C_BASE_PIOA	board-at91.h	30;"	d
-AT91C_BASE_PIOB	board-at91.h	31;"	d
-AT91C_BASE_PIOC	board-at91.h	32;"	d
-AT91C_BASE_PIOD	board-at91.h	33;"	d
-AT91C_BASE_PIT	board-at91.h	35;"	d
-AT91C_BASE_PMC	board-at91.h	27;"	d
-AT91C_BASE_SMC	board-at91.h	25;"	d
+AT91C_ALL_INT	board-at91.h	77;"	d
+AT91C_BASE_AIC	board-at91.h	30;"	d
+AT91C_BASE_EBI2	board-at91.h	38;"	d
+AT91C_BASE_ECC	board-at91.h	25;"	d
+AT91C_BASE_MATRIX	board-at91.h	27;"	d
+AT91C_BASE_PIOA	board-at91.h	31;"	d
+AT91C_BASE_PIOB	board-at91.h	32;"	d
+AT91C_BASE_PIOC	board-at91.h	33;"	d
+AT91C_BASE_PIOD	board-at91.h	34;"	d
+AT91C_BASE_PIT	board-at91.h	36;"	d
+AT91C_BASE_PMC	board-at91.h	28;"	d
+AT91C_BASE_SMC	board-at91.h	26;"	d
 AT91C_CKGR_BIASCOUNT	at91-gpio.h	72;"	d
 AT91C_CKGR_BIASEN	at91-gpio.h	69;"	d
 AT91C_CKGR_BIASEN_DISABLED	at91-gpio.h	70;"	d
@@ -87,38 +89,38 @@ AT91C_CKGR_USBDIV	at91-gpio.h	103;"	d
 AT91C_CKGR_USBDIV_0	at91-gpio.h	104;"	d
 AT91C_CKGR_USBDIV_1	at91-gpio.h	105;"	d
 AT91C_CKGR_USBDIV_2	at91-gpio.h	106;"	d
-AT91C_ID_AC97C	board-at91.h	66;"	d
-AT91C_ID_EMAC	board-at91.h	67;"	d
-AT91C_ID_FIQ	board-at91.h	42;"	d
-AT91C_ID_HDMA	board-at91.h	63;"	d
-AT91C_ID_IRQ0	board-at91.h	73;"	d
-AT91C_ID_ISI	board-at91.h	68;"	d
-AT91C_ID_LCDC	board-at91.h	65;"	d
-AT91C_ID_MCI0	board-at91.h	53;"	d
-AT91C_ID_MCI1	board-at91.h	71;"	d
-AT91C_ID_PIOA	board-at91.h	44;"	d
-AT91C_ID_PIOB	board-at91.h	45;"	d
-AT91C_ID_PIOC	board-at91.h	46;"	d
-AT91C_ID_PIOD_E	board-at91.h	47;"	d
-AT91C_ID_PWMC	board-at91.h	61;"	d
-AT91C_ID_SPI0	board-at91.h	56;"	d
-AT91C_ID_SPI1	board-at91.h	57;"	d
-AT91C_ID_SSC0	board-at91.h	58;"	d
-AT91C_ID_SSC1	board-at91.h	59;"	d
-AT91C_ID_SYS	board-at91.h	43;"	d
-AT91C_ID_TC	board-at91.h	60;"	d
-AT91C_ID_TDES	board-at91.h	70;"	d
-AT91C_ID_TRNG	board-at91.h	48;"	d
-AT91C_ID_TSADC	board-at91.h	62;"	d
-AT91C_ID_TWI0	board-at91.h	54;"	d
-AT91C_ID_TWI1	board-at91.h	55;"	d
-AT91C_ID_UDPHS	board-at91.h	69;"	d
-AT91C_ID_UHPHS	board-at91.h	64;"	d
-AT91C_ID_US0	board-at91.h	49;"	d
-AT91C_ID_US1	board-at91.h	50;"	d
-AT91C_ID_US2	board-at91.h	51;"	d
-AT91C_ID_US3	board-at91.h	52;"	d
-AT91C_ID_VDEC	board-at91.h	72;"	d
+AT91C_ID_AC97C	board-at91.h	69;"	d
+AT91C_ID_EMAC	board-at91.h	70;"	d
+AT91C_ID_FIQ	board-at91.h	45;"	d
+AT91C_ID_HDMA	board-at91.h	66;"	d
+AT91C_ID_IRQ0	board-at91.h	76;"	d
+AT91C_ID_ISI	board-at91.h	71;"	d
+AT91C_ID_LCDC	board-at91.h	68;"	d
+AT91C_ID_MCI0	board-at91.h	56;"	d
+AT91C_ID_MCI1	board-at91.h	74;"	d
+AT91C_ID_PIOA	board-at91.h	47;"	d
+AT91C_ID_PIOB	board-at91.h	48;"	d
+AT91C_ID_PIOC	board-at91.h	49;"	d
+AT91C_ID_PIOD_E	board-at91.h	50;"	d
+AT91C_ID_PWMC	board-at91.h	64;"	d
+AT91C_ID_SPI0	board-at91.h	59;"	d
+AT91C_ID_SPI1	board-at91.h	60;"	d
+AT91C_ID_SSC0	board-at91.h	61;"	d
+AT91C_ID_SSC1	board-at91.h	62;"	d
+AT91C_ID_SYS	board-at91.h	46;"	d
+AT91C_ID_TC	board-at91.h	63;"	d
+AT91C_ID_TDES	board-at91.h	73;"	d
+AT91C_ID_TRNG	board-at91.h	51;"	d
+AT91C_ID_TSADC	board-at91.h	65;"	d
+AT91C_ID_TWI0	board-at91.h	57;"	d
+AT91C_ID_TWI1	board-at91.h	58;"	d
+AT91C_ID_UDPHS	board-at91.h	72;"	d
+AT91C_ID_UHPHS	board-at91.h	67;"	d
+AT91C_ID_US0	board-at91.h	52;"	d
+AT91C_ID_US1	board-at91.h	53;"	d
+AT91C_ID_US2	board-at91.h	54;"	d
+AT91C_ID_US3	board-at91.h	55;"	d
+AT91C_ID_VDEC	board-at91.h	75;"	d
 AT91C_NR_PIO	at91-gpio.h	108;"	d
 AT91C_PA0_MCI0_DA0	at91-gpio.h	154;"	d
 AT91C_PA0_SPI0_MISO	at91-gpio.h	155;"	d
@@ -462,7 +464,7 @@ AT91C_PIO_PD6	at91-gpio.h	478;"	d
 AT91C_PIO_PD7	at91-gpio.h	481;"	d
 AT91C_PIO_PD8	at91-gpio.h	484;"	d
 AT91C_PIO_PD9	at91-gpio.h	487;"	d
-AT91C_SMARTMEDIA_BASE	board-at91.h	37;"	d
+AT91C_SMARTMEDIA_BASE	board-at91.h	40;"	d
 AT91C_SMC_BAT	at91-nandflash.h	78;"	d
 AT91C_SMC_BAT_BYTE_SELECT	at91-nandflash.h	79;"	d
 AT91C_SMC_BAT_BYTE_WRITE	at91-nandflash.h	80;"	d
@@ -594,6 +596,7 @@ AT91C_US_USMODE_MODEM	at91-uart.h	67;"	d
 AT91C_US_USMODE_NORMAL	at91-uart.h	64;"	d
 AT91C_US_USMODE_RS485	at91-uart.h	65;"	d
 AT91C_US_USMODE_SWHSH	at91-uart.h	71;"	d
+AT91SAM9_PMC_MDIV_3	at91-pmc.h	27;"	d
 AT91SAM_DBGU_BASE	board-at91.h	24;"	d
 AT91SAM_IO_START	board-at91.h	23;"	d
 AT91_MATRIX_EBICSA	at91cap9_matrix.h	21;"	d
@@ -614,8 +617,28 @@ AT91_MATRIX_EBI_DQSPDC	at91cap9_matrix.h	35;"	d
 AT91_MATRIX_EBI_VDDIOMSEL	at91cap9_matrix.h	36;"	d
 AT91_MATRIX_EBI_VDDIOMSEL_1_8V	at91cap9_matrix.h	37;"	d
 AT91_MATRIX_EBI_VDDIOMSEL_3_3V	at91cap9_matrix.h	38;"	d
+AT91_PMC_MDIV	at91-pmc.h	26;"	d
+AT91_PMC_PLLADIV2	at91-pmc.h	28;"	d
 AT91_SMART_MEDIA_ALE	at91-nandflash.h	100;"	d
 AT91_SMART_MEDIA_CLE	at91-nandflash.h	101;"	d
+ATMEL_ECC_BITADDR	atmel_nand_ecc.h	33;"	d
+ATMEL_ECC_CR	atmel_nand_ecc.h	17;"	d
+ATMEL_ECC_ECCERR	atmel_nand_ecc.h	29;"	d
+ATMEL_ECC_MR	atmel_nand_ecc.h	20;"	d
+ATMEL_ECC_MULERR	atmel_nand_ecc.h	30;"	d
+ATMEL_ECC_NPARITY	atmel_nand_ecc.h	37;"	d
+ATMEL_ECC_NPR	atmel_nand_ecc.h	36;"	d
+ATMEL_ECC_PAGESIZE	atmel_nand_ecc.h	21;"	d
+ATMEL_ECC_PAGESIZE_1056	atmel_nand_ecc.h	23;"	d
+ATMEL_ECC_PAGESIZE_2112	atmel_nand_ecc.h	24;"	d
+ATMEL_ECC_PAGESIZE_4224	atmel_nand_ecc.h	25;"	d
+ATMEL_ECC_PAGESIZE_528	atmel_nand_ecc.h	22;"	d
+ATMEL_ECC_PR	atmel_nand_ecc.h	32;"	d
+ATMEL_ECC_RECERR	atmel_nand_ecc.h	28;"	d
+ATMEL_ECC_RST	atmel_nand_ecc.h	18;"	d
+ATMEL_ECC_SR	atmel_nand_ecc.h	27;"	d
+ATMEL_ECC_WORDADDR	atmel_nand_ecc.h	34;"	d
+ATMEL_NAND_ECC_H	atmel_nand_ecc.h	15;"	d
 BAD_BLOCK_INFO_OFFSET	at91-nandflash.h	173;"	d
 BAD_BLOCK_INFO_OFFSET	at91-nandflash.h	176;"	d
 BAD_BLOCK_TAG	at91-nandflash.h	180;"	d
@@ -624,20 +647,6 @@ CKGR_MOR	at91-gpio.h	60;"	d
 CKGR_PLLAR	at91-gpio.h	62;"	d
 CKGR_PLLBR	at91-gpio.h	63;"	d
 CKGR_UCKR	at91-gpio.h	59;"	d
-CMD_ERASE_1	at91-nandflash.h	217;"	d
-CMD_ERASE_2	at91-nandflash.h	218;"	d
-CMD_READID	at91-nandflash.h	212;"	d
-CMD_READ_1	at91-nandflash.h	209;"	d
-CMD_READ_2	at91-nandflash.h	210;"	d
-CMD_READ_A0	at91-nandflash.h	224;"	d
-CMD_READ_A1	at91-nandflash.h	225;"	d
-CMD_READ_C	at91-nandflash.h	226;"	d
-CMD_RESET	at91-nandflash.h	221;"	d
-CMD_STATUS	at91-nandflash.h	220;"	d
-CMD_WRITE_1	at91-nandflash.h	214;"	d
-CMD_WRITE_2	at91-nandflash.h	215;"	d
-CMD_WRITE_A	at91-nandflash.h	228;"	d
-CMD_WRITE_C	at91-nandflash.h	229;"	d
 DBGU_BRGR	at91-dbgu.h	35;"	d
 DBGU_CIDR	at91-dbgu.h	36;"	d
 DBGU_CR	at91-dbgu.h	27;"	d
@@ -663,11 +672,12 @@ DBGU_TPR	at91-dbgu.h	41;"	d
 DISK_FS_VBASE	memlayout.h	113;"	d
 EINVAL	at91-gpio.c	38;"	d	file:
 ERASE_TIMEOUT	at91-nandflash.h	189;"	d
-HAS_NANDFLASH	board-at91.h	100;"	d
-HAS_RAMDISK	board-at91.h	99;"	d
+HAS_NANDFLASH	board-at91.h	103;"	d
+HAS_RAMDISK	board-at91.h	102;"	d
+HAS_SDS	board-at91.h	104;"	d
 INTERRUPT_ON_READYBUSY	at91-nandflash.h	195;"	d
-IO_SPACE_SIZE	board-at91.h	97;"	d
-IO_SPACE_START	board-at91.h	96;"	d
+IO_SPACE_SIZE	board-at91.h	100;"	d
+IO_SPACE_START	board-at91.h	99;"	d
 KERNBASE	memlayout.h	72;"	d
 KERNTOP	memlayout.h	74;"	d
 KERN_ACCESS	memlayout.h	108;"	d
@@ -678,11 +688,11 @@ KSTACKPAGE	memlayout.h	93;"	d
 KSTACKSIZE	memlayout.h	94;"	d
 MACH_BOARD_AT91_H	board-at91.h	21;"	d
 MACH_BOARD_H	board.h	21;"	d
-NAND_BUS_WIDTH_16BITS	at91-nandflash.h	232;"	d
-NAND_BUS_WIDTH_8BITS	at91-nandflash.h	231;"	d
-NAND_DISABLE_CE	at91-nandflash.c	94;"	d	file:
-NAND_ENABLE_CE	at91-nandflash.c	95;"	d	file:
-NAND_WAIT_READY	at91-nandflash.c	97;"	d	file:
+NAND_DISABLE_CE	at91-nandflash.c	81;"	d	file:
+NAND_ENABLE_CE	at91-nandflash.c	82;"	d	file:
+NAND_FS_VBASE	memlayout.h	116;"	d
+NAND_WAIT_READY	at91-nandflash.c	84;"	d	file:
+NandFlash_InitInfo	at91-nandflash.c	/^static struct SNandInitInfo NandFlash_InitInfo[] = {$/;"	v	typeref:struct:SNandInitInfo	file:
 NandFlash_InitInfo	nand_ids.h	/^const static struct SNandInitInfo NandFlash_InitInfo[] = {$/;"	v	typeref:struct:SNandInitInfo
 PIO_ABSR	at91-gpio.h	50;"	d
 PIO_ASR	at91-gpio.h	48;"	d
@@ -722,11 +732,12 @@ PIO_PPUSR	at91-gpio.h	47;"	d
 PIO_PSR	at91-gpio.h	27;"	d
 PIO_PULLUP	at91-gpio.h	120;"	d
 PIO_SODR	at91-gpio.h	34;"	d
-PIT_MR	board-at91.h	83;"	d
-PIT_PIIR	board-at91.h	86;"	d
-PIT_PIVR	board-at91.h	85;"	d
-PIT_SR	board-at91.h	84;"	d
-PIV_200_MS	clock.c	11;"	d	file:
+PIT_MR	board-at91.h	86;"	d
+PIT_PIIR	board-at91.h	89;"	d
+PIT_PIVR	board-at91.h	88;"	d
+PIT_SR	board-at91.h	87;"	d
+PIV_10_MS	clock.c	14;"	d	file:
+PIV_1_MS	clock.c	13;"	d	file:
 PMC_IDR	at91-pmc.h	22;"	d
 PMC_IER	at91-pmc.h	21;"	d
 PMC_IMR	at91-pmc.h	24;"	d
@@ -749,13 +760,84 @@ POOL_ON_STATUS	at91-nandflash.h	196;"	d
 PSNandInfo	at91-nandflash.h	/^} SNandInfo, *PSNandInfo;$/;"	t	typeref:struct:_NandInfo
 PSNandInitInfo	at91-nandflash.h	/^} SNandInitInfo, *PSNandInitInfo;$/;"	t	typeref:struct:SNandInitInfo
 PSSectorInfo	at91-nandflash.h	/^} SSectorInfo, *PSSectorInfo;$/;"	t	typeref:struct:_SectorInfo
-READ_NAND	at91-nandflash.c	69;"	d	file:
-READ_NAND16	at91-nandflash.c	90;"	d	file:
+READ_DELAY_TIME	intel_sds.c	40;"	d	file:
+READ_DELAY_TIMEOUT	intel_sds.c	41;"	d	file:
+READ_NAND	at91-nandflash.c	56;"	d	file:
+READ_NAND16	at91-nandflash.c	77;"	d	file:
+READ_SELF_EXIT_TIMEOUT	intel_sds.c	42;"	d	file:
 READ_TIMEOUT	at91-nandflash.h	191;"	d
 RESET_TIMEOUT	at91-nandflash.h	190;"	d
 RTTC_INTERRUPT_LEVEL	aic.c	29;"	d	file:
-SDRAM0_SIZE	board-at91.h	94;"	d
-SDRAM0_START	board-at91.h	93;"	d
+SDRAM0_SIZE	board-at91.h	97;"	d
+SDRAM0_START	board-at91.h	96;"	d
+SDS_BLK_SIZE	intel_sds.h	163;"	d
+SDS_BLOCK_SIZE	intel_sds.h	162;"	d
+SDS_CHAR_BUFSIZE	intel_sds.c	38;"	d	file:
+SDS_CMD_ENTRY_ADDRESS	intel_sds.h	176;"	d
+SDS_CMD_ERROR	intel_sds.h	/^    SDS_CMD_ERROR,$/;"	e	enum:__anon1
+SDS_CMD_MASK	intel_sds.c	46;"	d	file:
+SDS_CMD_MULTI_READ	intel_sds.h	/^    SDS_CMD_MULTI_READ,$/;"	e	enum:__anon1
+SDS_CMD_MULTI_WRITE	intel_sds.h	/^    SDS_CMD_MULTI_WRITE,$/;"	e	enum:__anon1
+SDS_CMD_NONE	intel_sds.h	/^    SDS_CMD_NONE = 0,$/;"	e	enum:__anon1
+SDS_CMD_PENDING	intel_sds.h	/^    SDS_CMD_PENDING,$/;"	e	enum:__anon1
+SDS_CMD_SINGLE_READ	intel_sds.h	/^    SDS_CMD_SINGLE_READ,$/;"	e	enum:__anon1
+SDS_CMD_SINGLE_WRITE	intel_sds.h	/^    SDS_CMD_SINGLE_WRITE,$/;"	e	enum:__anon1
+SDS_CMD_STOP	intel_sds.h	/^    SDS_CMD_STOP,$/;"	e	enum:__anon1
+SDS_DATA_ENTRY_ADDRESS	intel_sds.h	177;"	d
+SDS_FPGA_REV	intel_sds.c	48;"	d	file:
+SDS_INTR	intel_sds.h	26;"	d
+SDS_INT_CLEAR	intel_sds.h	25;"	d
+SDS_INT_CTL	intel_sds.h	23;"	d
+SDS_INT_ENABLE	intel_sds.h	24;"	d
+SDS_PACKET_MAGIC	intel_sds.h	175;"	d
+SDS_PHY_BASE	intel_sds.c	37;"	d	file:
+SDS_RETURN_FAILURE	intel_sds.h	/^    SDS_RETURN_FAILURE = -1$/;"	e	enum:__anon2
+SDS_RETURN_SUCCESS	intel_sds.h	/^    SDS_RETURN_SUCCESS = 0,$/;"	e	enum:__anon2
+SDS_SACCR	intel_sds.h	43;"	d
+SDS_SBCR	intel_sds.h	36;"	d
+SDS_SBLR	intel_sds.h	35;"	d
+SDS_SCAR	intel_sds.h	32;"	d
+SDS_SCCCR	intel_sds.h	42;"	d
+SDS_SCID	intel_sds.h	51;"	d
+SDS_SCIR	intel_sds.h	31;"	d
+SDS_SCRCR	intel_sds.h	40;"	d
+SDS_SCSD	intel_sds.h	46;"	d
+SDS_SDR	intel_sds.h	37;"	d
+SDS_SDSRRCA	intel_sds.h	53;"	d
+SDS_SD_STATUS	intel_sds.h	54;"	d
+SDS_SFS	intel_sds.h	47;"	d
+SDS_SFV	intel_sds.h	57;"	d
+SDS_SIER	intel_sds.h	30;"	d
+SDS_SMC	intel_sds.h	56;"	d
+SDS_SOCR	intel_sds.h	50;"	d
+SDS_SPETRA2S	intel_sds.h	39;"	d
+SDS_SPETRS2A	intel_sds.h	49;"	d
+SDS_SPFTRA2S	intel_sds.h	38;"	d
+SDS_SPFTRS2A	intel_sds.h	48;"	d
+SDS_SPTO	intel_sds.h	55;"	d
+SDS_SRCCR	intel_sds.h	41;"	d
+SDS_SRESETR	intel_sds.h	45;"	d
+SDS_SRR	intel_sds.h	34;"	d
+SDS_SRSR	intel_sds.h	33;"	d
+SDS_SSCR	intel_sds.h	52;"	d
+SDS_SSR	intel_sds.h	29;"	d
+SDS_SWRCR	intel_sds.h	44;"	d
+SDS_VBASE	memlayout.h	119;"	d
+SFS_A2S_FIFO_EMPTY	intel_sds.h	116;"	d
+SFS_A2S_FIFO_FULL	intel_sds.h	118;"	d
+SFS_A2S_OVERFLOW	intel_sds.h	123;"	d
+SFS_A2S_PROGRAM_EMPTY	intel_sds.h	115;"	d
+SFS_A2S_PROGRAM_FULL	intel_sds.h	117;"	d
+SFS_A2S_UNDERFLOW	intel_sds.h	122;"	d
+SFS_S2A_FIFO_EMPTY	intel_sds.h	112;"	d
+SFS_S2A_FIFO_FULL	intel_sds.h	114;"	d
+SFS_S2A_OVERFLOW	intel_sds.h	121;"	d
+SFS_S2A_PROGRAM_EMPTY	intel_sds.h	111;"	d
+SFS_S2A_PROGRAM_FULL	intel_sds.h	113;"	d
+SFS_S2A_UNDERFLOW	intel_sds.h	120;"	d
+SFS_STOP_TRANSMISSION	intel_sds.h	119;"	d
+SMC_CHECK_MASK	intel_sds.h	127;"	d
+SMC_COUNT_MASK	intel_sds.h	126;"	d
 SMC_CTRL0	at91-nandflash.h	29;"	d
 SMC_CTRL1	at91-nandflash.h	33;"	d
 SMC_CTRL2	at91-nandflash.h	37;"	d
@@ -794,11 +876,41 @@ SNandInitInfo	at91-nandflash.h	/^} SNandInitInfo, *PSNandInitInfo;$/;"	t	typeref
 SPARE_DATA_SIZE	at91-nandflash.h	174;"	d
 SPARE_DATA_SIZE	at91-nandflash.h	177;"	d
 SPARE_VALUE	at91-nandflash.h	199;"	d
+SRESETR_FIFO_CLEAR	intel_sds.h	108;"	d
+SSR_A2S_FIFO_EMPTY	intel_sds.h	69;"	d
+SSR_A2S_FIFO_FULL	intel_sds.h	71;"	d
+SSR_A2S_PROGRAM_EMPTY	intel_sds.h	68;"	d
+SSR_A2S_PROGRAM_FULL	intel_sds.h	70;"	d
+SSR_CMD_CRC_ERROR	intel_sds.h	85;"	d
+SSR_CMD_NCC_ERROR	intel_sds.h	81;"	d
+SSR_CMD_NCR_ERROR	intel_sds.h	84;"	d
+SSR_CMD_NID_ERROR	intel_sds.h	83;"	d
+SSR_CMD_NRC_ERROR	intel_sds.h	82;"	d
+SSR_DATA_CRC_ERROR	intel_sds.h	80;"	d
+SSR_DATA_NAC_ERROR	intel_sds.h	79;"	d
+SSR_DATA_NWR_ERROR	intel_sds.h	78;"	d
+SSR_FIFO_STATUS	intel_sds.h	72;"	d
+SSR_HIGH_CAPACITY	intel_sds.h	105;"	d
+SSR_HOST_CMD_DONE	intel_sds.h	62;"	d
+SSR_HOST_CMD_SET	intel_sds.h	61;"	d
+SSR_HOST_DATA_DONE	intel_sds.h	63;"	d
+SSR_MULTI_READ_BLK	intel_sds.h	93;"	d
+SSR_MULTI_WRITE_BLK	intel_sds.h	95;"	d
+SSR_RESET	intel_sds.h	103;"	d
+SSR_S2A_FIFO_EMPTY	intel_sds.h	65;"	d
+SSR_S2A_FIFO_FULL	intel_sds.h	67;"	d
+SSR_S2A_PROGRAM_EMPTY	intel_sds.h	64;"	d
+SSR_S2A_PROGRAM_FULL	intel_sds.h	66;"	d
+SSR_SINGLE_READ_BLK	intel_sds.h	92;"	d
+SSR_SINGLE_WRITE_BLK	intel_sds.h	94;"	d
+SSR_STATUS_ERROR	intel_sds.h	86;"	d
+SSR_STOP_TRANSMISSION	intel_sds.h	102;"	d
+SSR_TRANSFER_SHIFT	intel_sds.h	100;"	d
+SSR_TRNASFER_DATA	intel_sds.h	96;"	d
 SSectorInfo	at91-nandflash.h	/^} SSectorInfo, *PSSectorInfo;$/;"	t	typeref:struct:_SectorInfo
 STATUS_ERROR	at91-nandflash.h	206;"	d
 STATUS_READY	at91-nandflash.h	205;"	d
-TEST_PAGE	memlayout.h	83;"	d
-UART0_TX	board-at91.h	106;"	d
+UART0_TX	board-at91.h	110;"	d
 USERBASE	memlayout.h	101;"	d
 USERTOP	memlayout.h	96;"	d
 USER_ACCESS	memlayout.h	105;"	d
@@ -834,37 +946,92 @@ UTEXT	memlayout.h	102;"	d
 VPT_BASE	memlayout.h	91;"	d
 WAIT_INTERRUPT	at91-nandflash.h	188;"	d
 WAIT_POOL	at91-nandflash.h	187;"	d
-WRITE_NAND	at91-nandflash.c	64;"	d	file:
-WRITE_NAND16	at91-nandflash.c	85;"	d	file:
-WRITE_NAND_ADDRESS	at91-nandflash.c	58;"	d	file:
-WRITE_NAND_ADDRESS16	at91-nandflash.c	79;"	d	file:
-WRITE_NAND_COMMAND	at91-nandflash.c	52;"	d	file:
-WRITE_NAND_COMMAND16	at91-nandflash.c	73;"	d	file:
+WRITE_DELAY_TIME	intel_sds.c	43;"	d	file:
+WRITE_DELAY_TIMEOUT	intel_sds.c	44;"	d	file:
+WRITE_NAND	at91-nandflash.c	51;"	d	file:
+WRITE_NAND16	at91-nandflash.c	72;"	d	file:
+WRITE_NAND_ADDRESS	at91-nandflash.c	45;"	d	file:
+WRITE_NAND_ADDRESS16	at91-nandflash.c	66;"	d	file:
+WRITE_NAND_COMMAND	at91-nandflash.c	39;"	d	file:
+WRITE_NAND_COMMAND16	at91-nandflash.c	60;"	d	file:
 WRITE_TIMEOUT	at91-nandflash.h	192;"	d
 ZONE_DATA	at91-nandflash.h	201;"	d
 ZONE_INFO	at91-nandflash.h	202;"	d
 _NAND_IDS_H	nand_ids.h	34;"	d
 _NandInfo	at91-nandflash.h	/^typedef struct _NandInfo {$/;"	s
+_SDS_DUMMY_MBR_H	sds_dummy_mbr.h	20;"	d
 _SectorInfo	at91-nandflash.h	/^typedef struct _SectorInfo {$/;"	s
 __AT91_AIC_H	at91-aic.h	20;"	d
 __AT91_DBGU_H	at91-dbgu.h	20;"	d
 __AT91_UART_H	at91-uart.h	20;"	d
+__INTEL_SDS_H	intel_sds.h	20;"	d
 __KERN_MM_MEMLAYOUT_H__	memlayout.h	2;"	d
+ale	at91-nandflash.h	/^  unsigned char ale;$/;"	m	struct:sam9_nand_config
+at91_pll_rate	board.c	/^static uint32_t at91_pll_rate(uint32_t freq, uint32_t reg)$/;"	f	file:
+atmel_check_block	at91-nandflash.c	/^static int atmel_check_block(struct nand_chip *chip, unsigned blkID)$/;"	f	file:
+atmel_enable_chip	at91-nandflash.c	/^static void atmel_enable_chip(int enable)$/;"	f	file:
+atmel_erase_block	at91-nandflash.c	/^static int atmel_erase_block(struct nand_chip* chip, unsigned blkID)$/;"	f	file:
+atmel_mark_badblock	at91-nandflash.c	/^static int atmel_mark_badblock(struct nand_chip *chip, unsigned blkID)$/;"	f	file:
+atmel_nand_calculate	at91-nandflash.c	/^static int atmel_nand_calculate(const unsigned char *dat, size_t sz, unsigned char *ecc_code)$/;"	f	file:
+atmel_nand_correct	at91-nandflash.c	/^static int atmel_nand_correct(unsigned char *dat,$/;"	f	file:
+atmel_nand_read_byte	at91-nandflash.c	/^static unsigned char atmel_nand_read_byte()$/;"	f	file:
+atmel_nand_write_addr	at91-nandflash.c	/^static void atmel_nand_write_addr(unsigned char addr)$/;"	f	file:
+atmel_nand_write_byte	at91-nandflash.c	/^static void atmel_nand_write_byte(unsigned char byte)$/;"	f	file:
+atmel_nand_write_cmd	at91-nandflash.c	/^static void atmel_nand_write_cmd(unsigned char cmd)$/;"	f	file:
+atmel_oobinfo_large	at91-nandflash.c	/^static struct nand_ecclayout atmel_oobinfo_large = {$/;"	v	typeref:struct:nand_ecclayout	file:
+atmel_read_page	at91-nandflash.c	/^static int atmel_read_page(struct nand_chip* chip,unsigned page_id, $/;"	f	file:
+atmel_wait_rdy	at91-nandflash.c	/^static void atmel_wait_rdy()$/;"	f	file:
+atmel_write_full_addr	at91-nandflash.c	/^static void atmel_write_full_addr(unsigned int row, unsigned int col)$/;"	f	file:
+atmel_write_page	at91-nandflash.c	/^static int atmel_write_page(struct nand_chip* chip, unsigned pageId, $/;"	f	file:
 attribute	at91-gpio.h	/^    unsigned char attribute;$/;"	m	struct:pio_desc
 board_init	board.c	/^board_init(){$/;"	f
+buf	intel_sds.c	/^  uint8_t buf[SDS_CHAR_BUFSIZE];$/;"	m	struct:sds_charbuf	file:
+buf	intel_sds.h	/^    uint8_t buf[SDS_BLOCK_SIZE];$/;"	m	struct:sds_request
+buffer	intel_sds.h	/^  unsigned char buffer[0];$/;"	m	struct:sds_packet
+bus_width_16	at91-nandflash.h	/^  unsigned char bus_width_16;$/;"	m	struct:sam9_nand_config
+card_addr	intel_sds.h	/^    uint32_t card_addr;$/;"	m	struct:sds_request
 check_nandflash	at91-nandflash.c	/^int check_nandflash(){$/;"	f
+check_sds	intel_sds.c	/^int check_sds(){$/;"	f
+chip	at91-nandflash.c	/^static struct nand_chip chip;$/;"	v	typeref:struct:nand_chip	file:
+cle	at91-nandflash.h	/^  unsigned char cle;$/;"	m	struct:sam9_nand_config
 clock_clear	clock.c	/^void clock_clear(void){$/;"	f
 clock_init	clock.c	/^clock_init(void) {$/;"	f
+cmd	intel_sds.h	/^    uint32_t cmd;$/;"	m	struct:sds_request
 dft_value	at91-gpio.h	/^    unsigned int dft_value;     \/* Default value for outputs *\/$/;"	m	struct:pio_desc
 did_init	aic.c	/^static bool did_init = 0;$/;"	v	file:
+dummy_mbr	sds_dummy_mbr.h	/^static unsigned char dummy_mbr[] = {$/;"	v
+ecc_readl	at91-nandflash.c	88;"	d	file:
+ecc_writel	at91-nandflash.c	90;"	d	file:
+ek_nand_config	at91-nandflash.c	/^static struct sam9_nand_config ek_nand_config = {$/;"	v	typeref:struct:sam9_nand_config	file:
+enable_pin_mask	at91-nandflash.h	/^  uint32_t enable_pin_mask;$/;"	m	struct:sam9_nand_config
+fill_sds_request	intel_sds.c	/^static int fill_sds_request(struct  sds_request *sq)$/;"	f	file:
+find_zone_by_addr	intel_sds.c	/^static struct sds_block_zone* find_zone_by_addr(uint32_t addr)$/;"	f	file:
+get_nand_chip	at91-nandflash.c	/^struct nand_chip* get_nand_chip(){$/;"	f
+info	at91-nandflash.h	/^  SNandInitInfo *info;$/;"	m	struct:sam9_nand_config
+io_addr_base	at91-nandflash.h	/^  uintptr_t io_addr_base;$/;"	m	struct:sam9_nand_config
+io_addr_ecc_base	at91-nandflash.h	/^  uintptr_t io_addr_ecc_base;$/;"	m	struct:sam9_nand_config
+io_addr_ecc_phy_base	at91-nandflash.h	/^  uintptr_t io_addr_ecc_phy_base;$/;"	m	struct:sam9_nand_config
+io_addr_phy_base	at91-nandflash.h	/^  uintptr_t io_addr_phy_base;$/;"	m	struct:sam9_nand_config
 irq_clear	aic.c	/^irq_clear(unsigned int source) {$/;"	f
 irq_configure	aic.c	/^irq_configure(unsigned irq, $/;"	f
 irq_handler	irq_handler.c	/^void irq_handler(void)$/;"	f
+is_charbuf_empty	intel_sds.c	82;"	d	file:
+is_charbuf_full	intel_sds.c	83;"	d	file:
+is_sds_init	intel_sds.c	/^static int is_sds_init = 0;$/;"	v	file:
+is_sds_reset	intel_sds.h	/^static inline int is_sds_reset(uint32_t status)$/;"	f
+is_sds_stop_transmission	intel_sds.h	/^static inline int is_sds_stop_transmission(uint32_t status)$/;"	f
+is_sds_transfer_data	intel_sds.h	/^static inline int is_sds_transfer_data(uint32_t status)$/;"	f
+last_packet	intel_sds.c	/^static unsigned char last_packet[SDS_BLK_SIZE];$/;"	v	file:
+magic	intel_sds.h	/^  uint32_t magic;$/;"	m	struct:sds_packet
+mem_start_addr	intel_sds.c	/^  uint32_t mem_start_addr;$/;"	m	struct:sds_block_zone	file:
 message	board.c	/^static const char* message = "Initializing AT91 Board...\\n";$/;"	v	file:
+mw_count	intel_sds.h	/^    uint32_t mw_count;$/;"	m	struct:sds_request
+name	at91-nandflash.h	/^    char                 name[32]         ; \/* Nand Name *\/$/;"	m	struct:SNandInitInfo
 nandflash_cfg_16bits_dbw_init	at91-nandflash.c	/^void nandflash_cfg_16bits_dbw_init(void)$/;"	f
 nandflash_cfg_8bits_dbw_init	at91-nandflash.c	/^void nandflash_cfg_8bits_dbw_init(void)$/;"	f
-nandflash_hw_init	at91-nandflash.c	/^void nandflash_hw_init(void)$/;"	f
+nandflash_hw_init	at91-nandflash.c	/^int nandflash_hw_init(void)$/;"	f
 nandflash_init	at91-nandflash.c	/^static int nandflash_init = 0;$/;"	v	file:
+nandflash_probe	at91-nandflash.c	/^static int nandflash_probe(unsigned short chipID)$/;"	f	file:
 pSpareScheme	at91-nandflash.h	/^    struct NandSpareScheme *pSpareScheme;$/;"	m	struct:SNandInitInfo	typeref:struct:SNandInitInfo::NandSpareScheme
 pSpareScheme	at91-nandflash.h	/^    struct NandSpareScheme *pSpareScheme;$/;"	m	struct:_NandInfo	typeref:struct:_NandInfo::NandSpareScheme
 pic_disable	aic.c	/^pic_disable(unsigned int irq) {$/;"	f
@@ -877,7 +1044,28 @@ pio_cfg_input	at91-nandflash.c	/^static inline void pio_cfg_input(uintptr_t base
 pio_cfg_output	at91-nandflash.c	/^static inline void pio_cfg_output(uintptr_t base, unsigned int pin, int value)$/;"	f	file:
 pio_desc	at91-gpio.h	/^struct pio_desc {$/;"	s
 pio_type	at91-gpio.h	/^enum pio_type {$/;"	g
+platform_1u_delay	intel_sds.c	/^static inline void platform_1u_delay()$/;"	f	file:
+platform_udelay	intel_sds.c	/^static inline void platform_udelay(int delay)$/;"	f	file:
+print_clock_info	board.c	/^static void print_clock_info(unsigned long main_clock)$/;"	f	file:
 put_string	board.c	/^static void put_string(const char* str)$/;"	f	file:
+rdy_pin_mask	at91-nandflash.h	/^  uint32_t rdy_pin_mask;$/;"	m	struct:sam9_nand_config
+read_one_char	intel_sds.c	/^static inline int read_one_char(struct sds_charbuf* buf){$/;"	f	file:
+recv_buf	intel_sds.c	/^static struct sds_charbuf recv_buf = {$/;"	v	typeref:struct:sds_charbuf	file:
+rpos	intel_sds.c	/^  uint32_t rpos;$/;"	m	struct:sds_charbuf	file:
+sam9_nand_config	at91-nandflash.h	/^struct sam9_nand_config{$/;"	s
+sds_block_zone	intel_sds.c	/^struct sds_block_zone{$/;"	s	file:
+sds_charbuf	intel_sds.c	/^struct sds_charbuf{$/;"	s	file:
+sds_cid	intel_sds.c	/^static unsigned char sds_cid[] = {$/;"	v	file:
+sds_cid32	intel_sds.c	/^static uint32_t sds_cid32[] = {$/;"	v	file:
+sds_config	intel_sds.c	/^static void sds_config(uint32_t base)$/;"	f	file:
+sds_csd32	intel_sds.c	/^static uint32_t sds_csd32[] = {$/;"	v	file:
+sds_packet	intel_sds.h	/^struct sds_packet{$/;"	s
+sds_read_reg	intel_sds.c	33;"	d	file:
+sds_request	intel_sds.h	/^struct sds_request {$/;"	s
+sds_start_addr	intel_sds.c	/^  uint32_t sds_start_addr;$/;"	m	struct:sds_block_zone	file:
+sds_trace	intel_sds.c	35;"	d	file:
+sds_write_reg	intel_sds.c	32;"	d	file:
+send_buf	intel_sds.c	/^static struct sds_charbuf send_buf = {$/;"	v	typeref:struct:sds_charbuf	file:
 serial_check	at91sam_uart.c	/^int serial_check(){$/;"	f
 serial_clear	at91sam_uart.c	/^void serial_clear(){$/;"	f
 serial_exists	at91sam_uart.c	/^static int serial_exists = 0;$/;"	v	file:
@@ -885,7 +1073,15 @@ serial_init	at91sam_uart.c	/^serial_init(void) {$/;"	f
 serial_proc_data	at91sam_uart.c	/^serial_proc_data(void) {$/;"	f
 serial_putc	at91sam_uart.c	/^serial_putc(int c) {$/;"	f
 serial_putc_sub	at91sam_uart.c	/^serial_putc_sub(int c) {$/;"	f	file:
+size	intel_sds.c	/^  uint32_t size;$/;"	m	struct:sds_block_zone	file:
+size	intel_sds.h	/^  uint32_t size;$/;"	m	struct:sds_packet
+smc_count	intel_sds.h	/^    uint32_t smc_count;$/;"	m	struct:sds_request
+smc_cycle	at91-nandflash.h	/^  uint32_t smc_cycle;$/;"	m	struct:sam9_nand_config
+smc_mode	at91-nandflash.h	/^  uint32_t smc_mode;$/;"	m	struct:sam9_nand_config
+smc_pulse	at91-nandflash.h	/^  uint32_t smc_pulse;$/;"	m	struct:sam9_nand_config
+smc_setup	at91-nandflash.h	/^  uint32_t smc_setup;$/;"	m	struct:sam9_nand_config
 spare	at91-nandflash.h	/^    unsigned char spare[SPARE_DATA_SIZE];$/;"	m	struct:_SectorInfo
+stop	intel_sds.h	/^    uint32_t stop;$/;"	m	struct:sds_request
 ticks	clock.c	/^volatile size_t ticks;$/;"	v
 type	at91-gpio.h	/^    enum pio_type type;$/;"	m	struct:pio_desc	typeref:enum:pio_desc::pio_type
 uBadBlockInfoOffset	at91-nandflash.h	/^    unsigned int uBadBlockInfoOffset;   \/* Bad block info offset in spare zone (in bytes) *\/$/;"	m	struct:_NandInfo
@@ -905,3 +1101,6 @@ uNbSpares	at91-nandflash.h	/^    unsigned int uNbSpares;     \/* Nb of SpareByte
 uOffset	at91-nandflash.h	/^    unsigned int uOffset;$/;"	m	struct:_NandInfo
 uSectorNbBytes	at91-nandflash.h	/^    unsigned int uSectorNbBytes;        \/* Total nb of bytes in a sector *\/$/;"	m	struct:_NandInfo
 uSpareNbBytes	at91-nandflash.h	/^    unsigned int uSpareNbBytes; \/* Nb of bytes in spare section *\/$/;"	m	struct:_NandInfo
+wpos	intel_sds.c	/^  uint32_t wpos;$/;"	m	struct:sds_charbuf	file:
+write_one_char	intel_sds.c	/^static inline void write_one_char(struct sds_charbuf* buf, int c){$/;"	f	file:
+zones	intel_sds.c	/^static struct sds_block_zone zones[] = {$/;"	v	typeref:struct:sds_block_zone	file:

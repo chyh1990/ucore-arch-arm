@@ -102,6 +102,7 @@
 #define HAS_RAMDISK
 #define HAS_NANDFLASH
 #define HAS_SDS
+#define HAS_SHARED_KERNMEM
 
 //#define KERNEL_PHY_BASE 0x70100000
 

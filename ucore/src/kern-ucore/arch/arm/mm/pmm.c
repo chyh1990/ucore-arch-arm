@@ -322,7 +322,10 @@ pmm_init(void) {
   kprintf("mapping kern_shm 0x%08x to 0x%08x, size: %d Pages\n", 
     kern_shm_pbase, SHARED_KERNMEM_VBASE, SHARED_KERNMEM_PAGES);
 
-  *(uint32_t*)kern_shm_pbase = 0x53545556;
+  *(uint32_t*)kern_shm_pbase = 0x48594853;
+  *(uint32_t*)(kern_shm_pbase+4) = 0x04;
+  *(uint32_t*)(kern_shm_pbase+12) = 0x00555555;
+  *(uint32_t*)(kern_shm_pbase+512) = 0x43444546;
 #endif
   // ramdisk for swap
   //boot_map_segment(boot_pgdir, RAMDISK_START, 0x10000000, 0x10000000, PTE_W); // fixed address

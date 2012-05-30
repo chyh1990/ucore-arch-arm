@@ -307,7 +307,7 @@ pmm_init(void) {
 #endif
 #ifdef HAS_SDS
   if(check_sds()){
-    boot_map_segment(boot_pgdir, SDS_VBASE, 0x10000000, AT91C_BASE_EBI2
+    boot_map_segment(boot_pgdir, SDS_VBASE, SDS_VSIZE, AT91C_BASE_EBI2
         ,PTE_W|PTE_IOMEM);
     kprintf("mapping sds to 0x%08x\n", SDS_VBASE);
   }
@@ -321,6 +321,7 @@ pmm_init(void) {
     PTE_W|PTE_U);
   kprintf("mapping kern_shm 0x%08x to 0x%08x, size: %d Pages\n", 
     kern_shm_pbase, SHARED_KERNMEM_VBASE, SHARED_KERNMEM_PAGES);
+  *(uint32_t*)kern_shm_pbase = 0;
 
   *(uint32_t*)kern_shm_pbase = 0x48594853;
   *(uint32_t*)(kern_shm_pbase+4) = 0x04;

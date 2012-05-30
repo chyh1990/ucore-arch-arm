@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 #define printf(...)                 fprintf(1, __VA_ARGS__)
-#define KSHM_BASE 0xD0008000
+#define KSHM_BASE 0xDF000000
 #define KSHM_SIZE (1<<20) /* 1M */
 
 #define MIN(x,y) ((x)<(y)?(x):(y))
@@ -59,6 +59,8 @@ int main(int argc, char* argv[])
     printf("ERROR: file too big 0x%08x\n", sb->filesz);
     return -1;
   }
+  printf("Filename: %s\n", sb->filename);
+  printf("Filesize: %d\n", sb->filesz);
 
   int fd = open(sb->filename, O_WRONLY|O_TRUNC|O_CREAT);
   if(fd < 0){
@@ -68,7 +70,9 @@ int main(int argc, char* argv[])
 
   int rdcnt = 0;
   int leftsize = sb->filesz;
-  while(rdcnt < sb->filesz){
+  int filesize = sb->filesz;
+  while(rdcnt < filesize){
+    //printf("rdcnt: %d\n", rdcnt);
     int len = 0;
     memcpy(buf, kshm_base+512+rdcnt, 512);
     rdcnt += 512;

@@ -117,9 +117,10 @@
 #endif
 #ifdef HAS_SDS
 #define SDS_VBASE                 0xD0000000
+#define SDS_VSIZE                 0x01000000
 #endif
 #ifdef HAS_SHARED_KERNMEM
-#define SHARED_KERNMEM_VBASE 0xD0008000
+#define SHARED_KERNMEM_VBASE 0xDF000000
 #define SHARED_KERNMEM_PAGES 256 /* 1M */
 #endif
 

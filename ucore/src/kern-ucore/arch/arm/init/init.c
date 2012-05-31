@@ -21,6 +21,7 @@
 #include <fs.h>
 #include <sync.h>
 #include <ramdisk.h>
+#include <kgdb-stub.h>
 
 
 #include <yaffs2_direct/yaffsfs.h>
@@ -150,6 +151,7 @@ kern_init(void) {
 
 #endif
 
+  kgdb_init();
   check_bp();
 
   intr_enable();              // enable irq interrupt

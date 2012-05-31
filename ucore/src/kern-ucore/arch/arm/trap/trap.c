@@ -203,8 +203,7 @@ trap_dispatch(struct trapframe *tf) {
     case T_IRQ:
       irq_handler();
       break;
-    case T_PANIC: // System call
-      kprintf("Game over\n") ;
+    case T_PANIC:
       print_cur_status();
       //print_stackframe();
       break;

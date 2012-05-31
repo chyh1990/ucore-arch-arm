@@ -18,6 +18,8 @@
 #ifndef __DEBUG_KGDB_STUB_H
 #define __DEBUG_KGDB_STUB_H
 
+#define KGDB_BP_INSTR 0xe7fddefe 
+
 void kgdb_init();
 
 #endif

@@ -53,10 +53,14 @@ serial_intr(void) {
 }
 
 #ifdef HAS_SDS
+static int sds_proc_data_stdio()
+{
+  return sds_proc_data(0);
+}
 static void
 sds_intr(void) {
     if (check_sds()) {
-        cons_intr(sds_proc_data);
+        cons_intr(sds_proc_data_stdio);
     }
 }
 #endif
@@ -84,7 +88,7 @@ cons_putc(int c) {
 #ifdef HAS_SDS
         if(is_debugging())
           sds_poll_proc();
-        sds_putc(c);
+        sds_putc(0, c);
 #endif
     }
     local_intr_restore(intr_flag);

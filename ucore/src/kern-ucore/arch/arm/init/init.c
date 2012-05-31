@@ -97,7 +97,6 @@ static void check_bp()
   setup_bp((uint32_t)__dummy_foo);
   kprintf("calling __dummy_foo\n");
   __dummy_foo();
-  __dummy_foo();
   kprintf("check bp done...\n");
 }
 

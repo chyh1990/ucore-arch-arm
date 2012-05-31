@@ -25,11 +25,13 @@
 #include <kio.h>
 #include <kdebug.h>
 #include <string.h>
+#include <assert.h>
 #include <kgdb-stub.h>
 
 #define MAX_KGDB_BP      16
 
 #define SBPT_AVAIL (1<<0)
+#define SBPT_ACTIVE (1<<1)
 
 struct soft_bpt{
     uint32_t    addr;       /* address breapoint is present at */
@@ -49,6 +51,36 @@ static struct soft_bpt* find_bp(uint32_t addr)
   }
   return NULL;
 }
+
+static void activate_bps()
+{
+  int i = 0;
+  for(;i<MAX_KGDB_BP;i++){
+    if((breakpoints[i].flags & SBPT_AVAIL)
+      && !(breakpoints[i].flags & SBPT_ACTIVE)
+      ){
+        breakpoints[i].inst = *(uint32_t*)breakpoints[i].addr;
+        breakpoints[i].flags |= SBPT_ACTIVE;
+        *(uint32_t*)breakpoints[i].addr = KGDB_BP_INSTR;
+    }
+  }
+
+}
+
+static void deactivate_bps()
+{
+  int i = 0;
+  for(;i<MAX_KGDB_BP;i++){
+    if((breakpoints[i].flags & SBPT_AVAIL)
+      && (breakpoints[i].flags & SBPT_ACTIVE)
+      ){
+        *(uint32_t*)breakpoints[i].addr = breakpoints[i].inst;
+        breakpoints[i].flags &= ~SBPT_ACTIVE;
+    }
+  }
+
+}
+
 static struct soft_bpt* find_free_bp()
 {
   int i;
@@ -77,11 +109,8 @@ static struct soft_bpt *install_bp(uint32_t addr){
   if(!bp)
     return NULL;
   bp->addr = addr;
-  bp->inst = *(uint32_t*)addr;
   if(bp->inst == KGDB_BP_INSTR)
     return NULL;
-  /* patch */
-  *(uint32_t*)addr = KGDB_BP_INSTR;
   bp->flags = SBPT_AVAIL;
   return bp;
 }
@@ -96,18 +125,25 @@ void kgdb_init()
   int i;
   for(i=0;i<MAX_KGDB_BP;i++)
     breakpoints[i].flags = 0;
-
 }
 
+
+
+static int trap_reentry = 0;
 int kgdb_trap(struct trapframe* tf)
 {
+  if(trap_reentry)
+    panic("kgdb_trap reentry\n");
+  trap_reentry = 1;
   uint32_t pc = tf->tf_epc - 4;
   //uint32_t inst = *(uint32_t *)(pc);
   struct soft_bpt *bp = find_bp(pc);
   int compilation_bp = (bp==NULL);
   start_debug();
+
   kprintf("BP hit: compile=%d, pc=0x%08x...\n",
       compilation_bp, pc);
+
   end_debug();
   /* soft bp */
   if(!compilation_bp){
@@ -115,6 +151,7 @@ int kgdb_trap(struct trapframe* tf)
     remove_bp(pc);
     tf->tf_epc = pc;
   }
+  trap_reentry = 0;
   return 0;
 }
 

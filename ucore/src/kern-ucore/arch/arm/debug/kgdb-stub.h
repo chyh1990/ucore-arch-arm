@@ -21,5 +21,8 @@
 #define KGDB_BP_INSTR 0xe7fddefe 
 
 void kgdb_init();
+int setup_bp(uint32_t addr);
+int remove_bp(uint32_t addr);
+int kgdb_trap(struct trapframe* tf);
 
 #endif

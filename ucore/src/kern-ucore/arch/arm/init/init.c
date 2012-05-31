@@ -77,15 +77,27 @@ static void test_yaffs()
 
 }
 
-void __test_bp()
+static void __test_bp()
 {
   __asm__ volatile(".word 0xe7fddefe");
 }
 
-void check_bp()
+static void __dummy_foo()
 {
-  kprintf("check bp...\n");
+  static int i = 0;
+  i++;
+  kprintf("__dummy_foo: testbp %d\n", i);
+}
+
+static void check_bp()
+{
+  kprintf("check compilation bp...\n");
   __test_bp();
+  kprintf("check setup bp...\n");
+  setup_bp((uint32_t)__dummy_foo);
+  kprintf("calling __dummy_foo\n");
+  __dummy_foo();
+  __dummy_foo();
   kprintf("check bp done...\n");
 }
 

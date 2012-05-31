@@ -15,6 +15,7 @@
 #include <picirq.h>
 #include <syscall.h>
 #include <error.h>
+#include <kgdb-stub.h>
 
 #define TICK_NUM 5
 
@@ -149,6 +150,19 @@ pgfault_handler(struct trapframe *tf) {
   return do_pgfault(mm, error_code, far());
 }
 
+static int udef_handler(struct trapframe *tf)
+{
+//  print_trapframe(tf);
+  uint32_t inst = *(uint32_t *)(tf->tf_epc-4);
+  if(inst == KGDB_BP_INSTR){
+    return kgdb_trap(tf);
+  }else{
+    print_trapframe(tf);
+    panic("undefined instruction\n");
+  }
+  return 0;
+}
+
 /* trap_dispatch - dispatch based on what type of trap occurred */
 static void
 trap_dispatch(struct trapframe *tf) {
@@ -209,8 +223,7 @@ trap_dispatch(struct trapframe *tf) {
       break;
       /* for debugging */
     case T_UNDEF:
-      print_trapframe(tf);
-      panic("undefined handler");
+      udef_handler(tf);
       break;
     default:
       print_trapframe(tf);

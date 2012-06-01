@@ -33,6 +33,14 @@
 #define SBPT_AVAIL (1<<0)
 #define SBPT_ACTIVE (1<<1)
 
+//#define KGDB_TRACE
+
+#ifdef KGDB_TRACE
+#define kgdb_trace(...) kprintf(__VA_ARGS__)
+#else
+#define kgdb_trace(...) 
+#endif
+
 struct soft_bpt{
     uint32_t    addr;       /* address breapoint is present at */
     uint32_t    inst;       /* replaced instruction */
@@ -129,11 +137,13 @@ static void activate_bps()
   int i = 0;
   for(;i<MAX_KGDB_BP;i++){
     if((breakpoints[i].flags & SBPT_AVAIL)
-      && !(breakpoints[i].flags & SBPT_ACTIVE)
+        && !(breakpoints[i].flags & SBPT_ACTIVE)
       ){
-        breakpoints[i].inst = *(uint32_t*)breakpoints[i].addr;
-        breakpoints[i].flags |= SBPT_ACTIVE;
-        *(uint32_t*)breakpoints[i].addr = KGDB_BP_INSTR;
+      if(kdebug_check_mem_range(breakpoints[i].addr, 4))
+        continue;
+      breakpoints[i].inst = *(uint32_t*)breakpoints[i].addr;
+      breakpoints[i].flags |= SBPT_ACTIVE;
+      *(uint32_t*)breakpoints[i].addr = KGDB_BP_INSTR;
     }
   }
 
@@ -168,6 +178,8 @@ int remove_bp(uint32_t addr)
   struct soft_bpt *bp = find_bp(addr);
   if(!bp)
     return -1;
+  if(kdebug_check_mem_range(addr, 4))
+    return -1;
   /* restore */
   *(uint32_t*)(bp->addr) = bp->inst;
   bp->flags = 0;
@@ -182,6 +194,8 @@ static struct soft_bpt *install_bp(uint32_t addr){
     return NULL;
   bp->addr = addr;
   if(bp->inst == KGDB_BP_INSTR)
+    return NULL;
+  if(kdebug_check_mem_range(addr, 4))
     return NULL;
   bp->flags = SBPT_AVAIL;
   return bp;
@@ -276,6 +290,7 @@ static uint32_t kgdb_get_lr(struct trapframe *tf)
       write_psrflags(cpsr);
       return lr;
     case ARM_SR_MODE_USR:
+      /* TODO */
     default:
       return 0;
   }
@@ -300,22 +315,23 @@ static void kgdb_set_lr(struct trapframe *tf, uint32_t lr)
       write_psrflags(cpsr);
       break;
     case ARM_SR_MODE_USR:
+      /* TODO */
     default:
       return;
   }
 }
 
-static  uint32_t gdb_regs[13+4];
+static  uint32_t gdb_regs[13+5];
 static void kgdb_reg2data(struct trapframe* tf, 
-  char *buf)
+  char *buf, int iscompile)
 {
   memcpy(gdb_regs, &tf->tf_regs, sizeof(struct pushregs));
   gdb_regs[13] = tf->tf_esp;
-  gdb_regs[14] = tf->tf_epc;
-  gdb_regs[15] = tf->tf_epc;
+  gdb_regs[14] = kgdb_get_lr(tf);
+  gdb_regs[15] = tf->tf_epc - 4;
   gdb_regs[16] = tf->tf_sr;
   //strcpy(buf, "1234abcdcccccccc");
-  mem2hex((char*)gdb_regs, buf, sizeof(struct pushregs));
+  mem2hex((char*)gdb_regs, buf, sizeof(uint32_t)*17);
   
 }
 
@@ -330,19 +346,42 @@ static int kgdb_parse(char *buf, uint32_t arg[], int maxlen)
       arg[cnt++] = kgdb_atoi16(buf);
       buf = ptr + 1; 
       if(cnt >= maxlen)
-        return cnt;
+        goto done;
     }
     ptr++;
   }
+done:
+#ifdef KGDB_TRACE
+  kgdb_trace("arg: ");
+  int i;
+  for(i=0;i<cnt;i++)
+    kgdb_trace("%08x ", arg[i]);
+  kgdb_trace("\n");
+#endif
   return cnt; 
 }
 
-static int kgdb_sendmem(uint32_t start, uint32_t size)
+static int kgdb_sendmem(char*buf, uint32_t start, uint32_t size)
 {
   if(kdebug_check_mem_range(start,size))
     return -1;
+  mem2hex((char*)start, buf, size);
+  return  kgdb_put_packet(kgdb_buffer);
+}
 
-  return 0;
+/* CPU 400MHz? */
+static inline void platform_1u_delay()
+{
+  int i;
+  for(i=0;i<100;i++)
+    asm volatile("nop");
+}
+
+static inline void platform_udelay(int delay)
+{
+  for(;delay>=0;delay--){
+    platform_1u_delay();
+  }
 }
 
 static int trap_reentry = 0;
@@ -375,17 +414,18 @@ int kgdb_trap(struct trapframe* tf)
   rval = kgdb_put_packet("BP");
 
   while(1){
-    kprintf("D>");
+    platform_udelay(500); 
+    kgdb_trace("D>");
     rval = kgdb_get_packet(kgdb_buffer);
     if(rval){
       kprintf("kgdb_trap: fail to get command from host\n");
       goto cont_kernel;
     }
-    kprintf("%s\n", kgdb_buffer);
+    kgdb_trace("%s\n", kgdb_buffer);
     switch(kgdb_buffer[1]){
       /* reg */
       case 'g':
-        kgdb_reg2data(tf, kgdb_buffer);
+        kgdb_reg2data(tf, kgdb_buffer, compilation_bp);
         rval = kgdb_put_packet(kgdb_buffer);
         break;
       case 'G':
@@ -394,15 +434,15 @@ int kgdb_trap(struct trapframe* tf)
       case 'z':
       /* add bp */
       case 'Z':
-        rval = kgdb_parse(kgdb_buffer+3, arg, 5);
-        if(rval!=2){
+        rval = kgdb_parse(kgdb_buffer+2, arg, 5);
+        if(rval!=3){
           kprintf("kgdb_trap: invalid param\n");
           break;
         }
         if(kgdb_buffer[1] == 'z'){
-          remove_bp(arg[0]);
+          remove_bp(arg[1]);
         }else{
-          rval = setup_bp(arg[0]);
+          rval = setup_bp(arg[1]);
           if(rval){
             kgdb_put_packet("E10");
           }
@@ -411,15 +451,13 @@ int kgdb_trap(struct trapframe* tf)
         break;
       /* read mem */
       case 'm':
-        rval = kgdb_parse(kgdb_buffer+3, arg, 5);
+        rval = kgdb_parse(kgdb_buffer+2, arg, 5);
         if(rval!=2){
           kprintf("kgdb_trap: invalid param\n");
           break;
         }
-        if(kgdb_sendmem(arg[0], arg[1])){
+        if(kgdb_sendmem(kgdb_buffer, arg[0], arg[1])){
           kgdb_put_packet("E13");
-        }else{
-          kgdb_put_packet("OK");
         }
         break;
       /* modify mem */
@@ -430,7 +468,7 @@ int kgdb_trap(struct trapframe* tf)
       case 'D':
       case 'c':
       case 's':
-        rval = kgdb_put_packet("OK");
+        rval = kgdb_put_packet("+");
         goto cont_kernel;
       default:
         kprintf("kgdb_trap: invalid command '%c'\n", kgdb_buffer[1]);

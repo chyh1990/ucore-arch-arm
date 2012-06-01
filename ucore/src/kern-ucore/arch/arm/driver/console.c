@@ -12,6 +12,8 @@
 #include <intel_sds.h>
 #endif
 
+#define USE_UART
+
 /* *
  * Here we manage the console input buffer, where we stash characters
  * received from the keyboard or serial port whenever the corresponding
@@ -84,7 +86,9 @@ cons_putc(int c) {
     bool intr_flag;
     local_intr_save(intr_flag);
     {
+#ifdef USE_UART
         serial_putc(c);
+#endif
 #ifdef HAS_SDS
         if(is_debugging())
           sds_poll_proc();
@@ -107,7 +111,9 @@ cons_getc(void) {
         // poll for any pending input characters,
         // so that this function works even when interrupts are disabled
         // (e.g., when called from the kernel monitor).
+#ifdef USE_UART
         serial_intr();
+#endif
 #ifdef HAS_SDS
         if(is_debugging())
           sds_poll_proc();

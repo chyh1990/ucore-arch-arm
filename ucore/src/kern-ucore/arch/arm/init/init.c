@@ -79,7 +79,7 @@ static void test_yaffs()
 
 static void __test_bp()
 {
-  __asm__ volatile(".word 0xe7fddefe");
+  kgdb_breakpoint();
 }
 
 static void __dummy_foo()
@@ -117,6 +117,9 @@ kern_init(void) {
   const char *message = "(THU.CST) os is loading ...";
   kprintf("%s\n\n", message);
 
+  kgdb_init();
+  //check_bp();
+  
 	/* Only to initialize lcpu_count. */
 	mp_init ();
 
@@ -162,8 +165,6 @@ kern_init(void) {
 
 #endif
 
-  kgdb_init();
-  check_bp();
 
   intr_enable();              // enable irq interrupt
 

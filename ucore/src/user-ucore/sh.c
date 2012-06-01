@@ -239,6 +239,10 @@ main(int argc, char **argv) {
         int pid;
         if (interactive && !strncmp(buffer, "!halt", 10))
           return 0;
+        if (interactive && !strncmp(buffer, "!debug", 10)){
+          __asm__ volatile(".word 0xe7fddefe");
+          continue;
+        }
         if ((pid = fork()) == 0) {
             ret = runcmd(buffer);
             exit(ret);

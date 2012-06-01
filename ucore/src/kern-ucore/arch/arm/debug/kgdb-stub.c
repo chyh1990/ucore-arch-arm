@@ -257,6 +257,54 @@ static int kgdb_put_packet(char *data)
   return 0;
 }
 
+static uint32_t kgdb_get_lr(struct trapframe *tf)
+{
+  uint32_t mode = tf->tf_sr & 0x1F;
+  uint32_t cpsr = read_psrflags();
+  uint32_t nc = cpsr & (~0x1F);
+  uint32_t lr = 0;
+  switch(mode){
+    case ARM_SR_MODE_ABT:
+    case ARM_SR_MODE_FIQ:
+    case ARM_SR_MODE_IRQ:
+    case ARM_SR_MODE_SVC:
+    case ARM_SR_MODE_SYS:
+    case ARM_SR_MODE_UND:
+      nc |= mode;
+      write_psrflags(nc);
+      asm volatile ("mov %0, lr" : "=r" (lr));
+      write_psrflags(cpsr);
+      return lr;
+    case ARM_SR_MODE_USR:
+    default:
+      return 0;
+  }
+  return 0;
+}
+
+static void kgdb_set_lr(struct trapframe *tf, uint32_t lr)
+{
+  uint32_t mode = tf->tf_sr & 0x1F;
+  uint32_t cpsr = read_psrflags();
+  uint32_t nc = cpsr & (~0x1F);
+  switch(mode){
+    case ARM_SR_MODE_ABT:
+    case ARM_SR_MODE_FIQ:
+    case ARM_SR_MODE_IRQ:
+    case ARM_SR_MODE_SVC:
+    case ARM_SR_MODE_SYS:
+    case ARM_SR_MODE_UND:
+      nc |= mode;
+      write_psrflags(nc);
+      asm volatile ("mov lr, %0" :: "r" (lr));
+      write_psrflags(cpsr);
+      break;
+    case ARM_SR_MODE_USR:
+    default:
+      return;
+  }
+}
+
 static  uint32_t gdb_regs[13+4];
 static void kgdb_reg2data(struct trapframe* tf, 
   char *buf)
@@ -311,7 +359,7 @@ int kgdb_trap(struct trapframe* tf)
   int compilation_bp = (bp==NULL);
 
   deactivate_bps();
-
+  
   start_debug();
 
   kprintf("BP hit: compile=%d, pc=0x%08x...\n",

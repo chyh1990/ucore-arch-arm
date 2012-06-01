@@ -7,6 +7,7 @@
 #include <sync.h>
 #include <proc.h>
 #include <pmm.h>
+#include <vmm.h>
 #include <kdebug.h>
 
 #define STACKFRAME_DEPTH 20
@@ -356,9 +357,21 @@ void end_debug()
 int kdebug_check_mem_range(uint32_t addr, uint32_t size)
 {
   pde_t *pgdir = boot_pgdir;
-  if(pls_read(current)){
-    //pgdir = pls_read(current);
+  if(pls_read(current) && pls_read(current)->mm){
+    pgdir = pls_read(current)->mm->pgdir;
   }
+  assert(pgdir);
+  addr = PTE_ADDR(addr);
+  /* dont overflow */
+  if(PGOFF(size))
+    size = size / PGSIZE + 1;
+  else
+    size = size / PGSIZE;
+  int i = 0;
+  for(; i<size;i++)
+    if(!get_pte(pgdir, addr + (i<<PGSHIFT), 0))
+      return -1;
+
   return 0;
 }
 

@@ -321,17 +321,18 @@ static void kgdb_set_lr(struct trapframe *tf, uint32_t lr)
   }
 }
 
-static  uint32_t gdb_regs[13+5];
+static  uint32_t gdb_regs[GDB_MAX_REGS];
 static void kgdb_reg2data(struct trapframe* tf, 
   char *buf, int iscompile)
 {
+  memset(gdb_regs, 0, sizeof(uint32_t)*GDB_MAX_REGS);
   memcpy(gdb_regs, &tf->tf_regs, sizeof(struct pushregs));
   gdb_regs[13] = tf->tf_esp;
   gdb_regs[14] = kgdb_get_lr(tf);
   gdb_regs[15] = tf->tf_epc - 4;
-  gdb_regs[16] = tf->tf_sr;
+  gdb_regs[_CPSR] = tf->tf_sr;
   //strcpy(buf, "1234abcdcccccccc");
-  mem2hex((char*)gdb_regs, buf, sizeof(uint32_t)*17);
+  mem2hex((char*)gdb_regs, buf, sizeof(uint32_t)*GDB_MAX_REGS);
   
 }
 

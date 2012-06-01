@@ -41,6 +41,78 @@ struct soft_bpt{
 
 struct soft_bpt breakpoints[MAX_KGDB_BP] = {{0}};
 
+
+static const char hexchars[]="0123456789abcdef";
+
+static int hex(char ch)
+{
+    if ((ch >= 'a') && (ch <= 'f'))
+        return (ch - 'a' + 10);
+    if ((ch >= '0') && (ch <= '9'))
+        return (ch - '0');
+    if ((ch >= 'A') && (ch <= 'F'))
+        return (ch - 'A' + 10);
+    return (-1);
+}
+
+
+/* convert the memory pointed to by mem into hex, placing result in buf */
+/* return a pointer to the last char put in buf (null) */
+static char *mem2hex(char *mem, char *buf, int count)
+{
+    int i;
+    unsigned char ch;
+
+    for (i = 0; i < count; i++) {
+        ch = *mem++;
+        *buf++ = hexchars[ch >> 4];
+        *buf++ = hexchars[ch % 16];
+    }
+    *buf = 0;
+    return (buf);
+}
+
+/* convert the hex array pointed to by buf into binary to be placed in mem */
+/* return a pointer to the character AFTER the last byte written */
+static char *hex2mem(char *buf, char *mem, int count)
+{
+    int i;
+    unsigned char ch;
+
+    for (i = 0; i < count; i++) {
+        ch = hex(*buf++) << 4;
+        ch = ch + hex(*buf++);
+        *mem++ = ch;
+    }
+    return (mem);
+}
+
+/*
+ * WHILE WE FIND NICE HEX CHARS, BUILD AN INT
+ * RETURN NUMBER OF CHARS PROCESSED
+ */
+int hexToInt(char **ptr, int *intValue)
+{
+        int numChars = 0;
+        int hexValue;
+
+        *intValue = 0;
+
+        while (**ptr) {
+                hexValue = hex(**ptr);
+                if (hexValue >= 0) {
+                        *intValue = (*intValue << 4) | hexValue;
+                        numChars++;
+                } else
+                        break;
+
+                (*ptr)++;
+        }
+
+        return (numChars);
+}
+
+
 static struct soft_bpt* find_bp(uint32_t addr)
 {
   int i = 0;
@@ -203,6 +275,9 @@ static int kgdb_parse(char *buf, uint32_t arg[], int maxlen)
 
 static int kgdb_sendmem(uint32_t start, uint32_t size)
 {
+  if(kdebug_check_mem_range(start,size))
+    return -1;
+
   return 0;
 }
 

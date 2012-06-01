@@ -176,11 +176,22 @@ static int kgdb_put_packet(char *data)
   return 0;
 }
 
+static void kgdb_reg2data(struct trapframe* tf, 
+  char *buf)
+{
+  strcpy(buf, "1234abcdcccccccc");
+}
+
+static int kgdb_parse(char *buf, char* arg[])
+{
+  return 0; 
+}
 
 static int trap_reentry = 0;
 int kgdb_trap(struct trapframe* tf)
 {
   int rval = -1;
+  char *arg[5];
   if(trap_reentry)
     panic("kgdb_trap reentry\n");
   trap_reentry = 1;
@@ -205,12 +216,20 @@ int kgdb_trap(struct trapframe* tf)
       kprintf("kgdb_trap: fail to get command from host\n");
       goto cont_kernel;
     }
+    kprintf("kgdb_trap: host: %s\n", kgdb_buffer);
     switch(kgdb_buffer[1]){
       /* reg */
       case 'g':
+        kgdb_reg2data(tf, kgdb_buffer);
+        rval = kgdb_put_packet(kgdb_buffer);
         break;
       /* clear bp */
       case 'z':
+        rval = kgdb_parse(kgdb_buffer+2, arg);
+        if(rval!=2){
+          kprintf("kgdb_trap: invalid param\n");
+          break;
+        }
         break;
       /* add bp */
       case 'Z':

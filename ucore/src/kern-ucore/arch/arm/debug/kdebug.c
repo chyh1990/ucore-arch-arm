@@ -5,6 +5,8 @@
 #include <kio.h>
 #include <string.h>
 #include <sync.h>
+#include <proc.h>
+#include <pmm.h>
 #include <kdebug.h>
 
 #define STACKFRAME_DEPTH 20
@@ -351,5 +353,12 @@ void end_debug()
   __is_debugging = 0;
 }
 
-
+int kdebug_check_mem_range(uint32_t addr, uint32_t size)
+{
+  pde_t *pgdir = boot_pgdir;
+  if(pls_read(current)){
+    //pgdir = pls_read(current);
+  }
+  return 0;
+}
 

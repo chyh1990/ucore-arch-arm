@@ -164,6 +164,10 @@ int mon_dump(int argc, char **argv, struct trapframe *tf){
     if(end<start)
       end = start + 32;
   }
+  if(kdebug_check_mem_range(start, end-start)){
+    kprintf("dump ERROR: invalid addr range\n");
+    return -1;
+  }
     
   kprintf("DUMP 0x%08x:\n", start);
   for(;start<end;start+=4){

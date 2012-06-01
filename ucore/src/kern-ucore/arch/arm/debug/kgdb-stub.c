@@ -128,10 +128,59 @@ void kgdb_init()
 }
 
 
+static char kgdb_buffer[512];
+
+#define __kgdb_put_char(c)
+#define __kgdb_get_char() (-1)
+#define __kgdb_flush_char()
+#define __kgdb_poll_char() (0)
+
+static int kgdb_get_packet(char *data)
+{
+  int cnt = 0;
+  int c;
+  while(1){
+    c = __kgdb_get_char();
+    if(c==-1)
+      __kgdb_poll_char();
+    else if(c=='$')
+      break;
+  }
+  data[cnt++] = '$'; 
+  while(cnt < 500){
+    c = __kgdb_get_char();
+    if(c==-1)
+      __kgdb_poll_char();
+    else if(c=='#')
+      break;
+    else
+      data[cnt++] = c;
+  }
+  if(cnt>0 && data[cnt-1] == '#'){
+    return cnt - 1;
+  }else{
+    return -1;
+  }
+}
+
+/* add $# automatically */
+static int kgdb_put_packet(char *data)
+{
+  int len = strlen(data);
+  int i;
+  __kgdb_put_char('$');
+  for(i = 0;i<len;i++)
+    __kgdb_put_char(data[i]);
+  __kgdb_put_char('#');
+  __kgdb_flush_char();
+  return 0;
+}
+
 
 static int trap_reentry = 0;
 int kgdb_trap(struct trapframe* tf)
 {
+  int rval = -1;
   if(trap_reentry)
     panic("kgdb_trap reentry\n");
   trap_reentry = 1;
@@ -139,11 +188,51 @@ int kgdb_trap(struct trapframe* tf)
   //uint32_t inst = *(uint32_t *)(pc);
   struct soft_bpt *bp = find_bp(pc);
   int compilation_bp = (bp==NULL);
+
+  deactivate_bps();
+
   start_debug();
 
   kprintf("BP hit: compile=%d, pc=0x%08x...\n",
       compilation_bp, pc);
 
+  /* tell host we are ready */
+  rval = kgdb_put_packet("BP");
+
+  while(1){
+    rval = kgdb_get_packet(kgdb_buffer);
+    if(rval){
+      kprintf("kgdb_trap: fail to get command from host\n");
+      goto cont_kernel;
+    }
+    switch(kgdb_buffer[1]){
+      /* reg */
+      case 'g':
+        break;
+      /* clear bp */
+      case 'z':
+        break;
+      /* add bp */
+      case 'Z':
+        break;
+      /* read mem */
+      case 'm':
+        break;
+      /* modify mem */
+      case 'M':
+        break;
+      /* continue */
+      case 'D':
+      case 'c':
+      case 's':
+        goto cont_kernel;
+      default:
+        kprintf("kgdb_trap: invalid command '%c'\n", kgdb_buffer[1]);
+
+    }
+  }
+
+cont_kernel:
   end_debug();
   /* soft bp */
   if(!compilation_bp){
@@ -151,6 +240,7 @@ int kgdb_trap(struct trapframe* tf)
     remove_bp(pc);
     tf->tf_epc = pc;
   }
+  activate_bps();
   trap_reentry = 0;
   return 0;
 }

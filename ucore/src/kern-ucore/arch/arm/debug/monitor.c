@@ -135,21 +135,6 @@ mon_trapframe(int argc, char **argv, struct trapframe *tf) {
     return 0;
 }
 
-static int atoi16(const char* s)
-{
-  int res = 0;
-  while(*s){
-    if( (*s)>='0' && (*s)<='9')
-      res = (res<<4)+(*s++)-'0';
-    else if( (*s)>='A' && (*s)<='F')
-      res = (res<<4)+(*s++)-'A'+10;
-    else if( (*s)>='a' && (*s)<='f')
-      res = (res<<4)+(*s++)-'a'+10;
-    else 
-      s++; //skip
-  }
-  return res;
-}
 
 int mon_dump(int argc, char **argv, struct trapframe *tf){
   if(argc==0){
@@ -157,10 +142,10 @@ int mon_dump(int argc, char **argv, struct trapframe *tf){
             "       (addr in hex without '0x')\n");
     return 0;
   }
-  unsigned int start = atoi16(argv[0]);
+  unsigned int start = kgdb_atoi16(argv[0]);
   unsigned int end = start+32;
   if(argc>=2){
-    end = atoi16(argv[1]);
+    end = kgdb_atoi16(argv[1]);
     if(end<start)
       end = start + 32;
   }

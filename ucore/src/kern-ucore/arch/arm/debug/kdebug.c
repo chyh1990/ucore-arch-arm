@@ -375,3 +375,19 @@ int kdebug_check_mem_range(uint32_t addr, uint32_t size)
   return 0;
 }
 
+int kgdb_atoi16(const char* s)
+{
+  int res = 0;
+  while(*s){
+    if( (*s)>='0' && (*s)<='9')
+      res = (res<<4)+(*s++)-'0';
+    else if( (*s)>='A' && (*s)<='F')
+      res = (res<<4)+(*s++)-'A'+10;
+    else if( (*s)>='a' && (*s)<='f')
+      res = (res<<4)+(*s++)-'a'+10;
+    else 
+      break;
+  }
+  return res;
+}
+

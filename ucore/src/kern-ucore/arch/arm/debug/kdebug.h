@@ -11,6 +11,7 @@ bool is_debugging();
 void start_debug();
 void end_debug();
 int kdebug_check_mem_range(uint32_t addr, uint32_t size);
+int kgdb_atoi16(const char* s);
 
 #endif /* !__KERN_DEBUG_KDEBUG_H__ */
 

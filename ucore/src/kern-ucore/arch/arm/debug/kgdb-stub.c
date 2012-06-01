@@ -202,10 +202,18 @@ void kgdb_init()
 
 static char kgdb_buffer[512];
 
+#ifdef HAS_SDS
+#include <intel_sds.h>
+#define __kgdb_put_char(c) sds_putc(1, c)
+#define __kgdb_get_char() sds_proc_data(1)
+#define __kgdb_flush_char() while(!sds_poll_proc());
+#define __kgdb_poll_char() (sds_poll_proc())
+#else
 #define __kgdb_put_char(c)
-#define __kgdb_get_char() (-1)
+#define __kgdb_get_char() ('#')
 #define __kgdb_flush_char()
 #define __kgdb_poll_char() (0)
+#endif
 
 static int kgdb_get_packet(char *data)
 {
@@ -223,14 +231,14 @@ static int kgdb_get_packet(char *data)
     c = __kgdb_get_char();
     if(c==-1)
       __kgdb_poll_char();
-    else if(c=='#')
-      break;
     else
       data[cnt++] = c;
+    if(c == '#')
+      break;
   }
   data[cnt] = 0;
   if(cnt>0 && data[cnt-1] == '#'){
-    return cnt - 1;
+    return 0;
   }else{
     return -1;
   }
@@ -249,10 +257,18 @@ static int kgdb_put_packet(char *data)
   return 0;
 }
 
+static  uint32_t gdb_regs[13+4];
 static void kgdb_reg2data(struct trapframe* tf, 
   char *buf)
 {
-  strcpy(buf, "1234abcdcccccccc");
+  memcpy(gdb_regs, &tf->tf_regs, sizeof(struct pushregs));
+  gdb_regs[13] = tf->tf_esp;
+  gdb_regs[14] = tf->tf_epc;
+  gdb_regs[15] = tf->tf_epc;
+  gdb_regs[16] = tf->tf_sr;
+  //strcpy(buf, "1234abcdcccccccc");
+  mem2hex((char*)gdb_regs, buf, sizeof(struct pushregs));
+  
 }
 
 #define _IS_SEP(x) ( (x) == ',' || (x)=='#' || (x)==':')
@@ -311,12 +327,13 @@ int kgdb_trap(struct trapframe* tf)
   rval = kgdb_put_packet("BP");
 
   while(1){
+    kprintf("D>");
     rval = kgdb_get_packet(kgdb_buffer);
     if(rval){
       kprintf("kgdb_trap: fail to get command from host\n");
       goto cont_kernel;
     }
-    kprintf("kgdb_trap: host: %s\n", kgdb_buffer);
+    kprintf("%s\n", kgdb_buffer);
     switch(kgdb_buffer[1]){
       /* reg */
       case 'g':
@@ -365,7 +382,7 @@ int kgdb_trap(struct trapframe* tf)
       case 'D':
       case 'c':
       case 's':
-        kgdb_put_packet("OK");
+        rval = kgdb_put_packet("OK");
         goto cont_kernel;
       default:
         kprintf("kgdb_trap: invalid command '%c'\n", kgdb_buffer[1]);

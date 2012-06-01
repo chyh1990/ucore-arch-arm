@@ -156,6 +156,7 @@ static int kgdb_get_packet(char *data)
     else
       data[cnt++] = c;
   }
+  data[cnt] = 0;
   if(cnt>0 && data[cnt-1] == '#'){
     return cnt - 1;
   }else{
@@ -182,16 +183,34 @@ static void kgdb_reg2data(struct trapframe* tf,
   strcpy(buf, "1234abcdcccccccc");
 }
 
-static int kgdb_parse(char *buf, char* arg[])
+#define _IS_SEP(x) ( (x) == ',' || (x)=='#' || (x)==':')
+static int kgdb_parse(char *buf, uint32_t arg[], int maxlen)
 {
-  return 0; 
+  char *ptr = buf;
+  int cnt = 0;
+  while(*ptr){
+    if(_IS_SEP(*ptr)){
+      *ptr = 0;
+      arg[cnt++] = kgdb_atoi16(buf);
+      buf = ptr + 1; 
+      if(cnt >= maxlen)
+        return cnt;
+    }
+    ptr++;
+  }
+  return cnt; 
+}
+
+static int kgdb_sendmem(uint32_t start, uint32_t size)
+{
+  return 0;
 }
 
 static int trap_reentry = 0;
 int kgdb_trap(struct trapframe* tf)
 {
   int rval = -1;
-  char *arg[5];
+  uint32_t arg[5];
   if(trap_reentry)
     panic("kgdb_trap reentry\n");
   trap_reentry = 1;
@@ -206,6 +225,12 @@ int kgdb_trap(struct trapframe* tf)
 
   kprintf("BP hit: compile=%d, pc=0x%08x...\n",
       compilation_bp, pc);
+#if 0
+  rval = kgdb_parse("6a1bbb,2#", arg, 5);
+  kprintf("## %d %08x %08x %08x\n", rval, arg[0], arg[1], arg[2]);
+  rval = kgdb_parse("6a1bbb,29:a340#", arg, 5);
+  kprintf("## %d %08x %08x %08x\n", rval, arg[0], arg[1], arg[2]);
+#endif
 
   /* tell host we are ready */
   rval = kgdb_put_packet("BP");
@@ -223,31 +248,52 @@ int kgdb_trap(struct trapframe* tf)
         kgdb_reg2data(tf, kgdb_buffer);
         rval = kgdb_put_packet(kgdb_buffer);
         break;
+      case 'G':
+        break;
       /* clear bp */
       case 'z':
-        rval = kgdb_parse(kgdb_buffer+2, arg);
+      /* add bp */
+      case 'Z':
+        rval = kgdb_parse(kgdb_buffer+3, arg, 5);
         if(rval!=2){
           kprintf("kgdb_trap: invalid param\n");
           break;
         }
-        break;
-      /* add bp */
-      case 'Z':
+        if(kgdb_buffer[1] == 'z'){
+          remove_bp(arg[0]);
+        }else{
+          rval = setup_bp(arg[0]);
+          if(rval){
+            kgdb_put_packet("E10");
+          }
+        }
+        kgdb_put_packet("OK");
         break;
       /* read mem */
       case 'm':
+        rval = kgdb_parse(kgdb_buffer+3, arg, 5);
+        if(rval!=2){
+          kprintf("kgdb_trap: invalid param\n");
+          break;
+        }
+        if(kgdb_sendmem(arg[0], arg[1])){
+          kgdb_put_packet("E13");
+        }else{
+          kgdb_put_packet("OK");
+        }
         break;
       /* modify mem */
       case 'M':
+        kgdb_put_packet("E11");
         break;
       /* continue */
       case 'D':
       case 'c':
       case 's':
+        kgdb_put_packet("OK");
         goto cont_kernel;
       default:
         kprintf("kgdb_trap: invalid command '%c'\n", kgdb_buffer[1]);
-
     }
   }
 

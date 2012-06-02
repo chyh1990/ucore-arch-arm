@@ -535,6 +535,7 @@ int kgdb_trap(struct trapframe* tf)
         break;
       /* continue */
       case 'D':
+      case 'k':
       case 'c':
       case 's':
         rval = kgdb_put_packet("+");

@@ -12,7 +12,7 @@
 #include <intel_sds.h>
 #endif
 
-#define USE_UART
+//#define USE_UART
 
 /* *
  * Here we manage the console input buffer, where we stash characters

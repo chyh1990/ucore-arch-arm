@@ -471,7 +471,7 @@ int kgdb_trap(struct trapframe* tf)
     rval = kgdb_put_packet(KGDB_SIGTRAP_REPLY);
 
   while(1){
-    platform_udelay(500); 
+    //platform_udelay(200); 
     kgdb_trace("D>");
     rval = kgdb_get_packet(kgdb_buffer);
     if(rval){

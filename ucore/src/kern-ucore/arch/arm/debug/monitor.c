@@ -4,6 +4,7 @@
 #include <trap.h>
 #include <monitor.h>
 #include <kdebug.h>
+#include <kgdb-stub.h>
 
 /* *
  * Simple command-line kernel monitor useful for controlling the
@@ -23,6 +24,7 @@ static struct command commands[] = {
     {"backtrace", "Print backtrace of stack frame.", mon_backtrace},
     {"dump", "Dump memory.", mon_dump},
     {"trapframe", "Print trapframe", mon_trapframe},
+    {"debug", "Start KGDB", mon_kgdb},
 };
 
 #define NCOMMANDS (sizeof(commands)/sizeof(struct command))
@@ -158,6 +160,12 @@ int mon_dump(int argc, char **argv, struct trapframe *tf){
   for(;start<end;start+=4){
     kprintf("%08x\t0x%08x\n",start, *(uint32_t*)start);
   }
+  return 0;
+}
+
+int mon_kgdb(int argc, char **argv, struct trapframe *tf){
+  kprintf("Please start GDB on host...\n");
+  kgdb_breakpoint();
   return 0;
 }
 

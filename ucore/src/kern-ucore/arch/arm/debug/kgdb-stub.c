@@ -244,6 +244,11 @@ static char kgdb_buffer[512];
 #define __kgdb_poll_char() (0)
 #endif
 
+static void kgdb_drain_input()
+{
+  while(__kgdb_get_char()!=-1);
+}
+
 static int kgdb_get_packet(char *data)
 {
   int cnt = 0;
@@ -469,6 +474,8 @@ int kgdb_trap(struct trapframe* tf)
     rval = kgdb_put_packet(KGDB_SIGINT_REPLY);
   else
     rval = kgdb_put_packet(KGDB_SIGTRAP_REPLY);
+
+  kgdb_drain_input();
 
   while(1){
     //platform_udelay(200); 

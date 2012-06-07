@@ -10,6 +10,7 @@ int mon_kerninfo(int argc, char **argv, struct trapframe *tf);
 int mon_backtrace(int argc, char **argv, struct trapframe *tf);
 int mon_trapframe(int argc, char **argv, struct trapframe *tf);
 int mon_dump(int argc, char **argv, struct trapframe *tf);
+int mon_kgdb(int argc, char **argv, struct trapframe *tf);
 
 #endif /* !__KERN_DEBUG_MONITOR_H__ */
 

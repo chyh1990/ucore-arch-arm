@@ -12,7 +12,7 @@
 #include <intel_sds.h>
 #endif
 
-#define USE_UART
+//#define USE_UART
 
 /* *
  * Here we manage the console input buffer, where we stash characters
@@ -90,7 +90,7 @@ cons_putc(int c) {
         serial_putc(c);
 #endif
 #ifdef HAS_SDS
-        if(is_debugging())
+        if(check_sds() && is_debugging())
           sds_poll_proc();
         sds_putc(0, c);
 #endif
@@ -115,7 +115,7 @@ cons_getc(void) {
         serial_intr();
 #endif
 #ifdef HAS_SDS
-        if(is_debugging())
+        if(check_sds() && is_debugging())
           sds_poll_proc();
         sds_intr();
 #endif

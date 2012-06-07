@@ -52,6 +52,21 @@ struct soft_bpt breakpoints[MAX_KGDB_BP] = {{0}};
 
 static const char hexchars[]="0123456789abcdef";
 
+/* CPU 400MHz? */
+static inline void platform_1u_delay()
+{
+  int i;
+  for(i=0;i<100;i++)
+    asm volatile("nop");
+}
+
+static inline void platform_udelay(int delay)
+{
+  for(;delay>=0;delay--){
+    platform_1u_delay();
+  }
+}
+
 static int hex(char ch)
 {
     if ((ch >= 'a') && (ch <= 'f'))
@@ -229,6 +244,11 @@ static char kgdb_buffer[512];
 #define __kgdb_poll_char() (0)
 #endif
 
+static void kgdb_drain_input()
+{
+  while(__kgdb_get_char()!=-1);
+}
+
 static int kgdb_get_packet(char *data)
 {
   int cnt = 0;
@@ -323,7 +343,7 @@ static void kgdb_set_lr(struct trapframe *tf, uint32_t lr)
 
 static  uint32_t gdb_regs[GDB_MAX_REGS];
 static void kgdb_reg2data(struct trapframe* tf, 
-  char *buf, int iscompile)
+  char *buf)
 {
   memset(gdb_regs, 0, sizeof(uint32_t)*GDB_MAX_REGS);
   memcpy(gdb_regs, &tf->tf_regs, sizeof(struct pushregs));
@@ -336,14 +356,38 @@ static void kgdb_reg2data(struct trapframe* tf,
   
 }
 
-#define _IS_SEP(x) ( (x) == ',' || (x)=='#' || (x)==':')
-static int kgdb_parse(char *buf, uint32_t arg[], int maxlen)
+static int kgdb_data2reg(struct trapframe *tf, 
+    char *buf)
 {
+  int len = 0;
   char *ptr = buf;
+  while(*ptr){
+    if(*ptr == '#')
+      break;
+    ptr++;
+  }
+  len = ptr - buf;
+  if(len % 8){
+    kgdb_trace("invalid param\n");
+    return -1;
+  }
+  len = len / 2;
+  memset(gdb_regs, 0, sizeof(uint32_t)*GDB_MAX_REGS);
+  hex2mem(buf, (char*)gdb_regs, len);
+  len /= 4;
+  memcpy(&tf->tf_regs, gdb_regs, len * sizeof(uint32_t));
+  /* TODO set pc, sp, lr, sr */
+  return 0;
+}
+
+#define _IS_SEP(x) ( (x) == ',' || (x)=='#' || (x)==':')
+static int kgdb_parse(const char *buf, uint32_t arg[], int maxlen)
+{
+  const char *ptr = buf;
   int cnt = 0;
   while(*ptr){
     if(_IS_SEP(*ptr)){
-      *ptr = 0;
+      //*ptr = 0;
       arg[cnt++] = kgdb_atoi16(buf);
       buf = ptr + 1; 
       if(cnt >= maxlen)
@@ -370,22 +414,36 @@ static int kgdb_sendmem(char*buf, uint32_t start, uint32_t size)
   return  kgdb_put_packet(kgdb_buffer);
 }
 
-/* CPU 400MHz? */
-static inline void platform_1u_delay()
+static int kgdb_changemem(char*buf, uint32_t start, uint32_t size)
 {
-  int i;
-  for(i=0;i<100;i++)
-    asm volatile("nop");
+  if(kdebug_check_mem_range(start,size)){
+    kgdb_trace("CM\n");
+    return -1;
+  }
+  char *ptr = NULL;
+  /* find data start */
+  while(*buf){
+    if(*buf == ':'){
+      ptr = buf;
+      break;
+    }
+    buf++;
+  }
+  if(!ptr){
+    kgdb_trace("PT\n");
+    return -2;
+  }
+  ptr++;
+  hex2mem(ptr, (char*)start, size);
+  return  kgdb_put_packet("OK");
 }
 
-static inline void platform_udelay(int delay)
-{
-  for(;delay>=0;delay--){
-    platform_1u_delay();
-  }
-}
+
 
 static int trap_reentry = 0;
+#define KGDB_SIGTRAP_REPLY "S05"
+#define KGDB_SIGINT_REPLY "S02"
+
 int kgdb_trap(struct trapframe* tf)
 {
   int rval = -1;
@@ -412,10 +470,15 @@ int kgdb_trap(struct trapframe* tf)
 #endif
 
   /* tell host we are ready */
-  rval = kgdb_put_packet("BP");
+  if(compilation_bp)
+    rval = kgdb_put_packet(KGDB_SIGINT_REPLY);
+  else
+    rval = kgdb_put_packet(KGDB_SIGTRAP_REPLY);
+
+  kgdb_drain_input();
 
   while(1){
-    platform_udelay(500); 
+    //platform_udelay(200); 
     kgdb_trace("D>");
     rval = kgdb_get_packet(kgdb_buffer);
     if(rval){
@@ -426,10 +489,15 @@ int kgdb_trap(struct trapframe* tf)
     switch(kgdb_buffer[1]){
       /* reg */
       case 'g':
-        kgdb_reg2data(tf, kgdb_buffer, compilation_bp);
+        kgdb_reg2data(tf, kgdb_buffer);
         rval = kgdb_put_packet(kgdb_buffer);
         break;
       case 'G':
+        rval = kgdb_data2reg(tf, kgdb_buffer+2);
+        if(rval)
+          rval = kgdb_put_packet("E14");
+        else
+          rval = kgdb_put_packet("OK");
         break;
       /* clear bp */
       case 'z':
@@ -463,10 +531,18 @@ int kgdb_trap(struct trapframe* tf)
         break;
       /* modify mem */
       case 'M':
-        kgdb_put_packet("E11");
+        rval = kgdb_parse(kgdb_buffer+2, arg, 2);
+        if(rval!=2){
+          kprintf("kgdb_trap: invalid param\n");
+          break;
+        }
+        if(kgdb_changemem(kgdb_buffer+2, arg[0], arg[1])){
+          kgdb_put_packet("E11");
+        }
         break;
       /* continue */
       case 'D':
+      case 'k':
       case 'c':
       case 's':
         rval = kgdb_put_packet("+");

@@ -118,7 +118,13 @@ root@ubuntu:/home/chenyh# mkfs.ext2 -L "PIA_root" /dev/mmcblk0p2
 It is recommended to try the precompiled bootloader and kernel before
 you make any changes.
 
-TODO
+For example:
+\begin{verbatim}
+$ cp bin/pia_boot/* /media/PIA_boot/
+\end{verbatim}
+
+If you compile your own ucore, copy \emph{\$(UCORE\_ROOT)/obj/kernel-initrd-at91}
+to the \emph{PIA\_boot} partition, and rename to \emph{image.bin}.
 
 \subsection{Check the Connection}
 Now insert your PIA and check the connection:

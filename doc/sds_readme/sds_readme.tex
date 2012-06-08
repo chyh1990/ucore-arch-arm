@@ -253,6 +253,53 @@ hello pass.
 \section{KGDB Debugging}
 Only available in \emph{um\_sds}. 
 
+\begin{enumerate}
+\item Ensure that you have start the usermode sds daemon.
+
+Note: To start the usermode sds daemon, you should be in root or use sudo.
+\begin{verbatim}
+gerainty demo # ./um_sds 
+Waiting SDS...
+listening @ unix socket: sds.socket...
+file >>KGDB listening at PORT 1234
+kgdb_wait_target_break: Waiting target...
+\end{verbatim}
+
+\item Get into the debug mode on PIA.
+
+
+\begin{verbatim}
+$ !debug
+\end{verbatim}
+
+\item Open your gdb as following.
+
+{
+\footnotesize
+\begin{verbatim}
+$  arm-linux-gdb
+GNU gdb 6.6
+Copyright (C) 2006 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "--host=x86_64-unknown-linux-gnu --target=arm-linux".
+(gdb) 
+\end{verbatim}
+
+}
+\item Connect to usermode sds daemon.
+
+\begin{verbatim}
+(gdb) file kernel-initrd-at91
+(gdb) target remote 127.0.0.1:1234
+\end{verbatim}
+
+\item You can begin your debug now.
+
+\end{enumerate}
+
 \section{Problems?}
 Please contact us: \\
 Chen Yuheng: chyh1990@163.com\\

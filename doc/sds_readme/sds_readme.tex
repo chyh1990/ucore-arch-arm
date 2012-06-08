@@ -192,14 +192,55 @@ Only available in \emph{um\_sds}. The sent file is only stored
 in the memory on PIA, you will need two steps to write it to
 Ucore's filesystem:
 \begin{enumerate}
-\item
+\item Ensure that you have start the usermode sds daemon.
+
+Note: To start the usermode sds daemon, you should be in root or use sudo.
 \begin{verbatim}
-TODO
+gerainty demo # ./um_sds 
+Waiting SDS...
+listening @ unix socket: sds.socket...
+file >>KGDB listening at PORT 1234
+kgdb_wait_target_break: Waiting target...
 \end{verbatim}
 
-\item
+\item Use put command to upload a file to the PIA.
 \begin{verbatim}
-TODO
+file >>put test.exe
+maigc:0x48594853
+file name:test.exe
+finish:100%
+send finish
+file >>
+\end{verbatim}
+
+
+\item On PIA, you should use kshm\_test to get the file from memory to your filesystem. If you use ls, then you will find out test.exe is in current directory now.
+\begin{verbatim}
+$ kshm_test
+[0]: 48594853
+Filename: test.exe
+Filesize: 101133
+$ ls 
+ @ is  [directory] 6(hlinks) 6(blocks) 2048(bytes) : @'.'
+   [d]   6(h)        6(b)     2048(s)   .
+   [d]   6(h)        6(b)     2048(s)   ..
+   [d]   2(h)        3(b)     1280(s)   script
+   [d]   3(h)        2(b)     1024(s)   testman
+   [-]   1(h)        1(b)        6(s)   hello.txt
+   [d]   2(h)       47(b)    12544(s)   bin
+   [d]   2(h)        1(b)      768(s)   test
+   [-]   1(h)       25(b)   101133(s)   test.exe
+
+\end{verbatim}
+
+\item Now you can execute the uploaded file as following.
+\begin{verbatim}
+$ ./test.exe
+Hello world!!.
+I am process 10.
+ARG: 1:
+ARG 0: ./test.exe
+hello pass.
 \end{verbatim}
 \end{enumerate}
 

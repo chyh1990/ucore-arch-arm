@@ -77,12 +77,42 @@ Other tools you need:
 \end{itemize}
 
 \section{Booting}
+NOTE: The shipped PIA board contains a precompiled bootloader and a 
+ucore kernel, and can boot directly! Please skip to Section 2.
 \subsection{Prepare An SD Card}
+
 On the PIA development board, you will need a normal SD card to store
 the bootloader(BOOT.BIN) and the kernel(image.bin).
 Since the SD card will be formatted, backup your data first.
 
-TODO
+To figure out the device name of your SD card:
+\begin{verbatim}
+root@ubuntu:/home/chenyh# fdisk -l
+Disk /dev/mmcblk0: 3904 MB, 3904897024 bytes
+100 heads, 35 sectors/track, 2179 cylinders
+Units = cylinders of 3500 * 512 = 1792000 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x00000000
+
+        Device Boot      Start         End      Blocks   Id  System
+/dev/mmcblk0p1               3        2180     3809280    b  W95 FAT32
+\end{verbatim}
+
+Make partitions:
+\begin{verbatim}
+root@ubuntu:/home/chenyh# fdisk /dev/mmcblk0
+//create two partitions
+        Device Boot      Start         End      Blocks   Id  System
+/dev/mmcblk0p1               1         294      514482+   6  FAT16
+/dev/mmcblk0p2             295        2179     3298750   83  Linux
+\end{verbatim}
+
+Format partitions:
+\begin{verbatim}
+root@ubuntu:/home/chenyh# mkfs.vfat -n "PIA_boot" /dev/mmcblk0p1
+root@ubuntu:/home/chenyh# mkfs.ext2 -L "PIA_root" /dev/mmcblk0p2
+\end{verbatim}
 
 \subsection{Copy the Binaries to Your SD Card}
 It is recommended to try the precompiled bootloader and kernel before
@@ -91,12 +121,53 @@ you make any changes.
 TODO
 
 \subsection{Check the Connection}
+Now insert your PIA and check the connection:
+\begin{enumerate}
+  \item Power up PIA, wait for 5 seconds (SDS initializing)
+  \item Insert PIA into the SD slot on your PC
+  \item Check your connection:
+    \begin{verbatim}
+$ dmesg|tail
+[ 1835.325238] mmc0: new SDHC card at address 0000
+[ 1835.325457] mmcblk0: mmc0:0000 SDS0 3.69 GiB 
+[ 1835.330193]  mmcblk0:
+
+$ ls /dev/mmc*
+/dev/mmcblk0
+    \end{verbatim}
+
+\end{enumerate}
 
 \section{Console Input/Output}
 
 \subsection{Start the Usermode SDS Daemon}
 
+\begin{verbatim}
+chenyh@ubuntu:~/os/driver/demo$ sudo ./um_sds 
+[sudo] password for chenyh: 
+Waiting SDS...
+listening @ unix socket: sds.socket...
+file >>KGDB listening at PORT 1234
+kgdb_wait_target_break: Waiting target...
+>>
+\end{verbatim}
+
+If you can not see these lines, try to reset the PIA and 
+check the SD connection. 
+
 \subsection{Use Minicom to Communicate with PIA}
+Now, you can use Minicom to access your console on PIA:
+\begin{verbatim}
+chenyh@ubuntu:~/os/driver/demo$ minicom -D unix#`pwd`/sds.socket
+\end{verbatim}
+
+Now you should be able to get a remote shell:
+\begin{verbatim}
+cpu_idle: starting
+kernel_execve: pid = 2, name = "sh".
+Welcome to sh!
+$                                   
+\end{verbatim}
 
 \subsection{Enable UART}
 By default, Ucore only uses SDS as its I/O device. If you need

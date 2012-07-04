@@ -78,7 +78,7 @@ Other tools you need:
 
 \section{Booting}
 NOTE: The shipped PIA board contains a precompiled bootloader and a 
-ucore kernel, and can boot directly! Please skip to Section 2.
+ucore kernel, and can boot directly! Please skip to Section \ref{sec:checkconn}.
 \subsection{Prepare An SD Card}
 
 On the PIA development board, you will need a normal SD card to store
@@ -127,6 +127,7 @@ If you compile your own ucore, copy \emph{\$(UCORE\_ROOT)/obj/kernel-initrd-at91
 to the \emph{PIA\_boot} partition, and rename to \emph{image.bin}.
 
 \subsection{Check the Connection}
+\label{sec:checkconn}
 Now insert your PIA and check the connection:
 \begin{enumerate}
   \item Power up PIA, wait for 5 seconds (SDS initializing)
@@ -175,41 +176,31 @@ Welcome to sh!
 $                                   
 \end{verbatim}
 
-\subsection{Enable UART}
-By default, Ucore only uses SDS as its I/O device. If you need
-to enable UART, you have to change the source code of ucore's kernel:
+%\subsection{Enable UART}
+%By default, Ucore only uses SDS as its I/O device. If you need
+%to enable UART, you have to change the source code of ucore's kernel:
 
-\begin{verbatim}
-TODO
-\end{verbatim}
+%\begin{verbatim}
+%TODO
+%\end{verbatim}
 
-And recompile your kernel\footnote{To figure out how to compile
-ucore, see \emph{UCore Porting on ARM9}}.
+%And recompile your kernel\footnote{To figure out how to compile
+%ucore, see \emph{UCore Porting on ARM9}}.
 
-After connect the PIA with your PC through a serial cable, 
-reconfigure your Minicom:
+%After connect the PIA with your PC through a serial cable, 
+%reconfigure your Minicom:
 
-\begin{verbatim}
-TODO
-\end{verbatim}
+%\begin{verbatim}
+%TODO
+%\end{verbatim}
 
 \section{File Uploading}
 Only available in \emph{um\_sds}. The sent file is only stored
 in the memory on PIA, you will need two steps to write it to
 Ucore's filesystem:
 \begin{enumerate}
-\item Ensure that you have start the usermode sds daemon.
-
-Note: To start the usermode sds daemon, you should be in root or use sudo.
-\begin{verbatim}
-gerainty demo # ./um_sds 
-Waiting SDS...
-listening @ unix socket: sds.socket...
-file >>KGDB listening at PORT 1234
-kgdb_wait_target_break: Waiting target...
-\end{verbatim}
-
-\item Use put command to upload a file to the PIA.
+\item Ensure that you have start the usermode SDS daemon.
+\item In SDS daemon, use put command to upload a file to the PIA.
 \begin{verbatim}
 file >>put test.exe
 maigc:0x48594853

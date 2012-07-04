@@ -409,13 +409,13 @@ copy_range(pgd_t *to, pgd_t *from, uintptr_t start, uintptr_t end, bool share) {
             }
 #else /* ARCH_ARM */
             if (ptep_present(ptep)) {
-                pte_perm_t perm = ptep_get_perm(ptep, PTE_USER);
-                struct Page *page = pte2page(*ptep);
-                if (!share && ptep_s_write(ptep)) {
-                  ptep_unset_s_write(&perm);
-                  pte_perm_t perm_with_swap_stat = ptep_get_perm(ptep, PTE_SWAP);
-                  ptep_set_perm(&perm_with_swap_stat, perm);
-                  page_insert(from, page, start, perm_with_swap_stat);
+              pte_perm_t perm = ptep_get_perm(ptep, PTE_USER);
+              struct Page *page = pte2page(*ptep);
+              if (!share && ptep_s_write(ptep)) {
+                ptep_unset_s_write(&perm);
+                pte_perm_t perm_with_swap_stat = ptep_get_perm(ptep, PTE_SWAP);
+                ptep_set_perm(&perm_with_swap_stat, perm);
+                page_insert(from, page, start, perm_with_swap_stat);
                 }
                 ret = page_insert(to, page, start, perm);
                 assert(ret == 0);
@@ -433,9 +433,11 @@ copy_range(pgd_t *to, pgd_t *from, uintptr_t start, uintptr_t end, bool share) {
         }
         start += PGSIZE;
     } while (start != 0 && start < end);
+#ifdef ARCH_ARM
     /* we have modified the PTE of the original
      * process, so invalidate TLB */
     tlb_invalidate_all();
+#endif
     return 0;
 }
 

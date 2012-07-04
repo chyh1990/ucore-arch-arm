@@ -17,8 +17,10 @@
  */
 
 #include <board.h>
+#include <picirq.h>
 #include <serial.h>
 #include <clock.h>
+#include <pdev_bus.h>
 
 static const char* message = "Initializing Goldfish Board...\n";
 

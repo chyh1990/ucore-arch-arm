@@ -349,7 +349,7 @@ pmm_init(void) {
   //XXX This is a buggy test!
   //check_boot_pgdir();
 
-  print_pgdir(kprintf);
+  //print_pgdir(kprintf);
 
   /* boot_pgdir now should be VDT */
   boot_pgdir = (pde_t*)VPT_BASE;
@@ -361,10 +361,11 @@ pmm_init(void) {
 
 // invalidate both TLB 
 // (clean and flush, meaning we write the data back)
-// TODO check if it is the page currrently in use
 void
 tlb_invalidate(pde_t *pgdir, uintptr_t la) {
-  asm volatile("mcr p15, 0, %0, c8, c7, 1" 
+  asm volatile("mcr p15, 0, %0, c8, c5, 1" 
+      : : "r" (la) : "cc");
+  asm volatile("mcr p15, 0, %0, c8, c6, 1" 
       : : "r" (la) : "cc");
 }
 
@@ -376,7 +377,8 @@ void tlb_invalidate_all(){
  // tlb_invalidate(0,0);
   const int zero = 0;
   asm volatile (
-      "MCR p15, 0, %0, c8, c7, 0" /* invalidate TLB */
+      "MCR p15, 0, %0, c8, c5, 0;" /* invalidate TLB */
+      "MCR p15, 0, %0, c8, c6, 0" /* invalidate TLB */
       ::"r" (zero):"cc"
       );
 }

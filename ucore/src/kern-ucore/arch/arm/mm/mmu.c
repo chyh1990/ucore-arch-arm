@@ -109,16 +109,6 @@ controlSet(uint32_t value, uint32_t mask)
 void
 mmu_init(void) {
 	uint32_t enable, change;
-	//~ /* Part 1 Initialize system (fixed) page tables */
-	//~ mmuInitPT(&masterPT); /* init master L1 PT with FAULT PTE */
-	
-	//~ /* Part 2 filling page tables with translation & attribute data */
-	//~ mmuMapRegion(&masterRegion); /* Map kernelRegion SystemPT */
-	//~ mmuMapRegion(&coarseRegion); /* Map kernelRegion SystemPT */
-	
-	//~ /* Part 3 activating page tables */
-	//~ mmuAttachPT(&masterPT); /* load L1 TTB to cp15:c2:c0 register */
-	//~ mmuAttachPT(&coarsePT); /* load L1 TTB to cp15:c2:c0 register */
 	
 	/* Part 4 Set Domain Access */
 	domainAccessSet(DOM3CLT, CHANGEALLDOM); /* set Domain Access */

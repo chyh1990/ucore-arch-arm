@@ -1,4 +1,5 @@
-file obj/kernel-initrd-versatilepb
+#file obj/kernel-initrd-versatilepb
+file obj/kernel-initrd-goldfish
 #file obj/user-sfs/bin/forktest
 define hook-stop
 x/2i $pc
@@ -6,6 +7,6 @@ end
 
 target remote 127.0.0.1:1234
 #b switch_to
-b yaffs_vop_namefile
-display yramsim_dev0.param.name
+#b yaffs_vop_namefile
+#display yramsim_dev0.param.name
 

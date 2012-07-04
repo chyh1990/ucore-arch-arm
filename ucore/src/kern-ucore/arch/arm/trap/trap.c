@@ -177,6 +177,7 @@ trap_dispatch(struct trapframe *tf) {
     // Data Abort service routine
     case T_PABT:
     case T_DABT:
+
       if ((ret = pgfault_handler(tf)) != 0) {
         print_pgfault(tf);
         print_trapframe(tf);

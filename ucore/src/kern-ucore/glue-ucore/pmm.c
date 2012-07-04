@@ -179,8 +179,8 @@ page_insert(pgd_t *pgdir, struct Page *page, uintptr_t la, pte_perm_t perm) {
 out:
 	ptep_map(ptep, page2pa(page));
 	ptep_set_perm(ptep, perm);
-    mp_tlb_update(pgdir, la);
-    return 0;
+  mp_tlb_update(pgdir, la);
+  return 0;
 }
 
 /**
@@ -433,6 +433,9 @@ copy_range(pgd_t *to, pgd_t *from, uintptr_t start, uintptr_t end, bool share) {
         }
         start += PGSIZE;
     } while (start != 0 && start < end);
+    /* we have modified the PTE of the original
+     * process, so invalidate TLB */
+    tlb_invalidate_all();
     return 0;
 }
 

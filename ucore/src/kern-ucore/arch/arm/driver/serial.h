@@ -19,7 +19,6 @@
 #ifndef __MACH_SERIAL_H
 #define __MACH_SERIAL_H
 
-void serial_init(void);
 int serial_check();
 void serial_putc(int c);
 int serial_proc_data();

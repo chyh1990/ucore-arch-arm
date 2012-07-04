@@ -27,13 +27,13 @@ extern volatile size_t ticks;
 //unsigned yaffs_trace_mask = 0xFFFFFFFF;
 unsigned yaffs_trace_mask =
 //	YAFFS_TRACE_SCAN |
-	YAFFS_TRACE_GC |
-	YAFFS_TRACE_ERASE |
+//	YAFFS_TRACE_GC |
+//	YAFFS_TRACE_ERASE |
 	YAFFS_TRACE_ERROR |
-	YAFFS_TRACE_TRACING |
-	YAFFS_TRACE_ALLOCATE |
+//	YAFFS_TRACE_TRACING |
+//	YAFFS_TRACE_ALLOCATE |
 	YAFFS_TRACE_BAD_BLOCKS |
-	YAFFS_TRACE_VERIFY |
+//	YAFFS_TRACE_VERIFY |
   //YAFFS_TRACE_OS|
 	0;
 int yaffs_errno;

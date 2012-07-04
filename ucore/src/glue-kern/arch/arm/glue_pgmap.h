@@ -286,6 +286,7 @@ ptep_unset_dirty (pte_t *ptep)
 //	*ptep &= ~PTE_D;
 }
 
+#if 0
 static inline pte_perm_t _arm_perm2ucore(pte_t* ptep)
 {
   pte_perm_t p = 0;
@@ -308,5 +309,6 @@ static inline pte_perm_t _arm_perm2ucore(pte_t* ptep)
     }
   return p;
 }
+#endif
 
 #endif  /* !__ARCH_X86_INCLUDE_PG_MAP_H__ */

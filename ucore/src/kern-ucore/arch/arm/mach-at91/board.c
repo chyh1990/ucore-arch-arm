@@ -72,6 +72,7 @@ void
 board_init(){
   put_string(message);
   pic_init();                 // init interrupt controller
+  extern void serial_init();
   serial_init();
   print_clock_info(12000000); //12Mhz
 #ifdef HAS_NANDFLASH

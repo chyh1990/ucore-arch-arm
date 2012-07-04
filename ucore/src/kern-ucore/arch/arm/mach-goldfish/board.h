@@ -17,18 +17,9 @@
  */
 
 
-#ifndef  BOOTLOADER_MACH_BOARD_H
-#define  BOOTLOADER_MACH_BOARD_H
+#ifndef  MACH_BOARD_H
+#define  MACH_BOARD_H
 
-#ifdef PLATFORM_VERSATILEPB
-#include "../../../kern-ucore/arch/arm/mach-versatilepb/board.h"
-#elif PLATFORM_AT91
-#include "../../../kern-ucore/arch/arm/mach-at91/board.h"
-#elif PLATFORM_GOLDFISH
-#include "../../../kern-ucore/arch/arm/mach-goldfish/board.h"
-#else
-#error Unknown platform
-#endif
-
+#include "board-goldfish.h"
 
 #endif  

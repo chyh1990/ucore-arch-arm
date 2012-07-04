@@ -20,7 +20,7 @@
 #include <serial.h>
 #include <clock.h>
 
-static const char* message = "Initializing VersatilePB Board...\n";
+static const char* message = "Initializing Goldfish Board...\n";
 
 static void put_string(const char* str)
 {
@@ -31,10 +31,11 @@ static void put_string(const char* str)
 void 
 board_init(){
   put_string(message);
-  pic_init();                 // init interrupt controller
-  extern void serial_init();
-  serial_init();
 
+  pic_init();                 // init interrupt controller
+  pdev_bus_init();
+/* use pdev bus to probe devices */
+  //serial_init();
 }
 
 /* no nand */

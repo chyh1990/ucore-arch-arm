@@ -14,23 +14,27 @@
 
 #define ELFHDR		((struct elfhdr *) (BOOTLOADER_BASE+0x1000))      // scratch space
 
-#ifdef PLATFORM_AT91
 /* uart_putc, uart_put_s
  * write on UART0 */
-#define UART0_CSR ((volatile unsigned int*)(AT91SAM_DBGU_BASE+DBGU_CSR))
 static void uart_putc(int c)
 {
+#ifdef PLATFORM_AT91
+#define UART0_CSR ((volatile unsigned int*)(AT91SAM_DBGU_BASE+DBGU_CSR))
   while (!((*UART0_CSR) & AT91C_US_TXRDY)) ;
 	*UART0_TX = c;
-}
 #endif
 
+
 #ifdef PLATFORM_VERSATILEPB
-static void uart_putc(int c)
-{
 	*UART0_TX = c;
-}
+#endif 
+
+#ifdef PLATFORM_GOLDFISH
+	*UART0_TX = c;
 #endif
+}
+
+
 
 static void uart_puts(const char *p)
 {

@@ -133,10 +133,20 @@
 /* Typical */
 #define PTEX_PWT (PTEX_WT << 2) // Write Through
 #define PTEX_PIO (PTEX_cb << 2) // Write Through
+
+#ifdef __MACH_ARM_ARMV5
 #define PTEX_R   0x000       // Supervisor/Readonly
 #define PTEX_W   0x550       // Supervisor/Write
 #define PTEX_U   0xAA0       // Supervisor/Write _ User/Read Only
 #define PTEX_UW  0xFF0       // Supervisor/Write _ User/Write
+#elif defined __MACH_ARM_ARMV7
+#define PTEX_R   0x110       // Supervisor/Readonly
+#define PTEX_W   0x010       // Supervisor/Write
+#define PTEX_U   0x020       // Supervisor/Write _ User/Read Only
+#define PTEX_UW  0x030       // Supervisor/Write _ User/Write
+#else
+#error Unknown ARM CPU type
+#endif
 
 /* Chen Yuheng */
 #define PTEX_PROTECT_MASK 0xFF0

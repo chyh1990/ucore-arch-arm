@@ -130,6 +130,10 @@ kern_init(void) {
 
   kprintf("pmm_init() done.\n");
 
+#ifdef HAS_FRAMEBUFFER
+  fb_alloc_buffer();
+#endif
+
   vmm_init();                 // init virtual memory management
   _PROBE_();
 

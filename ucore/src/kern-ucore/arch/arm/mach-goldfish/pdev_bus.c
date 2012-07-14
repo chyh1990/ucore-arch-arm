@@ -23,6 +23,7 @@
 #include <serial.h>
 #include <clock.h>
 #include <string.h>
+#include <framebuffer.h>
 
 struct pdev_device{
   uint32_t id, base, size, irq, irq_count, name_len;
@@ -36,6 +37,8 @@ static int pdev_device_init(struct pdev_device* dev)
   if(!strcmp(dev->name, "goldfish_tty") && dev->id == 2){
     extern void serial_init(uint32_t base, uint32_t irq);
     serial_init(dev->base, dev->irq);
+  }else if(!strcmp(dev->name, "goldfish_fb")){
+    fb_init(dev->base, dev->irq);
   }
 }
 

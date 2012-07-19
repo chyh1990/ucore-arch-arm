@@ -1,6 +1,8 @@
 #ifndef __LIBS_TYPES_H__
 #define __LIBS_TYPES_H__
 
+#ifndef __NO_UCORE_TYPE__
+
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
@@ -104,6 +106,8 @@ typedef uint32_t mode_t;
 #endif
 
 typedef uint32_t          dev_t;
+
+#endif /* __NO_UCORE_TYPE__ */
 
 #endif /* !__LIBS_TYPES_H__ */
 

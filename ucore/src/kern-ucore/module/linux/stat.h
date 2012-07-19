@@ -1,6 +1,12 @@
 #ifndef _LINUX_STAT_H
 #define _LINUX_STAT_H
 
+#ifdef __KERNEL__
+
+#include <asm/stat.h>
+
+#endif
+
 #if defined(__KERNEL__) || !defined(__GLIBC__) || (__GLIBC__ < 2)
 
 #define S_IFMT  00170000

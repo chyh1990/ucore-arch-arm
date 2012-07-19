@@ -15,8 +15,15 @@
  *
  * =====================================================================================
  */
+
+#include <linux/kernel.h>
+
+#define __NO_UCORE_TYPE__
 #include <module.h>
 #include <kio.h>
+
+
+extern initcall_t __initcall_start[], __initcall_end[];
 
 void do_initcalls()
 {
@@ -29,4 +36,5 @@ void do_initcalls()
   }
   kprintf("do_initcalls() end!\n");
 }
+
 

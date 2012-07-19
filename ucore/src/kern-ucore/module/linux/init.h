@@ -40,11 +40,11 @@
 
 /* These are for everybody (although not all archs will actually
    discard it in modules) */
-#define __init	
-#define __initdata	
-#define __initconst
-#define __exitdata
-#define __exit_call	
+#define __init		__section(.init.text) __cold notrace
+#define __initdata	__section(.init.data)
+#define __initconst	__section(.init.rodata)
+#define __exitdata	__section(.exit.data)
+#define __exit_call	__used __section(.exitcall.exit)
 
 /* modpost check for section mismatches during the kernel build.
  * A section mismatch happens when there are references from a
@@ -139,13 +139,18 @@
 typedef int (*initcall_t)(void);
 typedef void (*exitcall_t)(void);
 
-extern initcall_t __initcall_start[], __initcall_end[];
+extern initcall_t __con_initcall_start[], __con_initcall_end[];
+extern initcall_t __security_initcall_start[], __security_initcall_end[];
 
 /* Defined in init/main.c */
 extern int do_one_initcall(initcall_t fn);
 extern char __initdata boot_command_line[];
 extern char *saved_command_line;
 extern unsigned int reset_devices;
+
+/* used by init/main.c */
+void setup_arch(char **);
+void prepare_namespace(void);
 
 extern void (*late_time_init)(void);
 

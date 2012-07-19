@@ -16,12 +16,13 @@ export PLATFORM_DEF := -DPLATFORM_$(shell echo $(ARCH_ARM_BOARD) | tr 'a-z' 'A-Z
 
 export MACH_MACRO := -D__MACH_ARM_UNKNOWN
 ifeq ($(ARCH_ARM_MACH), armv5)
-MACH_MACRO := -D__MACH_ARM_ARMV5	
+MACH_MACRO := -D__MACH_ARM_ARMV5	-D__LINUX_ARM_ARCH__=5
 endif
 
 ifeq ($(ARCH_ARM_MACH), armv7-a)
-MACH_MACRO := -D__MACH_ARM_ARMV7
+MACH_MACRO := -D__MACH_ARM_ARMV7 	-D__LINUX_ARM_ARCH__=7
 endif
+
 
 export TARGET_CC_SYSTEM_LIB ?=  -L/opt/FriendlyARM/toolschain/4.4.3/lib/gcc/arm-none-linux-gnueabi/4.4.3/ 
 

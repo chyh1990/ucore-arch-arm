@@ -2,6 +2,10 @@
 #define _LINUX_ELF_H
 
 #include <linux/types.h>
+#include <linux/elf-em.h>
+#ifdef __KERNEL__
+#include <asm/elf.h>
+#endif
 
 struct file;
 
@@ -392,5 +396,14 @@ extern Elf64_Dyn _DYNAMIC [];
 
 #endif
 
+/* Optional callbacks to write extra ELF notes. */
+#ifndef ARCH_HAVE_EXTRA_ELF_NOTES
+static inline int elf_coredump_extra_notes_size(void) { return 0; }
+static inline int elf_coredump_extra_notes_write(struct file *file,
+			loff_t *foffset) { return 0; }
+#else
+extern int elf_coredump_extra_notes_size(void);
+extern int elf_coredump_extra_notes_write(struct file *file, loff_t *foffset);
+#endif
 #endif /* __KERNEL__ */
 #endif /* _LINUX_ELF_H */

@@ -10,7 +10,17 @@ SECTIONS {
     . = TEXT_START;
 
     .text : {
-        *(.text .stub .text.* .gnu.linkonce.t.*)
+      *(.text .stub .text.* .gnu.linkonce.t.*)
+      . = ALIGN(4);
+        PROVIDE(__initcall_start = .);
+        *(.initcall1.init)
+        *(.initcall2.init)
+        *(.initcall3.init)
+        *(.initcall4.init)
+        *(.initcall5.init)
+        *(.initcall6.init)
+        *(.initcall7.init)
+        PROVIDE(__initcall_end = .);
     }
 
     PROVIDE(etext = .); /* Define the 'etext' symbol to this value */

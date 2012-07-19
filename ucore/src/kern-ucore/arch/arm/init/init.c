@@ -22,6 +22,7 @@
 #include <sync.h>
 #include <ramdisk.h>
 #include <kgdb-stub.h>
+#include <module.h>
 
 
 #include <yaffs2_direct/yaffsfs.h>
@@ -130,12 +131,14 @@ kern_init(void) {
 
   kprintf("pmm_init() done.\n");
 
+  vmm_init();                 // init virtual memory management
+  _PROBE_();
+
 #ifdef HAS_FRAMEBUFFER
   fb_alloc_buffer();
 #endif
 
-  vmm_init();                 // init virtual memory management
-  _PROBE_();
+  do_initcalls();
 
   clock_init();               // linux put tick_init in kernel_main, so do we~
 
@@ -163,7 +166,7 @@ kern_init(void) {
   //emulated yaffs start up
   yaffsfs_OSInitialisation();
   yramsim_CreateRamSim("data", 1,20, 2, 16);
-  test_yaffs();
+  //test_yaffs();
 
   yaffs_vfs_init();
 

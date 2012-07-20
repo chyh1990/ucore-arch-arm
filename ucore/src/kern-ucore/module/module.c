@@ -45,18 +45,18 @@ static void do_initcalls()
 
 void dde_init()
 {
-  do_initcalls();
   driver_init();
+  do_initcalls();
 }
 
 /* basic functions */
 int printk(const char *s, ...)
 {
-    va_list ap;
-    va_start(ap, s);
-    int cnt = vkprintf(s, ap);
-    va_end(ap);
-    return cnt;
+  va_list ap;
+  va_start(ap, s);
+  int cnt = vkprintf(s, ap);
+  va_end(ap);
+  return cnt;
 }
 
 void panic(const char *fmt, ...)
@@ -82,36 +82,36 @@ void warn_slowpath(const char *file, int line, const char *fmt, ...)
 
 void __attribute__((noreturn)) __bug(const char *file, int line)
 {
-         printk(KERN_CRIT"kernel BUG at %s:%d!\n", file, line);
-         panic("0");
-         /* Avoid "noreturn function does return" */
-         for (;;);
+  printk(KERN_CRIT"kernel BUG at %s:%d!\n", file, line);
+  panic("0");
+  /* Avoid "noreturn function does return" */
+  for (;;);
 }
 
 int sprint_symbol(char *buffer, unsigned long address)
 {
-        char *modname;
-        const char *name;
-        unsigned long offset, size;
-        int len;
+  char *modname;
+  const char *name;
+  unsigned long offset, size;
+  int len;
 
-        //name = kallsyms_lookup(address, &size, &offset, &modname, buffer);
-        name = NULL;
-        if (!name)
-                return sprintf(buffer, "0x%lx", address);
+  //name = kallsyms_lookup(address, &size, &offset, &modname, buffer);
+  name = NULL;
+  if (!name)
+    return sprintf(buffer, "0x%lx", address);
 
-        if (name != buffer)
-                strcpy(buffer, name);
-        len = strlen(buffer);
-        buffer += len;
+  if (name != buffer)
+    strcpy(buffer, name);
+  len = strlen(buffer);
+  buffer += len;
 
-        if (modname)
-                len += sprintf(buffer, "+%#lx/%#lx [%s]",
-                                                offset, size, modname);
-        else
-                len += sprintf(buffer, "+%#lx/%#lx", offset, size);
+  if (modname)
+    len += sprintf(buffer, "+%#lx/%#lx [%s]",
+        offset, size, modname);
+  else
+    len += sprintf(buffer, "+%#lx/%#lx", offset, size);
 
-        return len;
+  return len;
 }
 
 /* Look up a kernel symbol and print it to the kernel messages. */
@@ -122,11 +122,14 @@ void __print_symbol(const char *fmt, unsigned long address)
 
 void __memzero(void *ptr, __kernel_size_t n)
 {
-  memset(ptr, 0, n);
+  int i;
+  for(i=0;i<n;i++)
+    *(((uint8_t*)ptr)+i) = 0;
 }
 
 void *__kmalloc(size_t size, gfp_t flags)
 {
+  //kprintf("__kmalloc %d %08x\n", size, flags);
   void *ptr = kmalloc(size);
   if(flags | __GFP_ZERO){
     memset(ptr, 0, size);
@@ -136,17 +139,17 @@ void *__kmalloc(size_t size, gfp_t flags)
 
 char *kstrdup(const char *s, gfp_t gfp)
 {
-        size_t len;
-        char *buf;
+  size_t len;
+  char *buf;
 
-        if (!s)
-                return NULL;
+  if (!s)
+    return NULL;
 
-        len = strlen(s) + 1;
-        buf = __kmalloc(len, gfp);
-        if (buf)
-                memcpy(buf, s, len);
-        return buf;
+  len = strlen(s) + 1;
+  buf = __kmalloc(len, gfp);
+  if (buf)
+    memcpy(buf, s, len);
+  return buf;
 }
 
 
@@ -157,7 +160,7 @@ void __mutex_init(struct mutex *lock, const char *name, struct lock_class_key *k
 }
 
 extern void __init_rwsem(struct rw_semaphore *sem, const char *name,
-              struct lock_class_key *key)
+    struct lock_class_key *key)
 {
 }
 
@@ -173,26 +176,27 @@ void mutex_unlock(struct mutex *lock)
 
 /* notifier */
 int blocking_notifier_call_chain(struct blocking_notifier_head *nh,
-  unsigned long val, void *v)
+    unsigned long val, void *v)
 {
   return 0;
 }
 
 extern int blocking_notifier_chain_register(struct blocking_notifier_head *nh,
-                 struct notifier_block *nb)
+    struct notifier_block *nb)
 {
   return 0;
 }
 
 extern int blocking_notifier_chain_unregister(struct blocking_notifier_head *nh,
-                 struct notifier_block *nb)
+    struct notifier_block *nb)
 {
   return 0;
 }
 
+
 /* sysfs */
 int sysfs_create_link(struct kobject *kobj, struct kobject *target,
-                      const char *name)
+    const char *name)
 {
   return 0;
 }

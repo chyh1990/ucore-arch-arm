@@ -1171,8 +1171,9 @@ struct device *device_find_child(struct device *parent, void *data,
 int __init devices_init(void)
 {
 	devices_kset = kset_create_and_add("devices", &device_uevent_ops, NULL);
-	if (!devices_kset)
+	if (!devices_kset){
 		return -ENOMEM;
+  }
 	dev_kobj = kobject_create_and_add("dev", NULL);
 	if (!dev_kobj)
 		goto dev_kobj_err;

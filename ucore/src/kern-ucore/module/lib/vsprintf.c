@@ -723,7 +723,7 @@ static char *pointer(const char *fmt, char *buf, char *end, void *ptr, int field
  * Call this function if you are already dealing with a va_list.
  * You probably want snprintf() instead.
  */
-#if 0
+#if 1
 int vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 {
 	unsigned long long num;

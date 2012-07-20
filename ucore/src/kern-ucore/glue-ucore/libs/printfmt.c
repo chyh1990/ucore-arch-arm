@@ -365,6 +365,7 @@ snprintf(char *str, size_t size, const char *fmt, ...) {
  * Call this function if you are already dealing with a va_list.
  * Or you probably want snprintf() instead.
  * */
+#if 0
 int
 vsnprintf(char *str, size_t size, const char *fmt, va_list ap) {
     struct sprintbuf b = {str, str + size - 1, 0};
@@ -377,4 +378,4 @@ vsnprintf(char *str, size_t size, const char *fmt, va_list ap) {
     *b.buf = '\0';
     return b.cnt;
 }
-
+#endif

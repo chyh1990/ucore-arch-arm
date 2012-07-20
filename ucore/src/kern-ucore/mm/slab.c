@@ -458,6 +458,10 @@ kmem_cache_free(kmem_cache_t *cachep, void *objp) {
 // kfree - simple interface used by ooutside functions to free an obj
 void
 kfree(void *objp) {
+  //Fix by chenyh
+  //according to Linux "If @objp is NULL, no operation is performed."
+  if(!objp)
+    return;
     kmem_cache_free(GET_PAGE_CACHE(kva2page(objp)), objp);
 }
 

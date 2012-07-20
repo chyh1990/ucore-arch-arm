@@ -118,7 +118,7 @@ kern_init(void) {
   const char *message = "(THU.CST) os is loading ...";
   kprintf("%s\n\n", message);
 
-  kgdb_init();
+  //kgdb_init();
   //check_bp();
   
 	/* Only to initialize lcpu_count. */
@@ -134,11 +134,11 @@ kern_init(void) {
   vmm_init();                 // init virtual memory management
   _PROBE_();
 
+  dde_init();
 #ifdef HAS_FRAMEBUFFER
   fb_alloc_buffer();
 #endif
 
-  dde_init();
 
   clock_init();               // linux put tick_init in kernel_main, so do we~
 

@@ -48,6 +48,7 @@ static struct memmap masterMemmap = {1,
 struct Page *pages;
 // amount of physical memory (in pages)
 size_t npage = 0;
+unsigned long max_pfn;
 
 PLS static size_t pls_used_pages;
 PLS list_entry_t pls_page_struct_free_list;
@@ -168,6 +169,7 @@ page_init(void) {
 
   // number of pages of the non-existing and existing physical memory (kernel + free)
   npage = maxpa / PGSIZE;
+  max_pfn = npage;
 
   // put page structure table at the end of kernel
   pages = (struct Page *)ROUNDUP((void *)end, PGSIZE); 

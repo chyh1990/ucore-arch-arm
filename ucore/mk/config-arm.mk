@@ -70,7 +70,7 @@ goldfish: $(T_OBJ)/$(KERNEL_INITRD_FILENAME)
 	$(GOLDFISH_EMULATOR) -avd $(GOLDFISH_AVD) -kernel $(T_OBJ)/$(KERNEL_INITRD_FILENAME) -qemu -serial stdio
 
 goldfish_debug: $(T_OBJ)/$(KERNEL_INITRD_FILENAME)
-	$(TERMINAL) -e "$(GOLDFISH_EMULATOR) -avd $(GOLDFISH_AVD) -kernel $(T_OBJ)/$(KERNEL_INITRD_FILENAME) -qemu -serial stdio -S -s"
+	$(TERMINAL) -e "$(GOLDFISH_EMULATOR) -avd $(GOLDFISH_AVD) -kernel $(T_OBJ)/$(KERNEL_INITRD_FILENAME) -qemu -serial stdio -S -s" &
 	sleep 1
 	$(GDB) -x gdbinit.arm
 

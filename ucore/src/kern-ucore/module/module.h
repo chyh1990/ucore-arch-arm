@@ -19,8 +19,6 @@
 #ifndef _MODULE_MODULE_H
 #define _MODULE_MODULE_H
 
-#include <linux/init.h>
-
-void do_initcalls(void);
+void dde_init();
 
 #endif

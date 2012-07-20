@@ -138,7 +138,7 @@ kern_init(void) {
   fb_alloc_buffer();
 #endif
 
-  do_initcalls();
+  dde_init();
 
   clock_init();               // linux put tick_init in kernel_main, so do we~
 

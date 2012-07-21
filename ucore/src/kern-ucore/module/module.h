@@ -20,5 +20,6 @@
 #define _MODULE_MODULE_H
 
 void dde_init();
+void dde_call_mapio_early();
 
 #endif

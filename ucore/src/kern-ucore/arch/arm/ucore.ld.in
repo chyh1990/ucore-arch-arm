@@ -28,6 +28,10 @@ SECTIONS {
 
     .rodata : {
         *(.rodata .rodata.* .gnu.linkonce.r.*)
+        . = ALIGN(4);
+        PROVIDE(__arch_info_begin = .);
+        *(.arch.info.init)
+        PROVIDE(__arch_info_end = .);
     }
 
     /* Include debugging information in kernel memory */

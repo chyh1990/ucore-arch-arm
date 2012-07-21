@@ -171,6 +171,7 @@ static irqreturn_t goldfish_pdev_bus_interrupt(int irq, void *dev_id)
 
 static int __devinit goldfish_pdev_bus_probe(struct platform_device *pdev)
 {
+  printk(KERN_DEBUG "> goldfish_pdev_bus_probe\n");
 	int ret;
 	struct resource *r;
 	r = platform_get_resource(pdev, IORESOURCE_IO, 0);

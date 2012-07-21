@@ -127,6 +127,7 @@ kern_init(void) {
   print_kerninfo();
 
   pmm_init();                 // init physical memory management
+  dde_call_mapio_early();
   pmm_init_ap();
 
   kprintf("pmm_init() done.\n");

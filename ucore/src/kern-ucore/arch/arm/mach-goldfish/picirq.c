@@ -57,16 +57,18 @@ pic_enable(unsigned int irq) {
 }
 
 struct irq_action{
-  irq_handler_t *handler;
+  ucore_irq_handler_t handler;
   void *opaque;
 };
 
 struct irq_action actions[32];
 
-void register_irq(int irq, irq_handler_t handler, void *opaque)
+void register_irq(int irq, ucore_irq_handler_t handler, void *opaque)
 {
-  if(irq>31) 
+  if(irq>31){
+    kprintf("WARNING: register_irq: irq>31\n");
     return;
+  }
   actions[irq].handler = handler;
   actions[irq].opaque = opaque;
 }
@@ -91,7 +93,7 @@ void irq_handler(){
   while(pending > 0){
     irq = inw(VIC_VBASE+INTERRUPT_NUMBER);
     if(actions[irq].handler){
-      actions[irq].handler(actions[irq].opaque);
+      (*actions[irq].handler)(irq, actions[irq].opaque);
     }else{
       pic_disable(irq);
     }

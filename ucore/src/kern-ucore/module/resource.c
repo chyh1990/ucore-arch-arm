@@ -45,11 +45,13 @@ struct resource iomem_resource = {
 
 int insert_resource(struct resource *parent, struct resource *new)
 {
+  printk(KERN_ALERT "TODO %s", __func__);
   return 0;
 }
 
 int release_resource(struct resource *old)
 {
+  printk(KERN_ALERT "TODO %s", __func__);
   return 0;
 }
 

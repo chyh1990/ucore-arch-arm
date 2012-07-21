@@ -45,7 +45,7 @@ enum {
 
 static uint8_t tty_buffer[4];
 
-static int serial_int_handler(void * data)
+static int serial_int_handler(int irq, void * data)
 {
   extern void dev_stdin_write(char c);
   char c = cons_getc();

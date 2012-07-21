@@ -226,6 +226,11 @@ boot_map_segment(pde_t *pgdir, uintptr_t la, size_t size, uintptr_t pa, uint32_t
     ptep_set_perm(ptep, PTE_P | perm);
   }
 }
+void
+__boot_map_iomem(uintptr_t la, size_t size, uintptr_t pa) {
+  kprintf("mapping iomem 0x%08x to 0x%08x, size 0x%08x\n", pa, la,size);
+  boot_map_segment(boot_pgdir, la, size, pa, PTE_W|PTE_IOMEM);
+}
 
 //boot_alloc_page - allocate pages for the PDT 
 // return value: the kernel virtual address of this allocated page
@@ -294,6 +299,8 @@ pmm_init(void) {
   //boot_map_segment(boot_pgdir, virtual, PGSIZE, physical, PTEX_W); // base location of vector table
   boot_map_segment(boot_pgdir, KERNBASE, KMEMSIZE, KERNBASE, PTE_W); // fixed address
   boot_map_segment(boot_pgdir, KIOBASE, KIOSIZE, KIOBASE, PTE_W|PTE_IOMEM); // fixed address
+
+
   boot_map_segment(boot_pgdir, 0xFFFF0000, PGSIZE, 0, PTE_W|PTE_PWT); // high location of vector table
 #ifdef HAS_RAMDISK
   if(CHECK_INITRD_EXIST()){

@@ -50,6 +50,7 @@ void dde_init()
   chrdev_init();
 
   driver_init();
+  dde_call_machine_init();
   do_initcalls();
 }
 
@@ -371,50 +372,6 @@ void *dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle
 {
   printk(KERN_ALERT "dma_alloc_writecombine size %08x\n", size);
   return NULL;
-}
-
-/* schedule */
-int wake_up_process(struct task_struct *tsk)
-{
-  panic("TODO");
-  return 0;
-}
-
-void async_synchronize_full(void)
-{
-}
-
-void msleep(unsigned int msecs)
-{
-}
-
-unsigned long msleep_interruptible(unsigned int msecs)
- {
-   return msecs;
- }
-
-void __wake_up(wait_queue_head_t *q, unsigned int mode, int nr, void *key){
-}
-
-int autoremove_wake_function(wait_queue_t *wait, unsigned mode, int sync, void *key)
-{
-  return 0;
-}
-void prepare_to_wait(wait_queue_head_t *q, wait_queue_t *wait, int state)
-{
-}
-
-void finish_wait(wait_queue_head_t *q, wait_queue_t *wait)
-{
-}
-
-void init_waitqueue_head(wait_queue_head_t *q)
-{
-}
-
-signed long schedule_timeout(signed long timeout)
-{
-  return 0;
 }
 
 /* console */

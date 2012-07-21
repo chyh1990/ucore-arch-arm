@@ -18,11 +18,21 @@
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/platform_device.h>
+#include <linux/delay.h>
+//#include <linux/mtd/mtd.h>
+//#include <linux/mtd/nand.h>
+//#include <linux/mtd/partitions.h>
+#include <linux/input.h>
 
 #include <mach/hardware.h>
 #include <asm/io.h>
+#include <asm/mach-types.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/flash.h>
+#include <asm/mach/map.h>
+#include <asm/mach/time.h>
 
-static int GOLDFISH_READY = 0;
+int GOLDFISH_READY = 0;
 
 static struct resource goldfish_pdev_bus_resources[] = {
 	{
@@ -50,9 +60,42 @@ static void __init goldfish_init(void)
 	platform_device_register(&goldfish_pdev_bus_device);
 }
 
-arch_initcall(goldfish_init);
+void goldfish_mask_irq(unsigned int irq)
+{
+	writel(irq, IO_ADDRESS(GOLDFISH_INTERRUPT_BASE) + GOLDFISH_INTERRUPT_DISABLE);
+}
+
+void goldfish_unmask_irq(unsigned int irq)
+{
+	writel(irq, IO_ADDRESS(GOLDFISH_INTERRUPT_BASE) + GOLDFISH_INTERRUPT_ENABLE);
+}
+
+static struct irq_chip goldfish_irq_chip = {
+	.name	= "goldfish",
+	.mask	= goldfish_mask_irq,
+	.mask_ack = goldfish_mask_irq,
+	.unmask = goldfish_unmask_irq,
+};
+
+void goldfish_init_irq(void)
+{
+	unsigned int i;
+	uint32_t int_base = IO_ADDRESS(GOLDFISH_INTERRUPT_BASE);
+
+	/*
+	 * Disable all interrupt sources
+	 */
+	writel(1, int_base + GOLDFISH_INTERRUPT_DISABLE_ALL);
 
 #if 0
+	for (i = 0; i < NR_IRQS; i++) {
+		set_irq_chip(i, &goldfish_irq_chip);
+		set_irq_handler(i, handle_level_irq);
+		set_irq_flags(i, IRQF_VALID | IRQF_PROBE);
+	}
+#endif
+}
+
 static struct map_desc goldfish_io_desc[] __initdata = {
 	{
 		.virtual	= IO_BASE,
@@ -68,7 +111,7 @@ static void __init goldfish_map_io(void)
     GOLDFISH_READY = 1;
 }
 
-extern struct sys_timer goldfish_timer;
+//extern struct sys_timer goldfish_timer;
 
 MACHINE_START(GOLDFISH, "Goldfish")
 	.phys_io	= IO_START,
@@ -77,6 +120,6 @@ MACHINE_START(GOLDFISH, "Goldfish")
 	.map_io		= goldfish_map_io,
 	.init_irq	= goldfish_init_irq,
 	.init_machine	= goldfish_init,
-	.timer		= &goldfish_timer,
+	//.timer		= &goldfish_timer,
 MACHINE_END
-#endif
+

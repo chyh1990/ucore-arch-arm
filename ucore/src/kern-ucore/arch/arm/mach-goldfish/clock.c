@@ -52,7 +52,7 @@ void clock_clear(void){
   outw(TIMER0_VA_BASE + TIMER_CLEAR_INTERRUPT, 1);
 }
 
-static int clock_int_handler(void * data)
+static int clock_int_handler(int irq, void * data)
 {
   ticks++;
   //if(ticks % 100 == 0)

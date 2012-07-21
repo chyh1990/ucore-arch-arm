@@ -21,6 +21,7 @@
 #include <linux/err.h>
 #include <linux/gfp.h>
 #include <linux/init.h>
+#include <linux/wait.h>
 
 #define __NO_UCORE_TYPE__
 #include <module.h>
@@ -45,6 +46,9 @@ static void do_initcalls()
 
 void dde_init()
 {
+  /* invoked in vfs_cache_init in Linux */
+  chrdev_init();
+
   driver_init();
   do_initcalls();
 }
@@ -362,6 +366,13 @@ void
  {
  }
 
+/* dma for arm */
+void *dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle, gfp_t gfp)
+{
+  printk(KERN_ALERT "dma_alloc_writecombine size %08x\n", size);
+  return NULL;
+}
+
 /* schedule */
 int wake_up_process(struct task_struct *tsk)
 {
@@ -384,3 +395,107 @@ unsigned long msleep_interruptible(unsigned int msecs)
 
 void __wake_up(wait_queue_head_t *q, unsigned int mode, int nr, void *key){
 }
+
+int autoremove_wake_function(wait_queue_t *wait, unsigned mode, int sync, void *key)
+{
+  return 0;
+}
+void prepare_to_wait(wait_queue_head_t *q, wait_queue_t *wait, int state)
+{
+}
+
+void finish_wait(wait_queue_head_t *q, wait_queue_t *wait)
+{
+}
+
+void init_waitqueue_head(wait_queue_head_t *q)
+{
+}
+
+signed long schedule_timeout(signed long timeout)
+{
+  return 0;
+}
+
+/* console */
+void acquire_console_sem(void)
+{
+}
+
+int try_acquire_console_sem(void)
+{
+  return 0;
+}
+
+void release_console_sem(void)
+{
+}
+
+/* uaccess */
+
+/* procfs */
+struct proc_dir_entry *proc_create_data(const char *name, mode_t mode,
+                                 struct proc_dir_entry *parent,
+                                 const struct file_operations *proc_fops,
+                                 void *data)
+{
+  //TODO
+  printk(KERN_DEBUG "proc_create_data: %s\n", name);
+  return NULL;
+}
+
+int seq_open(struct file *file, const struct seq_operations *op)
+{
+  return -EINVAL;
+}
+
+ssize_t seq_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
+{
+  return -EINVAL;
+}
+
+loff_t seq_lseek(struct file *file, loff_t offset, int origin)
+{
+  return -EINVAL;
+}
+
+int seq_release(struct inode *inode, struct file *file)
+{
+  return -EINVAL;
+}
+
+int seq_escape(struct seq_file *m, const char *s, const char *esc)
+{
+  return -EINVAL;
+}
+
+int seq_putc(struct seq_file *m, char c)
+{
+  return -EINVAL;
+}
+int seq_puts(struct seq_file *m, const char *s)
+{
+  return -EINVAL;
+}
+int seq_write(struct seq_file *seq, const void *data, size_t len)
+{
+  return -EINVAL;
+}
+int seq_printf(struct seq_file *m, const char *f, ...)
+{
+  return -EINVAL;
+}
+
+/* vmm */
+int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
+            unsigned long pfn, unsigned long size, pgprot_t prot)
+{
+  return 0;
+}
+
+/* bdi api, what is it? */
+int bdi_init(struct backing_dev_info *bdi)
+{
+  return 0;
+}
+

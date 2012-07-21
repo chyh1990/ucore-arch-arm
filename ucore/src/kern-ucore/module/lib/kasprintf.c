@@ -10,14 +10,6 @@
 #include <linux/string.h>
 
 
-#ifndef va_copy
-# ifdef __va_copy
-#  define va_copy(DEST,SRC) __va_copy((DEST),(SRC))
-# else
-#  define va_copy(DEST, SRC) memcpy((&DEST), (&SRC), sizeof(va_list))
-# endif
-#endif 
-
 /* Simplified asprintf. */
 char *kvasprintf(gfp_t gfp, const char *fmt, va_list ap)
 {

@@ -1,6 +1,7 @@
 #ifndef __KERN_MM_VMM_H__
 #define __KERN_MM_VMM_H__
 
+#ifndef __LINUX_GLUE__
 #include <types.h>
 #include <list.h>
 #include <memlayout.h>
@@ -9,6 +10,7 @@
 #include <shmem.h>
 #include <atomic.h>
 #include <sem.h>
+#endif
 
 //pre define
 struct mm_struct;

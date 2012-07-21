@@ -134,7 +134,6 @@ kern_init(void) {
   vmm_init();                 // init virtual memory management
   _PROBE_();
 
-  dde_init();
 #ifdef HAS_FRAMEBUFFER
   fb_alloc_buffer();
 #endif
@@ -149,6 +148,7 @@ kern_init(void) {
   proc_init();                // init process table
   _PROBE_();
     sync_init();                // init sync struct
+  dde_init();
 
   ide_init();                 // init ide devices
   _PROBE_();

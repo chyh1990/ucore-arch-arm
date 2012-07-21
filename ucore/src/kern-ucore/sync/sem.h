@@ -5,7 +5,7 @@
 #include <atomic.h>
 #include <wait.h>
 
-typedef struct {
+typedef struct semaphore{
     int value;
     bool valid;
     atomic_t count;

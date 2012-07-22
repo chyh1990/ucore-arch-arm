@@ -31,45 +31,20 @@
 
 extern const struct file_operations def_chr_fops;
 
-static int 
-__ucore_vfs_device_caller_open(struct device *dev, uint32_t open_flags)
-{
-  //kprintf("##__ucore_vfs_device_caller_open\n");
-  return __ucore_linux_inode_fops_stub_open(dev, open_flags);
-}
-
-static int 
-__ucore_vfs_device_caller_close(struct device *dev) {
-  //kprintf("##__ucore_vfs_device_caller_close\n");
-  //__ucore_linux_file_zero(dev->linux_file);
-  return __ucore_linux_inode_fops_stub_close(dev);
-}
+/* in helper */
+extern int __ucore_linux_inode_fops_stub_open(struct device *dev, uint32_t open_flags);
+extern int __ucore_linux_inode_fops_stub_close(struct device *dev);
+extern int __ucore_linux_inode_fops_stub_ioctl(struct device* dev, unsigned int cmd, unsigned long arg);
+extern int __ucore_linux_inode_fops_stub_read(struct device *dev, 
+  const char __user *buf, size_t count, size_t *offset);
+extern int __ucore_linux_inode_fops_stub_write(struct device *dev, 
+  const char __user *buf, size_t count, size_t *offset);
 
 static int 
 __ucore_vfs_device_caller_io(struct device *dev, struct iobuf *iob, bool write)
 {
   kprintf("## NEVER call __ucore_vfs_device_caller_io!\n");
   return -E_INVAL;
-}
-
-static int 
-__ucore_vfs_device_caller_linux_write(struct device *dev, const char __user *buf,
-                size_t count, size_t *offset) {
-  //kprintf("##__ucore_vfs_device_caller_linux_write\n");
-  return __ucore_linux_inode_fops_stub_write(dev, buf, count, offset);
-}
-
-static int 
-__ucore_vfs_device_caller_linux_ioctl(struct device *dev, unsigned int cmd, unsigned long arg) {
-  //kprintf("##__ucore_vfs_device_caller_linux_write\n");
-  return __ucore_linux_inode_fops_stub_ioctl(dev, cmd, arg);
-}
-
-static int 
-__ucore_vfs_device_caller_linux_read(struct device *dev, const char __user *buf,
-                size_t count, size_t *offset) {
-  //kprintf("##__ucore_vfs_device_caller_linux_write\n");
-  return __ucore_linux_inode_fops_stub_read(dev, buf, count, offset);
 }
 
 static void
@@ -83,14 +58,14 @@ __ucore_vfs_device_init(struct device *dev, dev_t devno, mode_t mode) {
   }
   dev->linux_dentry = __ucore_create_linux_dentry(devno, mode, fops); 
 
-  dev->d_open = __ucore_vfs_device_caller_open;
-  dev->d_close = __ucore_vfs_device_caller_close;
+  dev->d_open = __ucore_linux_inode_fops_stub_open;
+  dev->d_close = __ucore_linux_inode_fops_stub_close;
   dev->d_io = __ucore_vfs_device_caller_io;
 
   /* linux */
-  dev->d_linux_write = __ucore_vfs_device_caller_linux_write;
-  dev->d_linux_read = __ucore_vfs_device_caller_linux_read;
-  dev->d_linux_ioctl = __ucore_vfs_device_caller_linux_ioctl;
+  dev->d_linux_write = __ucore_linux_inode_fops_stub_write;
+  dev->d_linux_read = __ucore_linux_inode_fops_stub_read;
+  dev->d_linux_ioctl = __ucore_linux_inode_fops_stub_ioctl;
 }
 
 void ucore_vfs_add_device(const char* name, int major, int minor)

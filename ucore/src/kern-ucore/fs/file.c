@@ -409,7 +409,7 @@ failed_cleanup_file:
     return ret;
 }
 
-/* linux devfile */
+/* linux devfile adaptor */
 bool __is_linux_devfile(int fd)
 {
     int ret = -E_INVAL;

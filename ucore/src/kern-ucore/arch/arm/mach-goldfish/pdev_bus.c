@@ -38,7 +38,7 @@ static int pdev_device_init(struct pdev_device* dev)
     extern void serial_init(uint32_t base, uint32_t irq);
     serial_init(dev->base, dev->irq);
   }else if(!strcmp(dev->name, "goldfish_fb")){
-    fb_init(dev->base, dev->irq);
+    //fb_init(dev->base, dev->irq);
   }
 }
 

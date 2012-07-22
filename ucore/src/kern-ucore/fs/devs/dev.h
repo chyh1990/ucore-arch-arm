@@ -29,8 +29,9 @@ struct device{
     mode_t i_mode;
     const struct file_operations *i_fops; 
     */
-    void *linux_inode;
     void *linux_file;
+    void *linux_dentry;
+
     int (*d_linux_read)(struct device *dev, const char __user *buf,
                 size_t count, size_t *offset);
     int (*d_linux_write)(struct device *dev, const char __user *buf,
@@ -47,7 +48,7 @@ struct device{
 #define dop_io(dev, iob, write)             ((dev)->d_io(dev, iob, write))
 #define dop_ioctl(dev, op, data)            ((dev)->d_ioctl(dev, op, data))
 
-#define dev_is_linux_dev(dev) ((dev)->linux_inode != NULL)
+#define dev_is_linux_dev(dev) ((dev)->linux_dentry != NULL)
 
 void dev_init(void);
 /* Create inode for a vfs-level device. */

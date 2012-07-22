@@ -38,7 +38,7 @@ static ssize_t hzf_read(struct file *file, char __user *buf, size_t count,
     if(copy_to_user(buf,&hzf_var, sizeof(hzf_var)))
         return -EFAULT;
  
-    printk("hzf chrdev readvar=%d\n", hzf_var);
+    printk(KERN_INFO "hzf chrdev offset=%lld readvar=%d\n", *offset, hzf_var);
     return sizeof(hzf_var);
 }
  
@@ -48,7 +48,7 @@ static ssize_t hzf_write(struct file *file, const char __user *buf,
    if(copy_from_user(&hzf_var, buf, sizeof(int)))
         return -EFAULT;
  
-    printk("hzf chrdev writenew var=%d\n", hzf_var);
+    printk(KERN_INFO "hzf chrdev offset=%lld writenew var=%d\n", *offset, hzf_var);
     return sizeof(int);
 }
  

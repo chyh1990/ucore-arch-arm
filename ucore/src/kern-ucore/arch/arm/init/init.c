@@ -135,11 +135,6 @@ kern_init(void) {
   vmm_init();                 // init virtual memory management
   _PROBE_();
 
-#ifdef HAS_FRAMEBUFFER
-  fb_alloc_buffer();
-#endif
-
-
   clock_init();               // linux put tick_init in kernel_main, so do we~
 
   //intr_enable();

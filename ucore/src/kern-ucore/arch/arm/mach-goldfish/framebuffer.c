@@ -23,7 +23,7 @@
 #include <kio.h>
 #include <picirq.h>
 #include <framebuffer.h>
-#include "goldfish_logo.h"
+//#include "goldfish_logo.h"
 
 /* These values *must* match the platform definitions found under
  * hardware/libhardware/include/hardware/hardware.h
@@ -102,6 +102,7 @@ static int check_fb_drawable()
 
 static void draw_test()
 {
+#if 0
   assert(check_fb_drawable());
   int w = fb.fix_width;
   int h = fb.fix_height;
@@ -121,6 +122,7 @@ static void draw_test()
       buf[i + j] = color;
     }
   }
+#endif
 }
 
 int fb_alloc_buffer()

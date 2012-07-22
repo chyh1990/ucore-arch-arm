@@ -55,6 +55,7 @@ sysfile_close(int fd) {
 
 int
 sysfile_read(int fd, void *base, size_t len) {
+    int ret = 0;
     struct mm_struct *mm = pls_read(current)->mm;
     if (len == 0) {
         return 0;
@@ -62,12 +63,19 @@ sysfile_read(int fd, void *base, size_t len) {
     if (!file_testfd(fd, 1, 0)) {
         return -E_INVAL;
     }
+    /* for linux inode */
+    if(__is_linux_devfile(fd)){
+      size_t alen = 0;
+      ret = linux_devfile_read(fd, base, len, &alen);
+      if(ret)
+        return ret;
+      return alen;
+    }
     void *buffer;
     if ((buffer = kmalloc(IOBUF_SIZE)) == NULL) {
         return -E_NO_MEM;
     }
 
-    int ret = 0;
     size_t copied = 0, alen;
     while (len != 0) {
         if ((alen = IOBUF_SIZE) > len) {
@@ -116,8 +124,8 @@ sysfile_write(int fd, void *base, size_t len) {
     if(__is_linux_devfile(fd)){
       /* use 8byte int, in case of 64bit off_t
        * config in linux kernel */
-      unsigned long long alen = 0;
-      ret = linux_devfile_write(fd, base, len, (size_t*)&alen);
+      size_t alen = 0;
+      ret = linux_devfile_write(fd, base, len, &alen);
       if(ret)
         return ret;
       return alen;

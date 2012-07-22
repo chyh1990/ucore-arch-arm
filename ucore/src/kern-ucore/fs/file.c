@@ -423,12 +423,44 @@ bool __is_linux_devfile(int fd)
     return 0;
 }
 
+int
+linux_devfile_read(int fd, void *base, size_t len, size_t *copied_store)
+{
+  int ret = -E_INVAL;
+  struct file *file;
+  /* use 8byte int, in case of 64bit off_t
+   * config in linux kernel */
+  int64_t offset;
+  if ((ret = fd2file(fd, &file)) != 0) {
+    return 0;
+  }
+
+  if (!file->readable) {
+    return -E_INVAL;
+  }
+  filemap_acquire(file);
+  offset = file->pos;
+  struct device *dev = vop_info(file->node, device);
+  assert(dev);
+  ret = dev->d_linux_read(dev, base, len, (size_t*)&offset);
+  if(ret >= 0){
+    *copied_store = (size_t)ret;
+    file->pos += ret;
+    ret = 0;
+  }
+  filemap_release(file);
+  return ret;
+}
+
 
 int
 linux_devfile_write(int fd, void *base, size_t len, size_t *copied_store)
 {
   int ret = -E_INVAL;
   struct file *file;
+  /* use 8byte int, in case of 64bit off_t
+   * config in linux kernel */
+  int64_t offset;
   if ((ret = fd2file(fd, &file)) != 0) {
     return 0;
   }
@@ -437,9 +469,15 @@ linux_devfile_write(int fd, void *base, size_t len, size_t *copied_store)
     return -E_INVAL;
   }
   filemap_acquire(file);
+  offset = file->pos;
   struct device *dev = vop_info(file->node, device);
   assert(dev);
-  ret = dev->d_linux_write(dev, base, len, copied_store);
+  ret = dev->d_linux_write(dev, base, len, (size_t*)&offset);
+  if(ret >= 0){
+    *copied_store = (size_t)ret;
+    file->pos += ret;
+    ret = 0;
+  }
   filemap_release(file);
   return ret;
 }

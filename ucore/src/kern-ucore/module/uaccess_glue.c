@@ -21,8 +21,12 @@
 
 unsigned long __ucore_copy_to_user(void *to, const void *from, unsigned long n)
 {
-    struct mm_struct *mm = pls_read(current)->mm;
-  if(copy_to_user(mm, to, from, n))
+  int ret = 0;
+  struct mm_struct *mm = pls_read(current)->mm;
+  lock_mm(mm);
+  ret = copy_to_user(mm, to, from, n);
+  unlock_mm(mm);
+  if(ret)
     return 0;
   return n;
 }
@@ -30,8 +34,12 @@ unsigned long __ucore_copy_to_user(void *to, const void *from, unsigned long n)
 
 unsigned long __ucore_copy_from_user(void *to, const void *from, unsigned long n)
 {
-    struct mm_struct *mm = pls_read(current)->mm;
-  if(copy_from_user(mm, to, from, n, 0))
+  int ret = 0;
+  struct mm_struct *mm = pls_read(current)->mm;
+  lock_mm(mm);
+  ret = copy_from_user(mm, to, from, n, 0);
+  unlock_mm(mm);
+  if(ret)
     return 0;
   return n;
 }

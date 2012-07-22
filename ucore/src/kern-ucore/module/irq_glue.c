@@ -27,6 +27,8 @@
 int request_irq(unsigned int irq, irq_handler_t handler,
                  unsigned long irqflags, const char *devname, void *dev_id)
 {
+  if( irq > 31)
+    return -EINVAL;
   printk(KERN_DEBUG "request_irq %d\n", irq);
   register_irq(irq, handler, dev_id);
   pic_enable(irq);

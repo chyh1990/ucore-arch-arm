@@ -28,6 +28,7 @@
 #include <linux/pfn.h>
 #include <asm/io.h>
 
+#if 0
 /* resource */
 struct resource ioport_resource = {
   .name   = "PCI IO",
@@ -45,13 +46,13 @@ struct resource iomem_resource = {
 
 int insert_resource(struct resource *parent, struct resource *new)
 {
-  printk(KERN_ALERT "TODO %s", __func__);
+  printk(KERN_ALERT "TODO %s\n", __func__);
   return 0;
 }
 
 int release_resource(struct resource *old)
 {
-  printk(KERN_ALERT "TODO %s", __func__);
+  printk(KERN_ALERT "TODO %s\n", __func__);
   return 0;
 }
-
+#endif

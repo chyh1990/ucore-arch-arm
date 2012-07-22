@@ -409,3 +409,39 @@ failed_cleanup_file:
     return ret;
 }
 
+/* linux devfile */
+bool __is_linux_devfile(int fd)
+{
+    int ret = -E_INVAL;
+    struct file *file;
+    if ((ret = fd2file(fd, &file)) != 0) {
+        return 0;
+    }
+    if(file->node && check_inode_type(file->node, device) 
+      && dev_is_linux_dev(vop_info(file->node, device)))
+      return 1;
+    return 0;
+}
+
+
+int
+linux_devfile_write(int fd, void *base, size_t len, size_t *copied_store)
+{
+  int ret = -E_INVAL;
+  struct file *file;
+  if ((ret = fd2file(fd, &file)) != 0) {
+    return 0;
+  }
+
+  if (!file->writable) {
+    return -E_INVAL;
+  }
+  filemap_acquire(file);
+  struct device *dev = vop_info(file->node, device);
+  assert(dev);
+  ret = dev->d_linux_write(dev, base, len, copied_store);
+  filemap_release(file);
+  return ret;
+}
+
+

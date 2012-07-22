@@ -11,7 +11,11 @@ struct inode;
 struct stat;
 struct dirent;
 
+#ifdef __NO_UCORE_FILE__
+struct ucore_file {
+#else
 struct file {
+#endif
     enum {
         FD_NONE, FD_INIT, FD_OPENED, FD_CLOSED,
     } status;
@@ -40,6 +44,9 @@ int file_getdirentry(int fd, struct dirent *dirent);
 int file_dup(int fd1, int fd2);
 int file_pipe(int fd[]);
 int file_mkfifo(const char *name, uint32_t open_flags);
+
+int linux_devfile_read(int fd, void *base, size_t len, size_t *copied_store);
+int linux_devfile_write(int fd, void *base, size_t len, size_t *copied_store);
 
 static inline int
 fopen_count(struct file *file) {

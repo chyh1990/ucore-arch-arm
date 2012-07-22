@@ -27,53 +27,68 @@
 #define __NO_UCORE_TYPE__
 #include <module.h>
 
+#define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
+
 /* schedule */
 int wake_up_process(struct task_struct *tsk)
 {
-  panic("TODO");
+  _TODO_();
   return 0;
 }
 
 void async_synchronize_full(void)
 {
+  _TODO_();
 }
 
 void msleep(unsigned int msecs)
 {
+  _TODO_();
 }
 
 unsigned long msleep_interruptible(unsigned int msecs)
  {
+  _TODO_();
    return msecs;
  }
 
-void __wake_up(wait_queue_head_t *q, unsigned int mode, int nr, void *key){
+void __wake_up(wait_queue_head_t *q, unsigned int mode, int nr, void *key)
+{
+  _TODO_();
 }
 
 int autoremove_wake_function(wait_queue_t *wait, unsigned mode, int sync, void *key)
 {
+  _TODO_();
   return 0;
 }
 void prepare_to_wait(wait_queue_head_t *q, wait_queue_t *wait, int state)
 {
+  _TODO_();
 }
 
 void finish_wait(wait_queue_head_t *q, wait_queue_t *wait)
 {
+  _TODO_();
 }
 
 void init_waitqueue_head(wait_queue_head_t *q)
 {
+  _TODO_();
 }
 
 signed long schedule_timeout(signed long timeout)
 {
+  _TODO_();
   return 0;
 }
 
 int schedule_work(struct work_struct *work)
 {
-  pr_debug("schedule_work()\n");
+  int ret = 1;
+  pr_debug("TODO schedule_work()\n");
+  work_func_t f = work->func;
+  f(work);
   return 0;
 }
 

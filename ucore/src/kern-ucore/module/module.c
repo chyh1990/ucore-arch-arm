@@ -29,6 +29,11 @@
 #include <slab.h>
 //#include <assert.h>
 
+#ifdef DEBUG
+#define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
+#else 
+#define _TODO_() 
+#endif
 
 extern initcall_t __initcall_start[], __initcall_end[];
 
@@ -203,10 +208,12 @@ extern int blocking_notifier_chain_unregister(struct blocking_notifier_head *nh,
 int sysfs_create_link(struct kobject *kobj, struct kobject *target,
     const char *name)
 {
+  _TODO_();
   return 0;
 }
 int sysfs_create_dir(struct kobject *kobj)
 {
+  _TODO_();
   return 0;
 }
 void sysfs_remove_dir(struct kobject *kobj)
@@ -251,6 +258,7 @@ void sysfs_remove_link(struct kobject * kobj, const char * name)
 int sysfs_create_file(struct kobject *kobj,
                                     const struct attribute *attr)
 {
+  _TODO_();
   return 0;
 }
 
@@ -365,14 +373,9 @@ void
  dma_free_coherent(struct device *dev, size_t size, void *cpu_addr,
                      dma_addr_t dma_handle)
  {
+   printk(KERN_ALERT "TODO %s\n", __func__);
  }
 
-/* dma for arm */
-void *dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle, gfp_t gfp)
-{
-  printk(KERN_ALERT "dma_alloc_writecombine size %08x\n", size);
-  return NULL;
-}
 
 /* console */
 void acquire_console_sem(void)

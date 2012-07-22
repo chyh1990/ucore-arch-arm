@@ -28,6 +28,7 @@
 #include <asm/mach/time.h>
 
 #define __NO_UCORE_TYPE__
+#include <pmm_glue.h>
 
 extern uintptr_t *boot_pgdir;
 void __init iotable_init(struct map_desc *io_desc, int nr)
@@ -55,4 +56,13 @@ void dde_call_machine_init()
   __arch_info_begin[0].init_machine();
 }
 
+
+/* dma for arm */
+void *dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle, gfp_t gfp)
+{
+  printk(KERN_ALERT "dma_alloc_writecombine size %08x\n", size);
+  void *cpuaddr = ucore_kva_alloc_pages( (size+PAGE_SIZE-1)/PAGE_SIZE );
+  *handle = cpuaddr;
+  return cpuaddr;
+}
 

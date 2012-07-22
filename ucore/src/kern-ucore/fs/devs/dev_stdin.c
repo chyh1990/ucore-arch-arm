@@ -99,6 +99,7 @@ stdin_ioctl(struct device *dev, int op, void *data) {
 
 static void
 stdin_device_init(struct device *dev) {
+    memset(dev, 0, sizeof(*dev));
     dev->d_blocks = 0;
     dev->d_blocksize = 1;
     dev->d_open = stdin_open;

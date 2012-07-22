@@ -110,6 +110,7 @@ disk0_ioctl(struct device *dev, int op, void *data) {
 
 static void
 disk0_device_init(struct device *dev) {
+    memset(dev, 0, sizeof(*dev));
     static_assert(DISK0_BLKSIZE % SECTSIZE == 0);
     if (!ide_device_valid(DISK0_DEV_NO)) {
         panic("disk0 device isn't available.\n");

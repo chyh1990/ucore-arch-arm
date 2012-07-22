@@ -9,7 +9,11 @@
 /* copy from Linux 2.6 Chen Yuheng 2012/3/20*/
 typedef struct {
     volatile int counter;
-} atomic_t;
+} ucore_atomic_t;
+
+#ifndef __NO_UCORE_TYPE__ 
+typedef ucore_atomic_t atomic_t;
+#endif
 
 static inline int atomic_read(const atomic_t *v) __attribute__((always_inline));
 static inline void atomic_set(atomic_t *v, int i) __attribute__((always_inline));

@@ -106,6 +106,8 @@ serial_proc_data(void) {
       return -1;
     }
     outw(uart_base + TTY_CMD, TTY_CMD_READ_BUFFER);
+    if(tty_buffer[0] == 127)
+      tty_buffer[0] = '\b';
     return tty_buffer[0];
 }
 

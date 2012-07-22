@@ -63,8 +63,6 @@ typedef intptr_t off_t;
 /* ppn_t used for page numbers */
 typedef size_t ppn_t;
 
-/* sem_t is used for semaphore id */
-typedef uintptr_t sem_t;
 
 /* *
  * Rounding operations (efficient when n is a power of 2)
@@ -108,6 +106,9 @@ typedef uint32_t mode_t;
 typedef uint32_t          dev_t;
 
 #endif /* __NO_UCORE_TYPE__ */
+
+/* sem_t is used for semaphore id */
+typedef uintptr_t sem_t;
 
 #endif /* !__LIBS_TYPES_H__ */
 

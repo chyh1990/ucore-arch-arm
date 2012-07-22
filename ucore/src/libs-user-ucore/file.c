@@ -82,3 +82,6 @@ print_stat(const char *name, int fd, struct stat *stat) {
     cprintf("    size    : %lu\n", stat->st_size);
 }
 
+int ioctl(int fd, int request, unsigned long data){
+  return sys_ioctl(fd, request, data);
+}

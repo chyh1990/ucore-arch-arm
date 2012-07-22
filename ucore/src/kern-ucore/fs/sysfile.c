@@ -355,3 +355,11 @@ sysfile_mkfifo(const char *__name, uint32_t open_flags) {
     return ret;
 }
 
+int sysfile_ioctl(int fd, unsigned int cmd, unsigned long arg)
+{
+  if(!__is_linux_devfile(fd)){
+    return -E_INVAL;
+  }
+  return linux_devfile_ioctl(fd, cmd, arg);
+}
+

@@ -482,4 +482,18 @@ linux_devfile_write(int fd, void *base, size_t len, size_t *copied_store)
   return ret;
 }
 
+int linux_devfile_ioctl(int fd, unsigned int cmd, unsigned long arg)
+{
+  int ret = -E_INVAL;
+  struct file *file;
+  if ((ret = fd2file(fd, &file)) != 0) {
+    return 0;
+  }
+  filemap_acquire(file);
+  struct device *dev = vop_info(file->node, device);
+  assert(dev);
+  ret = dev->d_linux_ioctl(dev, cmd, arg);
+  filemap_release(file);
+  return ret;
+}
 

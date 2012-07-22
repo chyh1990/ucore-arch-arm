@@ -53,6 +53,9 @@
 #define SYS_pipe            140
 #define SYS_mkfifo          141
 
+/* chenyh 2012/7 */
+#define SYS_ioctl           142
+
 /* SYS_fork flags */
 #define CLONE_VM            0x00000100  // set if VM shared between processes
 #define CLONE_THREAD        0x00000200  // thread group

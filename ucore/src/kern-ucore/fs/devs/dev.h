@@ -36,6 +36,8 @@ struct device{
                 size_t count, size_t *offset);
     int (*d_linux_write)(struct device *dev, const char __user *buf,
                 size_t count, size_t *offset);
+    /* new ioctl */
+    int (*d_linux_ioctl)(struct device *dev, unsigned int, unsigned long);
 
     int (*d_open)(struct device *dev, uint32_t open_flags);
     int (*d_close)(struct device *dev);

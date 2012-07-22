@@ -60,6 +60,12 @@ __ucore_vfs_device_caller_linux_write(struct device *dev, const char __user *buf
 }
 
 static int 
+__ucore_vfs_device_caller_linux_ioctl(struct device *dev, unsigned int cmd, unsigned long arg) {
+  //kprintf("##__ucore_vfs_device_caller_linux_write\n");
+  return __ucore_linux_inode_fops_stub_ioctl(dev, cmd, arg);
+}
+
+static int 
 __ucore_vfs_device_caller_linux_read(struct device *dev, const char __user *buf,
                 size_t count, size_t *offset) {
   //kprintf("##__ucore_vfs_device_caller_linux_write\n");
@@ -84,6 +90,7 @@ __ucore_vfs_device_init(struct device *dev, dev_t devno, mode_t mode) {
   /* linux */
   dev->d_linux_write = __ucore_vfs_device_caller_linux_write;
   dev->d_linux_read = __ucore_vfs_device_caller_linux_read;
+  dev->d_linux_ioctl = __ucore_vfs_device_caller_linux_ioctl;
 }
 
 void ucore_vfs_add_device(const char* name, int major, int minor)

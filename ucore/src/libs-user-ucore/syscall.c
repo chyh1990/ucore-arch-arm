@@ -342,6 +342,7 @@ _syscall2(int, getdirentry,int , fd, struct dirent *, dirent);
 _syscall2(int, dup,int , fd1, int , fd2);
 _syscall1(int, pipe,int *, fd);
 _syscall2(int, mkfifo,const char *, name, uint32_t , open);
+_syscall3(int, ioctl, int, d, int, request, unsigned long, data);
 
 
 int

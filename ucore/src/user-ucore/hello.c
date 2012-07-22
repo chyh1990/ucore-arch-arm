@@ -81,6 +81,7 @@ static void logo_loop(){
     }
     close(fd);
     
+    assert(logo_height < h && logo_width < w);
 
     int size = w*h*vinfo.bits_per_pixel/8;
     unsigned short* buf = (unsigned short*)malloc(size);

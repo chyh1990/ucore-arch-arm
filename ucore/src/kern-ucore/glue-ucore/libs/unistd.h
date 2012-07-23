@@ -3,6 +3,8 @@
 
 #define T_SYSCALL           0x80
 
+#define __SYS_linux         0
+
 /* syscall number */
 #define SYS_exit            1
 #define SYS_fork            2

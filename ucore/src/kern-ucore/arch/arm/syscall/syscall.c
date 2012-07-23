@@ -350,6 +350,12 @@ sys_linux_mmap(uint32_t arg[])
   return (uint32_t)sysfile_linux_mmap(addr, len, fd, off);
 }
 
+static uint32_t __sys_linux_entry(struct trapframe *tf)
+{
+  panic("TODO __sys_linux_entry");
+  return -E_KILLED;
+}
+
 static uint32_t (*syscalls[])(uint32_t arg[]) = {
     [SYS_exit]              sys_exit,
     [SYS_fork]              sys_fork,
@@ -410,6 +416,10 @@ syscall() {
     uint32_t arg[5];
     struct trapframe* tf = pls_read(current)->tf;
     int num = tf->tf_err; // SYS_xxx
+    if (num == 0){
+      __sys_linux_entry(tf);
+      return ;
+    }
     if (num >= 0 && num < NUM_SYSCALLS) {
         if (syscalls[num] != NULL) {
             arg[0] = tf->tf_regs.reg_r[0]; // arg0

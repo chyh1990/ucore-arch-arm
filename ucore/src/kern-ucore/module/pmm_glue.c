@@ -17,10 +17,39 @@
  */
 #include <pmm.h>
 #include <pmm_glue.h>
+#include <vmm.h>
+#include <proc.h>
+#include <assert.h>
 
-
-extern void* ucore_kva_alloc_pages(size_t n)
+void* ucore_kva_alloc_pages(size_t n)
 {
   return page2kva(alloc_pages(n));
+}
+
+void *ucore_map_pfn_range(unsigned long addr, unsigned long pfn, unsigned long size, unsigned long flags)
+{
+  void *ret = NULL;
+    struct mm_struct *mm = pls_read(current)->mm;
+    uint32_t vm_flags = VM_READ|VM_WRITE;
+    if(flags & VM_IO)
+      vm_flags |= VM_IO;
+    pte_perm_t perm = PTE_P|PTE_U|PTE_W;
+    assert(mm);
+    lock_mm(mm);
+    if (addr == 0) {
+      if ((addr = get_unmapped_area(mm, size)) == 0) {
+        goto out_unlock;
+      }
+    }
+    if (mm_map(mm, addr, size, vm_flags, NULL) == 0) {
+        ret = (void*)addr; 
+    }
+    pfn = pfn << PGSHIFT;
+    size = (size + PGSIZE -1 ) / PGSIZE;
+    for(;size>0;size--,pfn+=PGSIZE,addr+=PGSIZE)
+      page_insert(mm->pgdir, pa2page(pfn), addr, perm);
+out_unlock:
+    unlock_mm(mm);
+    return ret;
 }
 

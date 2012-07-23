@@ -363,3 +363,11 @@ int sysfile_ioctl(int fd, unsigned int cmd, unsigned long arg)
   return linux_devfile_ioctl(fd, cmd, arg);
 }
 
+void* sysfile_linux_mmap(void *addr, size_t len, int fd, size_t off)
+{
+  if(!__is_linux_devfile(fd)){
+    return -E_INVAL;
+  }
+  return linux_devfile_mmap(addr, len, fd, off);
+}
+

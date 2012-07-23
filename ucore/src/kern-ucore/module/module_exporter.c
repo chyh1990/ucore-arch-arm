@@ -1,12 +1,12 @@
 /*
  * =====================================================================================
  *
- *       Filename:  linux-glue.h
+ *       Filename:  module_exporter.c
  *
  *    Description:  
  *
  *        Version:  1.0
- *        Created:  07/17/2012 08:56:05 PM
+ *        Created:  07/22/2012 04:14:23 PM
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -15,13 +15,13 @@
  *
  * =====================================================================================
  */
+#include <linux/kernel.h>
+#include <linux/module.h>
 
-#ifndef _LINUX_GLUE_H
-#define _LINUX_GLUE_H
+#include "uaccess_glue.h"
 
-#include <kio.h>
-
-#define printk(...) kprintf(__VA_ARGS__)
-
-#endif
+EXPORT_SYMBOL(__kmalloc);
+EXPORT_SYMBOL(krealloc);
+EXPORT_SYMBOL(__memzero);
+EXPORT_SYMBOL(printk);
 

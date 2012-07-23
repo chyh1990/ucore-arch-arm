@@ -55,6 +55,7 @@
 
 /* chenyh 2012/7 */
 #define SYS_ioctl           142
+#define SYS_linux_mmap      143
 
 /* SYS_fork flags */
 #define CLONE_VM            0x00000100  // set if VM shared between processes

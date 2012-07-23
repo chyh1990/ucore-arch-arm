@@ -3,7 +3,7 @@
 E_ENCODE ?= $(shell echo $(1) | sed -e 's!_!_1!g' -e 's!/!_2!g')
 E_DECODE ?= $(shell echo $(1) | sed -e 's!_1!_!g' -e 's!_2!/!g')
 
-MODS := bootloader kern-ucore # libs-user-ucore user-ucore
+MODS := bootloader kern-ucore kmod# libs-user-ucore user-ucore
 
 MODDIRS := $(addprefix mod-,${MODS})
 

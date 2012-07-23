@@ -298,6 +298,24 @@ type sys_##name(type1 arg1,type2 arg2) {                                  \
   __syscall_return(type,__res);                                                     \
 }
 
+
+#define _syscall4(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4)           \
+type sys_##name(type1 arg1,type2 arg2,type3 arg3, type4 arg4) {                                  \
+  long __res;                                                                     \
+  __asm__ __volatile__ (                                                        \
+  "mov\tr0,%1\n\t"                                                                  \
+  "mov\tr1,%2\n\t"                                                                  \
+  "mov\tr2,%3\n\t"                                                                  \
+  "mov\tr3,%4\n\t"                                                                  \
+  __syscall(name)                                                            \
+  "mov\t%0,r0"                                                                         \
+        : "=r" (__res)                                                             \
+        : "r" ((long)(arg1)),"r" ((long)(arg2)),"r" ((long)(arg3)),"r"((long)(arg4))     \
+        : "r0","r1","r2","r3","lr");                                                       \
+  __syscall_return(type,__res);                                                     \
+}
+
+
 _syscall1(int, exit,int , error);
 _syscall0(int,fork);
 _syscall2(int, wait,int , pid, int *, store);
@@ -343,6 +361,7 @@ _syscall2(int, dup,int , fd1, int , fd2);
 _syscall1(int, pipe,int *, fd);
 _syscall2(int, mkfifo,const char *, name, uint32_t , open);
 _syscall3(int, ioctl, int, d, int, request, unsigned long, data);
+_syscall4(void*, linux_mmap, void*, addr, size_t, length, int, fd, size_t, offset);
 
 
 int

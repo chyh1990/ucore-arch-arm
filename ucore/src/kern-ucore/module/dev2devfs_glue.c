@@ -39,6 +39,7 @@ extern int __ucore_linux_inode_fops_stub_read(struct device *dev,
   const char __user *buf, size_t count, size_t *offset);
 extern int __ucore_linux_inode_fops_stub_write(struct device *dev, 
   const char __user *buf, size_t count, size_t *offset);
+extern int __ucore_linux_inode_fops_stub_mmap(struct device *dev, void *addr, size_t len, int unused1, int unused2, size_t off);
 
 static int 
 __ucore_vfs_device_caller_io(struct device *dev, struct iobuf *iob, bool write)
@@ -66,6 +67,7 @@ __ucore_vfs_device_init(struct device *dev, dev_t devno, mode_t mode) {
   dev->d_linux_write = __ucore_linux_inode_fops_stub_write;
   dev->d_linux_read = __ucore_linux_inode_fops_stub_read;
   dev->d_linux_ioctl = __ucore_linux_inode_fops_stub_ioctl;
+  dev->d_linux_mmap = __ucore_linux_inode_fops_stub_mmap;
 }
 
 void ucore_vfs_add_device(const char* name, int major, int minor)

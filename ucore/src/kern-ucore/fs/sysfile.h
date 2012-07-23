@@ -25,6 +25,7 @@ int sysfile_pipe(int *fd_store);
 int sysfile_mkfifo(const char *name, uint32_t open_flags);
 
 int sysfile_ioctl(int fd, unsigned int cmd, unsigned long arg);
+void *sysfile_linux_mmap(void *addr, size_t len, int fd, size_t off);
 
 #endif /* !__KERN_FS_SYSFILE_H__ */
 

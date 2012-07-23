@@ -85,11 +85,11 @@
  * table, which maps all the PTEs (Page Table Entry) containing the page mappings
  * for the entire virtual address space into that 4 Meg region starting at VPT.
  * */
-#define VPT_BASE                 0xE0000000  //KERNBASE + 0x600000 
+#define VPT_BASE                 0xD0000000  //KERNBASE + 0x600000 
 
 
 /* For check routines */
-#define TEST_PAGE 0xD0000000
+//#define TEST_PAGE 0xD0000000
 
 #define KSTACKPAGE          2                           // # of pages in kernel stack
 #define KSTACKSIZE          (KSTACKPAGE * PGSIZE)       // sizeof kernel stack

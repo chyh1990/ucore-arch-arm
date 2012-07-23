@@ -34,6 +34,8 @@ static inline void _arm_pte_setflags (pte_t* pte, pte_perm_t flags)
 	{
 		if (flags & PTE_W)
 			*pte |= PTEX_W; // kernel will be read/write or no access
+    else
+      *pte |= PTEX_R; //kernel readonly
 	}	
 		
 	if (flags & PTE_PWT){

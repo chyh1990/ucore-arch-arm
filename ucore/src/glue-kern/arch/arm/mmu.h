@@ -140,7 +140,7 @@
 #define PTEX_U   0xAA0       // Supervisor/Write _ User/Read Only
 #define PTEX_UW  0xFF0       // Supervisor/Write _ User/Write
 #elif defined __MACH_ARM_ARMV7
-#define PTEX_R   0x110       // Supervisor/Readonly
+#define PTEX_R   0x210       // Supervisor/Readonly
 #define PTEX_W   0x010       // Supervisor/Write
 #define PTEX_U   0x020       // Supervisor/Write _ User/Read Only
 #define PTEX_UW  0x030       // Supervisor/Write _ User/Write

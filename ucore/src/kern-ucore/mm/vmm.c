@@ -699,7 +699,11 @@ do_pgfault(struct mm_struct *mm, machine_word_t error_code, uintptr_t addr) {
   }
 
   //kprintf("@ %x %08x\n", vma->vm_flags, vma->vm_start);
-
+  //assert((vma->vm_flags & VM_IO)==0);
+  if(vma->vm_flags & VM_IO){
+    ret = -E_INVAL;
+    goto failed;
+  }
   switch (error_code & 3) {
     default:
       /* default is 3: write, present */

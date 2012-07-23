@@ -297,7 +297,12 @@ pmm_init(void) {
   
   // map fixed address segments
   //boot_map_segment(boot_pgdir, virtual, PGSIZE, physical, PTEX_W); // base location of vector table
+  extern char __kernel_text_start[], __kernel_text_end[];
+  kprintf("## %08x %08x\n", __kernel_text_start, __kernel_text_end);
   boot_map_segment(boot_pgdir, KERNBASE, KMEMSIZE, KERNBASE, PTE_W); // fixed address
+  /* kernel code readonly protection */
+  boot_map_segment(boot_pgdir, __kernel_text_start, __kernel_text_end - __kernel_text_start, __kernel_text_start,  PTE_P);
+
   boot_map_segment(boot_pgdir, KIOBASE, KIOSIZE, KIOBASE, PTE_W|PTE_IOMEM); // fixed address
 
 

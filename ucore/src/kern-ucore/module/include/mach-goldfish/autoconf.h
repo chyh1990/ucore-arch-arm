@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.29
- * Fri Jul 20 19:06:03 2012
+ * Sun Jul 22 15:37:30 2012
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_ANDROID 1
@@ -33,6 +33,7 @@
 #define CONFIG_BLK_DEV 1
 #define CONFIG_HAS_IOPORT 1
 #define CONFIG_HAVE_ARCH_KGDB 1
+#define CONFIG_MODULES 1
 #define CONFIG_INPUT_MISC 1
 #define CONFIG_VT_CONSOLE 1
 #define CONFIG_DNOTIFY 1

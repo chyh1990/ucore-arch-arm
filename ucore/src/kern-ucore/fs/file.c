@@ -497,3 +497,18 @@ int linux_devfile_ioctl(int fd, unsigned int cmd, unsigned long arg)
   return ret;
 }
 
+void *linux_devfile_mmap(void *addr, size_t len, int fd, size_t off)
+{
+  int ret = -E_INVAL;
+  struct file *file;
+  if ((ret = fd2file(fd, &file)) != 0) {
+    return NULL;
+  }
+  filemap_acquire(file);
+  struct device *dev = vop_info(file->node, device);
+  assert(dev);
+  void* r = dev->d_linux_mmap(dev, addr, len, 0, 0, off);
+  filemap_release(file);
+  return r;
+}
+

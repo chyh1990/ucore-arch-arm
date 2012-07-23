@@ -268,6 +268,7 @@ setup_pgdir(struct mm_struct *mm) {
     pgd_t *pgdir_start = page2kva(page);
     pgd_t *pgdir = ROUNDUP(pgdir_start , 4*PGSIZE);
     memcpy(pgdir, init_pgdir_get(), 4*PGSIZE);
+
 	  map_pgdir (pgdir);
     mm->pgdir = pgdir;
     mm->pgdir_alloc_addr = pgdir_start;

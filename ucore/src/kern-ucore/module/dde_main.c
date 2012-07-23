@@ -17,16 +17,17 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/kobject.h>
 #include <linux/err.h>
 #include <linux/gfp.h>
 #include <linux/init.h>
 #include <linux/wait.h>
+#include <linux/mm.h>
 
 #define __NO_UCORE_TYPE__
 #include <module.h>
 #include <kio.h>
-#include <slab.h>
 //#include <assert.h>
 
 #ifdef DEBUG
@@ -34,6 +35,29 @@
 #else 
 #define _TODO_() 
 #endif
+
+/* Provided by the linker */
+extern const struct kernel_symbol __start___ksymtab[];
+extern const struct kernel_symbol __stop___ksymtab[];
+extern const struct kernel_symbol __start___ksymtab_gpl[];
+extern const struct kernel_symbol __stop___ksymtab_gpl[];
+extern const struct kernel_symbol __start___ksymtab_gpl_future[];
+extern const struct kernel_symbol __stop___ksymtab_gpl_future[];
+extern const struct kernel_symbol __start___ksymtab_gpl_future[];
+extern const struct kernel_symbol __stop___ksymtab_gpl_future[];
+extern const unsigned long __start___kcrctab[];
+extern const unsigned long __start___kcrctab_gpl[];
+extern const unsigned long __start___kcrctab_gpl_future[];
+#ifdef CONFIG_UNUSED_SYMBOLS
+extern const struct kernel_symbol __start___ksymtab_unused[];
+extern const struct kernel_symbol __stop___ksymtab_unused[];
+extern const struct kernel_symbol __start___ksymtab_unused_gpl[];
+extern const struct kernel_symbol __stop___ksymtab_unused_gpl[];
+extern const unsigned long __start___kcrctab_unused[];
+extern const unsigned long __start___kcrctab_unused_gpl[];
+#endif
+
+
 
 extern initcall_t __initcall_start[], __initcall_end[];
 
@@ -49,6 +73,21 @@ static void do_initcalls()
   kprintf("do_initcalls() end!\n");
 }
 
+int request_module(const char *fmt, ...)
+{
+  return -EINVAL;
+}
+
+static void loadable_module_init()
+{
+  int i;
+  int cnt = __stop___ksymtab - __start___ksymtab ;
+  for(i=0;i<cnt;i++){
+    pr_debug("%d\t%08x\t%s\n", i, __start___ksymtab[i].value,
+      __start___ksymtab[i].name);
+  }
+}
+
 void dde_init()
 {
   /* invoked in vfs_cache_init in Linux */
@@ -57,6 +96,8 @@ void dde_init()
   driver_init();
   dde_call_machine_init();
   do_initcalls();
+
+  loadable_module_init();
 }
 
 /* basic functions */
@@ -137,16 +178,6 @@ void __memzero(void *ptr, __kernel_size_t n)
     *(((uint8_t*)ptr)+i) = 0;
 }
 
-void *__kmalloc(size_t size, gfp_t flags)
-{
-  //kprintf("__kmalloc %d %08x\n", size, flags);
-  void *ptr = kmalloc(size);
-  if(flags | __GFP_ZERO){
-    memset(ptr, 0, size);
-  }
-  return ptr;
-}
-
 char *kstrdup(const char *s, gfp_t gfp)
 {
   size_t len;
@@ -161,6 +192,7 @@ char *kstrdup(const char *s, gfp_t gfp)
     memcpy(buf, s, len);
   return buf;
 }
+EXPORT_SYMBOL(kstrdup);
 
 
 
@@ -450,6 +482,15 @@ int seq_printf(struct seq_file *m, const char *f, ...)
 int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
             unsigned long pfn, unsigned long size, pgprot_t prot)
 {
+  if(vma->vm_start != addr || vma->vm_end != addr + size)
+    return -EINVAL;
+  vma->vm_pgoff = pfn;
+  //TODO
+  void *r = ucore_map_pfn_range(addr, pfn, size, VM_IO);
+  if(!r){
+    return -ENOMEM;
+  }
+  vma->vm_start = (unsigned long)r;
   return 0;
 }
 

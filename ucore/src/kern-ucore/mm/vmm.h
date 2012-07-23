@@ -38,6 +38,8 @@ struct vma_struct {
 #define VM_EXEC                 0x00000004
 #define VM_STACK                0x00000008
 #define VM_SHARE                0x00000010
+/* must the same as Linux */
+#define VM_IO           0x00004000
 
 struct mm_struct {
     list_entry_t mmap_list;

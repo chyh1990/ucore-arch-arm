@@ -5,15 +5,16 @@ switch_to:                      # switch_to(from, to)
 
     # save from's registers
 	# in the structure pointed by r0
-	stmia r0!, {lr}
-	stmia r0!, {sp}
-	stmia r0!, {r2-r4, fp, ip}
+  stmia r0!, {r4-r10, fp, sp, ip, lr}
+  mrs   r4, cpsr
+  stmia r0!, {r4}
 
     # restore to's registers
 	# in the structure pointed by r1
-	ldmia r1!, {lr}
-	ldmia r1!, {sp}
-	ldmia r1!, {r2-r4, fp, ip}
+  ldr   r4, [r1, #+44]
+  msr   cpsr, r4
+
+	ldmia r1!, {r4-r10, fp, sp, ip, lr}
 	
 	# return
 	mov pc, lr

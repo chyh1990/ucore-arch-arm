@@ -84,8 +84,14 @@ static void logo_loop(){
     assert(logo_height < h && logo_width < w);
 
     int size = w*h*vinfo.bits_per_pixel/8;
-    unsigned short* buf = (unsigned short*)malloc(size);
-    assert(buf);
+
+    fd = open("fb0:", O_RDWR);
+    unsigned short* buf = (unsigned short*)sys_linux_mmap(0, size, fd, 0);
+    cprintf("linux_mmap %08x\n", buf);
+    //close(fd);
+
+    //unsigned short* buf = (unsigned short*)malloc(size);
+    //assert(buf);
     memset(buf, 0x00, size);
     while(1){
       x += u;
@@ -107,7 +113,7 @@ static void logo_loop(){
         v = -v;
       }
 
-      fd = open("fb0:", O_RDWR);
+      //fd = open("fb0:", O_RDWR);
       //cprintf("fd = %d\n", fd);
       if(fd<0)
         return ;
@@ -123,11 +129,13 @@ static void logo_loop(){
           buf[i + j] = color;
         }
       }
-      write(fd, buf, size);
-      close(fd);
+      //write(fd, buf, size);
+      //close(fd);
+      sleep(2);
     }
 
     free(buf);
+    close(fd);
 
 }
 

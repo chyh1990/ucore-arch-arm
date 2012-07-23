@@ -340,6 +340,16 @@ sys_ioctl(uint32_t arg[])
   return sysfile_ioctl(fd, cmd, data);
 }
 
+static uint32_t
+sys_linux_mmap(uint32_t arg[])
+{
+  void *addr = (void*)arg[0];
+  size_t len = arg[1];
+  int fd = (int)arg[2];
+  size_t off = (size_t)arg[3];
+  return (uint32_t)sysfile_linux_mmap(addr, len, fd, off);
+}
+
 static uint32_t (*syscalls[])(uint32_t arg[]) = {
     [SYS_exit]              sys_exit,
     [SYS_fork]              sys_fork,
@@ -388,6 +398,7 @@ static uint32_t (*syscalls[])(uint32_t arg[]) = {
     [SYS_pipe]              sys_pipe,
     [SYS_mkfifo]            sys_mkfifo,
     [SYS_ioctl]             sys_ioctl,
+    [SYS_linux_mmap]        sys_linux_mmap,
 };
 
 

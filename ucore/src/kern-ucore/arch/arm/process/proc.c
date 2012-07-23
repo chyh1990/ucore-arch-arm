@@ -114,9 +114,6 @@ forkret(void) {
 
 
 // kernel_thread - create a kernel thread using "fn" function
-// NOTE: the trapframe is in the kernel stack of idle kernel thread
-//       we should notice not to create more kernel thread, or the 
-//       stack will be overfolw???
 int
 kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags) {
   struct trapframe tf_struct;
@@ -164,6 +161,7 @@ copy_thread(uint32_t clone_flags, struct proc_struct *proc,
   // setting sp to a trapframe, located on stack
   proc->context.epc = (uintptr_t)forkret;
   proc->context.esp = (uintptr_t)(proc->tf);
+  proc->context.e_cpsr = read_psrflags();
     return 0;
 }
 

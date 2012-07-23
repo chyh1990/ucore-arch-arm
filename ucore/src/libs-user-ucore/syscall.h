@@ -61,5 +61,6 @@ int sys_mkfifo(const char *name, uint32_t open_flags);
 
 int sys_ioctl(int d, int request, unsigned long data);
 
+void* sys_linux_mmap(void* addr, size_t length, int fd, size_t offset);
 #endif /* !__USER_LIBS_SYSCALL_H__ */
 

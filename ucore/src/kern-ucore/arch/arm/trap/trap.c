@@ -81,6 +81,7 @@ void
 print_trapframe(struct trapframe *tf) {
   kprintf("trapframe at %p\n", tf);
   print_regs(&tf->tf_regs);
+  kprintf("  usr_lr   0x%08x\n", tf->__tf_user_lr);
   kprintf("  sp   0x%08x\n", tf->tf_esp);
   kprintf("  lr   0x%08x\n", tf->tf_epc);
   kprintf("  spsr 0x%08x %s\n", tf->tf_sr, modenames[tf->tf_sr & 0xF]);

@@ -20,7 +20,7 @@ __switrap:
 	cmp r14, #0
 	bleq __save_user
 	ldr lr, [sp]
-	sub sp, sp, #4
+	sub sp, sp, #8
 	stmfd sp!, {r0-r12}
 
 	# Error code
@@ -51,7 +51,7 @@ __undtrap:
 	cmp r14, #0
 	bleq __save_user
 	ldr lr, [sp]
-	sub sp, sp, #4
+	sub sp, sp, #8
 	stmfd sp!, {r0-r12}
 
 	# Error code
@@ -85,7 +85,7 @@ __irqtrap:
 	and r14, r14, #0xF
 	cmp r14, #0
 	bleq __save_user
-	sub sp, sp, #4
+	sub sp, sp, #8
 	stmfd sp!, {r0-r12}
 	
 	# Error code
@@ -121,7 +121,7 @@ __pretrap:
 	and r14, r14, #0xF
 	cmp r14, #0
 	bleq __save_user
-	sub sp, sp, #4
+	sub sp, sp, #8
 	stmfd sp!, {r0-r12}
 	
 	# Error code: fsr for prefetch
@@ -152,7 +152,7 @@ __dattrap:
 	and r14, r14, #0xF
 	cmp r14, #0
 	bleq __save_user
-	sub sp, sp, #4
+	sub sp, sp, #8
 	stmfd sp!, {r0-r12}
 	
 	# Early abort
@@ -210,17 +210,17 @@ __trapret:
 	# valid for every "non user" mode
 	ldmfd sp!,{r0-r12}
 	
-	# discard esp value
-	add sp, sp, #4
+	# discard lr,esp value
+	add sp, sp, #8
 	
 	# CPSR is automatically restored
 	ldmfd sp!,{pc}^
 
 __restore_user:
   msr spsr_c, r1
-	# restoring the registers to the user banks, including sp
-	ldmfd sp,{r0-r13}^
-	add sp, sp, #56
+	# restoring the registers to the user banks, including sp,lr
+	ldmfd sp!,{r0-r12,sp,lr}^
+	#add sp, sp, #56
 
   #we may modify rs in trap(privilege switch), so load cpsr from stack, r1
 	ldmfd sp!,{pc}^
@@ -233,7 +233,7 @@ _memo:
 
 __save_user:
 	# save sp from user bank to stack
-	stmfd sp,{sp}^
+	stmfd sp,{sp,lr}^
 	# ldr r0,=_memo
 	# ldr sp, [sp, #-4]
 	# str sp, [r0]
@@ -253,7 +253,7 @@ forkrets:
 	cmp r0, #0
 	beq __restore_user
 	ldmfd sp!,{r0-r12}
-	add sp, sp, #4
+	add sp, sp, #8
 	ldmfd sp!,{pc}
 
 

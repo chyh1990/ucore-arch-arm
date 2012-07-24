@@ -53,6 +53,7 @@ struct trapframe {
 	uint32_t tf_err;		// Error code
 	struct pushregs tf_regs;
 	uint32_t tf_esp;		// esp
+  uint32_t __tf_user_lr;
 	uint32_t tf_epc;		// eip, actually lr
 } __attribute__((packed));
 

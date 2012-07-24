@@ -310,9 +310,9 @@ file_getdirentry(int fd, struct dirent *direntp) {
     }
     filemap_acquire(file);
 
-    struct iobuf __iob, *iob = iobuf_init(&__iob, direntp->name, sizeof(direntp->name), direntp->offset);
+    struct iobuf __iob, *iob = iobuf_init(&__iob, direntp->d_name, sizeof(direntp->d_name), direntp->d_off);
     if ((ret = vop_getdirentry(file->node, iob)) == 0) {
-        direntp->offset += iobuf_used(iob);
+        direntp->d_off += iobuf_used(iob);
     }
     filemap_release(file);
     return ret;

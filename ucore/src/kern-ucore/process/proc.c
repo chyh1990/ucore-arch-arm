@@ -860,7 +860,8 @@ do_execve(const char *name, int argc, const char **argv) {
 	copy_from_user (mm, &path, argv, sizeof (char*), 0);
     unlock_mm(mm);
 
-    fs_closeall(current->fs_struct);
+    /* linux never do this */
+    //fs_closeall(current->fs_struct);
 
     /* sysfile_open will check the first argument path, thus we have to use a user-space pointer, and argv[0] may be incorrect */
 
@@ -1071,6 +1072,46 @@ out_unlock:
 	copy_to_user (mm, brk_store, &mm->brk, sizeof (uintptr_t));
     unlock_mm(mm);
     return 0;
+}
+
+/* from x86 bionic porting */
+int
+do_linux_brk(uintptr_t brk) {
+    struct mm_struct *mm = current->mm;
+    if (mm == NULL) {
+        panic("kernel thread call sys_brk!!.\n");
+    }
+
+    if (brk == 0) {
+        return mm->brk_start;
+    }
+
+    lock_mm(mm);
+    if (brk < mm->brk_start) {
+        goto out_unlock;
+    }
+    uintptr_t newbrk = ROUNDUP(brk, PGSIZE), oldbrk = mm->brk;
+    assert(oldbrk % PGSIZE == 0);
+    if (newbrk == oldbrk) {
+        goto out_unlock;
+    }
+    if (newbrk < oldbrk) {
+        if (mm_unmap(mm, newbrk, oldbrk - newbrk) != 0) {
+            goto out_unlock;
+        }
+    }
+    else {
+        if (find_vma_intersection(mm, oldbrk, newbrk + PGSIZE) != NULL) {
+            goto out_unlock;
+        }
+        if (mm_brk(mm, oldbrk, newbrk - oldbrk) != 0) {
+            goto out_unlock;
+        }
+    }
+    mm->brk = newbrk;
+out_unlock:
+    unlock_mm(mm);
+    return newbrk;
 }
 
 // do_sleep - set current process state to sleep and add timer with "time"

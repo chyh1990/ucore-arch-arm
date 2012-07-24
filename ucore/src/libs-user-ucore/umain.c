@@ -29,6 +29,9 @@ umain(int argc, char **argv) {
     if ((fd = initfd(1, "stdout:", O_WRONLY)) < 0) {
         warn("open <stdout> failed: %e.\n", fd);
     }
+    if ((fd = initfd(2, "stdout:", O_WRONLY)) < 0) {
+        warn("open <stderr> failed: %e.\n", fd);
+    }
     int ret = main(argc, argv);
     exit(ret);
 }

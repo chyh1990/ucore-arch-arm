@@ -2,6 +2,21 @@
 #define __LIBS_STAT_H__
 
 #include <types.h>
+#include <arm-posix_types.h>
+
+#if 0
+typedef uint32_t      blksize_t;
+typedef int64_t     blkcnt_t; 
+typedef uint32_t __kernel_dev_t;
+
+typedef __kernel_ino_t		ino_t;
+typedef __kernel_nlink_t	nlink_t;
+typedef uint32_t uid_t;
+typedef uint32_t gid_t;
+typedef __kernel_time_t  _st_time_t;
+typedef __kernel_off_t   _st_off_t;
+//typedef __kernel_timer_t	timer_t;
+#endif
 
 struct stat {
     uint32_t st_mode;                   // protection mode and file type
@@ -9,6 +24,8 @@ struct stat {
     size_t st_blocks;                   // number of blocks file is using
     size_t st_size;                     // file size (bytes)
 };
+
+
 
 #if 0
 #define S_IFMT          070000          // mask for type of file

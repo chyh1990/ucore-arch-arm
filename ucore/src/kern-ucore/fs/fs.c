@@ -69,7 +69,7 @@ fs_closeall(struct fs_struct *fs_struct) {
     assert(fs_struct != NULL && fs_count(fs_struct) > 0);
     int i;
     struct file *file = fs_struct->filemap;
-    for (i = 2, file += 2; i < FS_STRUCT_NENTRY; i ++, file ++) {
+    for (i = 3, file += 2; i < FS_STRUCT_NENTRY; i ++, file ++) {
         if (file->status == FD_OPENED) {
             filemap_close(file);
         }

@@ -283,17 +283,21 @@ sysfile_getcwd(char *buf, size_t len) {
 }
 
 int
-sysfile_getdirentry(int fd, struct dirent *__direntp) {
+sysfile_getdirentry(int fd, struct dirent *__direntp, uint32_t *len_store) {
     struct mm_struct *mm = pls_read(current)->mm;
     struct dirent *direntp;
     if ((direntp = kmalloc(sizeof(struct dirent))) == NULL) {
         return -E_NO_MEM;
     }
+    memset(direntp, 0, sizeof(struct dirent));
+    direntp->d_reclen = sizeof(struct dirent);
+    /* libc will ignore entries with d_ino==0 */
+    direntp->d_ino = 1;
 
     int ret = 0;
     lock_mm(mm);
     {
-        if (!copy_from_user(mm, &(direntp->offset), &(__direntp->offset), sizeof(direntp->offset), 1)) {
+        if (!copy_from_user(mm, &(direntp->d_off), &(__direntp->d_off), sizeof(direntp->d_off), 1)) {
             ret = -E_INVAL;
         }
     }
@@ -310,11 +314,64 @@ sysfile_getdirentry(int fd, struct dirent *__direntp) {
         }
     }
     unlock_mm(mm);
-
+    if(len_store){
+      *len_store = (direntp->d_name[0])?direntp->d_reclen:0;
+    }
 out:
     kfree(direntp);
     return ret;
 }
+
+#if 0
+int sysfile_linux_getdents(int fd, struct linux_dirent* __dir, uint32_t count)
+{
+    struct mm_struct *mm = pls_read(current)->mm;
+    struct linux_dirent* dir;
+    int ret = 0;
+    if(count < sizeof(struct linux_dirent))
+      return -1;
+
+    if(( dir = kmalloc(sizeof(struct linux_dirent))) == NULL){
+      goto out;
+    }
+    memset(dir, 0, sizeof(struct linux_dirent));
+
+    lock_mm(mm);
+    {
+        if (!copy_from_user(mm, &(dir->d_off), &(__dir->d_off), sizeof(dir->d_off), 1)) {
+            ret = -1;
+        }
+    }
+    unlock_mm(mm);
+    direntp->offset = dir->d_off;
+
+    if (ret != 0 || (ret = file_getdirentry(fd, direntp)) != 0) {
+        goto put_linuxdir;
+    }
+
+    dir->d_reclen = sizeof(struct linux_dirent);
+    dir->d_off = direntp->offset  ;
+    dir->d_ino = 1;
+    strcpy(dir->d_name, direntp->name);
+
+    lock_mm(mm);
+    {
+      if (!copy_to_user(mm, __dir, dir, sizeof(struct linux_dirent))) {
+        ret = -1;
+      }
+    }
+    unlock_mm(mm);
+    ret = dir->d_reclen;
+    /* done */
+    if(!dir->d_name[0])
+      ret = 0;
+put_linuxdir:
+    kfree(dir);
+out:
+    kfree(direntp);
+    return ret;
+}
+#endif
 
 int
 sysfile_dup(int fd1, int fd2) {

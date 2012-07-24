@@ -71,15 +71,15 @@ readline(const char *prompt) {
             return NULL;
         }
         else if (c >= ' ' && i < BUFSIZE - 1) {
-            putc(c);
+            //putc(c);
             buffer[i ++] = c;
         }
         else if (c == '\b' && i > 0) {
-            putc(c);
+            //putc(c);
             i --;
         }
         else if (c == '\n' || c == '\r') {
-            putc(c);
+            //putc(c);
             buffer[i] = '\0';
             break;
         }

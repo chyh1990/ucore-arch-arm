@@ -165,16 +165,45 @@ copy_thread(uint32_t clone_flags, struct proc_struct *proc,
     return 0;
 }
 
+/*  
+ 	At this entry point, most registers' values are unspecified, except:
+
+    a1		Contains a function pointer to be registered with `atexit'.
+		This is how the dynamic linker arranges to have DT_FINI
+		functions called for shared libraries that have been loaded
+		before this code runs.
+ 
+    sp		The stack contains the arguments and environment:
+		0(sp)			argc
+		4(sp)			argv[0]
+		...
+		(4*argc)(sp)		NULL
+		(4*(argc+1))(sp)	envp[0]
+		...
+					NULL
+*/
+
 int
 init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char** kargv) 
 {
   uintptr_t stacktop = USTACKTOP - argc * PGSIZE;
+  uintptr_t argvbase = stacktop;
+#if 0
   char **uargv = (char **)(stacktop - argc * sizeof(char *));
   int i;
   for (i = 0; i < argc; i ++) {
     uargv[i] = (char*) strcpy((char *)(stacktop + i * PGSIZE), kargv[i]);
   }
   stacktop = (uintptr_t)uargv;
+#endif
+  stacktop = stacktop - (argc+3)*sizeof(char*);
+  uint32_t *esp = (uint32_t*)stacktop;
+  esp[0] = argc;
+  int i;
+  for(i=0;i<argc;i++)
+    esp[1+i] = (uint32_t) strcpy((char *)(argvbase + i * PGSIZE), kargv[i]);
+  esp[argc+1] = 0;
+  esp[argc+2] = 0;
   //*(int *)stacktop = argc;
 
   struct trapframe *tf = proc->tf;
@@ -185,8 +214,9 @@ init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char**
 	/* r3 = argc, r1 = argv 
    * initcode in user mode should copy r3 to r0
    */
-	tf->tf_regs.reg_r[3] = argc;
-	tf->tf_regs.reg_r[1] = (uintptr_t)uargv;
+	//tf->tf_regs.reg_r[3] = argc;
+	//tf->tf_regs.reg_r[1] = (uintptr_t)uargv;
+  tf->tf_regs.reg_r[0] = 0;
 
   //panic("UNIMPLEMENTED");
 	return 0;

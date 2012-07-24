@@ -27,7 +27,7 @@ mod-%:
 
 $(KERNEL_IMG): $(T_OBJ)/$(KERNEL_INITRD_FILENAME) $(T_OBJ)/$(BOOTLOADER_FILENAME)
 	$(OBJCOPY) -S -O binary $(T_OBJ)/$(BOOTLOADER_FILENAME) $(T_OBJ)/$(BOOTLOADER_FILENAME).binary
-	dd if=/dev/zero of=$@.noheader bs=12M count=1 
+	dd if=/dev/zero of=$@.noheader bs=16M count=1 
 	dd if=$(T_OBJ)/$(BOOTLOADER_FILENAME).binary of=$@.noheader conv=notrunc
 	dd if=$(T_OBJ)/$(KERNEL_INITRD_FILENAME) of=$@.noheader seek=8 conv=notrunc
 	mkimage -A arm -O linux -T kernel -C none -a $(ARCH_ARM_BOOTLOADER_BASE) -e $(ARCH_ARM_BOOTLOADER_BASE) -n "ucore-arm" -d $@.noheader $@
@@ -37,7 +37,7 @@ ${SWAPIMG}:
 
 ${FSIMG}: mod-user-ucore
 	@echo "Making FS IMG"
-	dd if=/dev/zero of=$@ bs=1M count=10
+	dd if=/dev/zero of=$@ bs=1M count=14
 	$(T_OBJ)/tools-mksfs $@ $(T_OBJ)/user-sfs
 
 ${RAMIMG}: ${T_OBJ}/$(KERNEL_FILENAME)

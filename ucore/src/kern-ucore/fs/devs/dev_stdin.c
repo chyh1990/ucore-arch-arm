@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <error.h>
 #include <assert.h>
+#include <glue_kio.h>
 
 #define STDIN_BUFSIZE               4096
 
@@ -42,10 +43,19 @@ dev_stdin_read(char *buf, size_t len) {
     bool intr_flag;
     local_intr_save(intr_flag);
     {
-        for (; ret < len; ret ++, p_rpos ++) {
+        while(1) {
+            if(ret >= len)
+              break;
         try_again:
             if (p_rpos < p_wpos) {
-                *buf ++ = stdin_buffer[p_rpos % STDIN_BUFSIZE];
+                char c = stdin_buffer[p_rpos % STDIN_BUFSIZE];
+                //FIXME
+                kcons_putc(c);
+                *buf ++ = c;
+                p_rpos ++;
+                ret ++;
+                if(p_rpos >= p_wpos)
+                  break;
             }
             else {
                 wait_t __wait, *wait = &__wait;

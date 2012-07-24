@@ -69,6 +69,7 @@
 #define MMAP_WRITE          0x00000100
 #define MMAP_STACK          0x00000200
 
+#if 0
 /* VFS flags */
 // flags for open: choose one of these
 #define O_RDONLY            0           // open for reading only
@@ -82,7 +83,26 @@
 // additonal related definition
 #define O_ACCMODE           3           // mask for O_RDONLY / O_WRONLY / O_RDWR
 
+#endif
 #define NO_FD               -0x9527     // invalid fd
+
+/* open/fcntl - O_SYNC is only implemented on blocks devices and on files
+   located on an ext2 file system */
+#define O_ACCMODE          0003
+#define O_RDONLY             00
+#define O_WRONLY             01
+#define O_RDWR               02
+#define O_CREAT            0100 /* not fcntl */
+#define O_EXCL             0200 /* not fcntl */
+#define O_NOCTTY           0400 /* not fcntl */
+#define O_TRUNC           01000 /* not fcntl */
+#define O_APPEND          02000
+#define O_NONBLOCK        04000
+#define O_NDELAY        O_NONBLOCK
+#define O_SYNC           010000
+#define O_FSYNC          O_SYNC
+#define O_ASYNC          020000
+
 
 /* lseek codes */
 #define LSEEK_SET           0           // seek relative to beginning of file

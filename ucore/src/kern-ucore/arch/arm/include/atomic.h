@@ -6,6 +6,7 @@
 
 /* Atomic operations that C can't guarantee us. Useful for resource counting etc.. */
 
+#if 1
 /* copy from Linux 2.6 Chen Yuheng 2012/3/20*/
 typedef struct {
     volatile int counter;
@@ -13,6 +14,7 @@ typedef struct {
 
 #ifndef __NO_UCORE_TYPE__ 
 typedef ucore_atomic_t atomic_t;
+#endif
 #endif
 
 static inline int atomic_read(const atomic_t *v) __attribute__((always_inline));

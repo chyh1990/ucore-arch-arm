@@ -4,7 +4,9 @@
 		// This function should look like this in C:
 		//     void _start (int argc, char* argv[])
 _start:		
-    mov r0, r3
+    ldr r0, [sp]
+    #ldr r1, [sp, #+4]
+    add r1, sp, #4
 		bl	umain
 		nop
 

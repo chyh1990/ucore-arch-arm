@@ -308,7 +308,7 @@ static uint32_t
 sys_getdirentry(uint32_t arg[]) {
     int fd = (int)arg[0];
     struct dirent *direntp = (struct dirent *)arg[1];
-    return sysfile_getdirentry(fd, direntp);
+    return sysfile_getdirentry(fd, direntp, NULL);
 }
 
 static uint32_t
@@ -350,10 +350,118 @@ sys_linux_mmap(uint32_t arg[])
   return (uint32_t)sysfile_linux_mmap(addr, len, fd, off);
 }
 
-static uint32_t __sys_linux_entry(struct trapframe *tf)
+///////////////////////////////////////////
+
+static uint32_t __sys_linux_ioctl(uint32_t args[])
 {
-  panic("TODO __sys_linux_entry");
-  return -E_KILLED;
+  return 0;
+}
+
+static uint32_t
+__sys_linux_dup(uint32_t arg[]) {
+        int fd = (int)arg[0];
+        return sysfile_dup(fd, NO_FD); 
+}
+
+static uint32_t
+__sys_linux_fcntl(uint32_t arg[])
+{
+  return -E_INVAL;
+}
+
+static uint32_t 
+__sys_linux_brk(uint32_t arg[]){
+	uintptr_t brk = (uintptr_t)arg[0];
+	return do_linux_brk(brk);
+}
+
+static uint32_t
+__sys_linux_getdents(uint32_t arg[])
+{
+  int fd = (int)arg[0];
+  struct linux_dirent *dir = (struct linux_dirent*)arg[1];
+  uint32_t count = arg[2];
+  if(count < sizeof(struct dirent))
+    return -1;
+  int ret = sysfile_getdirentry(fd, dir, &count);
+  if(ret < 0)
+    return -1;
+  return count;
+}
+
+static uint32_t
+__sys_linux_stat(uint32_t args[])
+{
+  return -1;
+}
+
+
+#define __UCORE_SYSCALL(x) [__NR_##x]  sys_##x
+#define __LINUX_SYSCALL(x) [__NR_##x]  __sys_linux_##x
+
+#define sys_dup2 sys_dup
+
+#include <linux_unistd.h>
+
+static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
+  __UCORE_SYSCALL(exit),
+  __UCORE_SYSCALL(fork),
+  __UCORE_SYSCALL(read),
+  __UCORE_SYSCALL(write),
+  __UCORE_SYSCALL(open),
+  __UCORE_SYSCALL(close),
+
+  __UCORE_SYSCALL(link),
+  __UCORE_SYSCALL(unlink),
+  /* execve */
+  __UCORE_SYSCALL(chdir),
+
+  __UCORE_SYSCALL(rename),
+  __UCORE_SYSCALL(mkdir),
+  /* rmdir */
+  __LINUX_SYSCALL(dup),
+  __UCORE_SYSCALL(pipe),
+  /* times */
+  __LINUX_SYSCALL(brk),
+
+  __UCORE_SYSCALL(getpid),
+  __LINUX_SYSCALL(ioctl),
+  __LINUX_SYSCALL(fcntl),
+
+  __UCORE_SYSCALL(dup2),
+
+  __LINUX_SYSCALL(stat),
+  __UCORE_SYSCALL(fstat),
+
+  __UCORE_SYSCALL(fsync),
+  __UCORE_SYSCALL(getcwd),
+
+  __LINUX_SYSCALL(getdents),
+
+};
+
+#define NUM_LINUX_SYSCALLS        ((sizeof(_linux_syscalls)) / (sizeof(_linux_syscalls[0])))
+
+/* Linux EABI
+ * r7 = syscall num
+ * r0 - r3 = args
+ *
+ */
+
+static int __sys_linux_entry(struct trapframe *tf)
+{
+  unsigned int num = tf->tf_regs.reg_r[7];
+  if(num < NUM_LINUX_SYSCALLS && _linux_syscalls[num]){
+    uint32_t arg[4];
+    arg[0] = tf->tf_regs.reg_r[0]; // arg0
+    arg[1] = tf->tf_regs.reg_r[1]; // arg1
+    arg[2] = tf->tf_regs.reg_r[2]; // arg2
+    arg[3] = tf->tf_regs.reg_r[3]; // arg3
+    tf->tf_regs.reg_r[0] = _linux_syscalls[num](arg); // calling the system call, return value in r0
+    return 0;
+  }
+
+  return -1;
 }
 
 static uint32_t (*syscalls[])(uint32_t arg[]) = {
@@ -417,8 +525,9 @@ syscall() {
     struct trapframe* tf = pls_read(current)->tf;
     int num = tf->tf_err; // SYS_xxx
     if (num == 0){
-      __sys_linux_entry(tf);
-      return ;
+      if( __sys_linux_entry(tf) )
+        goto bad_call;
+      return;
     }
     if (num >= 0 && num < NUM_SYSCALLS) {
         if (syscalls[num] != NULL) {
@@ -430,6 +539,7 @@ syscall() {
             return ;
         }
     }
+bad_call:
     print_trapframe(tf);
     kprintf("undefined syscall %d, pid = %d, name = %s.\n",
             num, pls_read(current)->pid, pls_read(current)->name);

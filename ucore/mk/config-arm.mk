@@ -23,7 +23,7 @@ ifeq ($(ARCH_ARM_MACH), armv7-a)
 MACH_MACRO := -D__MACH_ARM_ARMV7 	-D__LINUX_ARM_ARCH__=7
 endif
 
-MACH_MACRO += -DDEBUG
+MACH_MACRO += -DDEBUG -D__ARM_EABI__
 
 export TARGET_CC_SYSTEM_LIB ?=  -L/opt/FriendlyARM/toolschain/4.4.3/lib/gcc/arm-none-linux-gnueabi/4.4.3/ 
 

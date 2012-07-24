@@ -102,7 +102,8 @@ void may_killed(void);
 int do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf);
 int do_exit(int error_code);
 int do_exit_thread(int error_code);
-int do_execve(const char *name, int argc, const char **argv);
+//int do_execve(const char *name, int argc, const char **argv);
+int do_execve(const char *name, const char **argv, const char **envp);
 int do_yield(void);
 int do_wait(int pid, int *code_store);
 int do_kill(int pid, int error_code);
@@ -119,9 +120,10 @@ void switch_to(struct context *from, struct context *to);
 void de_thread_arch_hook (struct proc_struct *proc);
 int copy_thread(uint32_t clone_flags, struct proc_struct *proc,
 				uintptr_t user_stack, struct trapframe *tf);
-int init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char** kargv);
+int init_new_context (struct proc_struct *proc, struct elfhdr *elf,
+  int argc, char** kargv, int envc, char **kenvp);
 int kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags);
-int kernel_execve(const char *name, const char **argv);
+int kernel_execve(const char *name, const char **argv, const char** kenvp);
 int do_execve_arch_hook (int argc, char **kargv);
 
 #endif /* !__KERN_PROCESS_PROC_H__ */

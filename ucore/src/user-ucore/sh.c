@@ -14,6 +14,8 @@
 #define WHITESPACE                      " \t\r\n"
 #define SYMBOLS                         "<|>&;"
 
+static const char* g_envp[] = {"PATH=/bin", NULL};
+
 static char *shcwd = NULL;
 
 int
@@ -212,7 +214,7 @@ runit:
         argv[0] = argv0;
     }
     argv[argc] = NULL;
-    return __exec(NULL, argv);
+    return __exec(NULL, argv, g_envp);
 }
 
 int

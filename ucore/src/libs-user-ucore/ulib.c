@@ -176,12 +176,12 @@ mbox_info(int id, struct mboxinfo *info) {
 }
 
 int
-__exec(const char *name, const char **argv) {
+__exec(const char *name, const char **argv, const char **envp) {
     int argc = 0;
     while (argv[argc] != NULL) {
         argc ++;
     }
-    return sys_exec(name, argc, argv);
+    return sys_exec(argv[0], argv, envp);
 }
 
 int __clone(uint32_t clone_flags, uintptr_t stack, int (*fn)(void *), void *arg);

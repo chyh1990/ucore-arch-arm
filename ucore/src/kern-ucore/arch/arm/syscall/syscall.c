@@ -37,10 +37,10 @@ sys_wait(uint32_t arg[]) {
 
 static uint32_t
 sys_exec(uint32_t arg[]) {
-    const char *name = (const char *)arg[0];
-    size_t argc = (size_t)arg[1];
-    const char **argv = (const char **)arg[2];
-    return do_execve(name, argc, argv);
+	const char *name = (const char *)arg[0];
+	const char **argv = (const char **)arg[1];
+	const char **envp = (const char **)arg[2];
+    return do_execve(name, argv, envp);
 }
 
 
@@ -388,6 +388,7 @@ __sys_linux_getdents(uint32_t arg[])
     return -1;
   return count;
 }
+
 
 static uint32_t
 __sys_linux_stat(uint32_t args[])

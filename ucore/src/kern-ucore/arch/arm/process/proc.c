@@ -184,10 +184,12 @@ copy_thread(uint32_t clone_flags, struct proc_struct *proc,
 */
 
 int
-init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char** kargv) 
+init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char** kargv,
+      int envc, char ** kenvp) 
 {
-  uintptr_t stacktop = USTACKTOP - argc * PGSIZE;
+  uintptr_t stacktop = USTACKTOP - (argc+envc) * PGSIZE;
   uintptr_t argvbase = stacktop;
+  uintptr_t envbase = stacktop + argc*PGSIZE;
 #if 0
   char **uargv = (char **)(stacktop - argc * sizeof(char *));
   int i;
@@ -196,14 +198,17 @@ init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char**
   }
   stacktop = (uintptr_t)uargv;
 #endif
-  stacktop = stacktop - (argc+3)*sizeof(char*);
-  uint32_t *esp = (uint32_t*)stacktop;
-  esp[0] = argc;
+  stacktop = stacktop - (argc+envc+3)*sizeof(char*);
+  char **esp = (char**)stacktop;
+  *esp++ = (char*)argc;
   int i;
   for(i=0;i<argc;i++)
-    esp[1+i] = (uint32_t) strcpy((char *)(argvbase + i * PGSIZE), kargv[i]);
-  esp[argc+1] = 0;
-  esp[argc+2] = 0;
+    *esp++ = strcpy((char *)(argvbase + i * PGSIZE), kargv[i]);
+  *esp++ = 0;
+  for(i=0;i<envc;i++)
+    *esp++ = strcpy((char *)(envbase + i * PGSIZE), kenvp[i]);
+  *esp++ = 0;
+
   //*(int *)stacktop = argc;
 
   struct trapframe *tf = proc->tf;
@@ -226,12 +231,9 @@ init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char**
 
 // kernel_execve - do SYS_exec syscall to exec a user program called by user_main kernel_thread
 int
-kernel_execve(const char *name, const char **argv) {
+kernel_execve(const char *name, const char **argv, const char **kenvp) {
 	//kprintf("kernel_execve: %s at 0x%08x-0x%08x\n", name, binary, size);
-  int argc = 0, ret;
-	while (argv[argc] != NULL) {
-		argc ++;
-	}
+  int  ret;
 	//panic("unimpl");
   asm volatile (
   "mov\tr0,%1\n\t"
@@ -240,8 +242,8 @@ kernel_execve(const char *name, const char **argv) {
   __syscall(exec) 
   "mov\t%0,r0"                                                        
         : "=r" (ret)
-        : "r" ((long)(name)),"r" ((long)(argc)),"r" ((long)(argv))
-        : "r0","r1","r2","lr");                    
+        : "r" ((long)(name)),"r" ((long)argv),"r" ((long)(kenvp))
+        : "r0","r1","r2","lr");
    //ret = do_execve(name, argc, argv);
     return ret;
 }

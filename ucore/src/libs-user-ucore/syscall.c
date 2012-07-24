@@ -26,8 +26,8 @@ sys_wait(int pid, int *store) {
 }
 
 int
-sys_exec(const char *name, int argc, const char **argv) {
-    return syscall(SYS_exec, name, argc, argv);
+sys_exec(const char *filename, const char **argv, const char **envp) {
+    return syscall(SYS_exec, filename, argv, envp);
 }
 
 int
@@ -319,7 +319,8 @@ type sys_##name(type1 arg1,type2 arg2,type3 arg3, type4 arg4) {                 
 _syscall1(int, exit,int , error);
 _syscall0(int,fork);
 _syscall2(int, wait,int , pid, int *, store);
-_syscall3(int, exec,const char *, name, int , argc, const char **, argv);
+_syscall3(int, exec,const char *, filename, const char **, argv,
+    const char **, envp);
 _syscall0(int,yield);
 _syscall1(int, sleep,unsigned int , time);
 _syscall1(int, kill,int , pid);

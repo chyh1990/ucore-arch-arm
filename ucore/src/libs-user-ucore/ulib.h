@@ -62,7 +62,7 @@ int mbox_recv_timeout(int id, struct mboxbuf *buf, unsigned int timeout);
 int mbox_free(int id);
 int mbox_info(int id, struct mboxinfo *info);
 
-int __exec(const char *name, const char **argv);
+int __exec(const char *name, const char **argv, const char **envp);
 
 #define __exec0(name, path, ...)                \
     ({ const char *argv[] = {path, ##__VA_ARGS__, NULL}; __exec(name, argv); })

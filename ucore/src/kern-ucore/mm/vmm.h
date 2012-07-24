@@ -93,6 +93,9 @@ int mm_brk(struct mm_struct *mm, uintptr_t addr, size_t len);
 int do_pgfault(struct mm_struct *mm, machine_word_t error_code, uintptr_t addr);
 bool user_mem_check(struct mm_struct *mm, uintptr_t start, size_t len, bool write);
 
+size_t user_mem_check_size(struct mm_struct *mm, uintptr_t start, 
+    size_t len, bool write);
+
 bool copy_from_user(struct mm_struct *mm, void *dst, const void *src, size_t len, bool writable);
 bool copy_to_user(struct mm_struct *mm, void *dst, const void *src, size_t len);
 bool copy_string(struct mm_struct *mm, char *dst, const char *src, size_t maxn);

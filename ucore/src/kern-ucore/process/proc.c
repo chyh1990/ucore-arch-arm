@@ -644,8 +644,9 @@ load_icode_read(int fd, void *buf, size_t len, off_t offset) {
 }
 
 static int
-load_icode(int fd, int argc, char **kargv) {
+load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
     assert(argc >= 0 && argc <= EXEC_MAX_ARG_NUM);
+    assert(envc >= 0 && envc <= EXEC_MAX_ENV_NUM);
     if (current->mm != NULL) {
         panic("load_icode: current->mm must be empty.\n");
     }
@@ -776,7 +777,7 @@ load_icode(int fd, int argc, char **kargv) {
     mm->lapic = pls_read(lapic_id);
     mp_set_mm_pagetable(mm);
 
-    if (init_new_context (current, elf, argc, kargv) < 0)
+    if (init_new_context (current, elf, argc, kargv, envc, kenvp) < 0)
 		goto bad_cleanup_mmap;
 
     ret = 0;
@@ -800,49 +801,60 @@ put_kargv(int argc, char **kargv) {
 }
 
 static int
-copy_kargv(struct mm_struct *mm, int argc, char **kargv, const char **argv) {
-    int i, ret = -E_INVAL;
-	char *argv_k;
-    if (!user_mem_check(mm, (uintptr_t)argv, sizeof(const char *) * argc, 0)) {
-        return ret;
-    }
-    for (i = 0; i < argc; i ++) {
-        char *buffer;
-        if ((buffer = kmalloc(EXEC_MAX_ARG_LEN + 1)) == NULL) {
-            goto failed_nomem;
-        }
-        if (!copy_from_user (mm, &argv_k, argv + i, sizeof (char*), 0) ||
-			!copy_string(mm, buffer, argv_k, EXEC_MAX_ARG_LEN + 1)) {
-            kfree(buffer);
-            goto failed_cleanup;
-        }
-        kargv[i] = buffer;
-    }
+copy_kargv(struct mm_struct *mm, char **kargv, const char **argv, int max_argc, int *argc_store) {
+  int i, ret = -E_INVAL;
+  if(!argv){
+    *argc_store = 0;
     return 0;
+  }
+  char *argv_k;
+  for (i = 0; i < max_argc; i ++) {
+    if(!copy_from_user(mm, &argv_k, argv+i, sizeof(char*), 0))
+      goto failed_cleanup;
+    if(!argv_k)
+      break;
+    char *buffer;
+    if ((buffer = kmalloc(EXEC_MAX_ARG_LEN + 1)) == NULL) {
+      goto failed_nomem;
+    }
+#if 0
+    if (!copy_from_user (mm, &argv_k, argv + i, sizeof (char*), 0) ||
+        !copy_string(mm, buffer, argv_k, EXEC_MAX_ARG_LEN + 1)) {
+      kfree(buffer);
+      goto failed_cleanup;
+    }
+#endif
+    if(!copy_string(mm, buffer, argv_k, EXEC_MAX_ARG_LEN+1)){
+      kfree(buffer);
+      goto failed_cleanup;
+    }
+    kargv[i] = buffer;
+  }
+  *argc_store = i;
+  return 0;
 
 failed_nomem:
-    ret = -E_NO_MEM;
+  ret = -E_NO_MEM;
 failed_cleanup:
     put_kargv(i, kargv);
     return ret;
 }
 
 int
-do_execve(const char *name, int argc, const char **argv) {   
-	static_assert(EXEC_MAX_ARG_LEN >= FS_MAX_FPATH_LEN);
+do_execve(const char *filename, const char **argv, const char **envp) {
+    static_assert(EXEC_MAX_ARG_LEN >= FS_MAX_FPATH_LEN);
+    
     struct mm_struct *mm = current->mm;
-    if (!(argc >= 1 && argc <= EXEC_MAX_ARG_NUM)) {
-        return -E_INVAL;
-    }
 
     char local_name[PROC_NAME_LEN + 1];
     memset(local_name, 0, sizeof(local_name));
 
-    char *kargv[EXEC_MAX_ARG_NUM];
+    char *kargv[EXEC_MAX_ARG_NUM], *kenvp[EXEC_MAX_ENV_NUM];
     const char *path;
 
     int ret = -E_INVAL;
     lock_mm(mm);
+#if 0
     if (name == NULL) {
         snprintf(local_name, sizeof(local_name), "<null> %d", current->pid);
     }
@@ -852,12 +864,33 @@ do_execve(const char *name, int argc, const char **argv) {
             return ret;
         }
     }
-    if ((ret = copy_kargv(mm, argc, kargv, argv)) != 0) {
-        unlock_mm(mm);
-        return ret;
+#endif
+    snprintf(local_name, sizeof(local_name), "<null> %d", current->pid);
+
+    int argc = 0, envc = 0;
+    if ((ret = copy_kargv(mm, kargv, argv, EXEC_MAX_ARG_NUM, &argc)) != 0) {
+      unlock_mm(mm);
+      return ret;
     }
+    if ((ret = copy_kargv(mm, kenvp, envp, EXEC_MAX_ENV_NUM, &envc)) != 0) {
+      unlock_mm(mm);
+      put_kargv(argc, kargv);
+      return ret;
+    }
+
+#if 0
+    int i;
+    kprintf("## fn %s\n", filename);
+    kprintf("## argc %d\n", argc);
+    for(i=0;i<argc;i++)
+      kprintf("## %08x %s\n", kargv[i], kargv[i]);
+    kprintf("## envc %d\n", envc);
+    for(i=0;i<envc;i++)
+      kprintf("## %08x %s\n", kenvp[i], kenvp[i]);
+#endif
     //path = argv[0];
-	copy_from_user (mm, &path, argv, sizeof (char*), 0);
+    //copy_from_user (mm, &path, argv, sizeof (char*), 0);
+    path = filename;
     unlock_mm(mm);
 
     /* linux never do this */
@@ -867,20 +900,20 @@ do_execve(const char *name, int argc, const char **argv) {
 
     int fd;
     if ((ret = fd = sysfile_open(path, O_RDONLY)) < 0) {
-        goto execve_exit;
+      goto execve_exit;
     }
 
     if (mm != NULL) {
-		mm->lapic = -1;
-        mp_set_mm_pagetable(NULL);
-        if (mm_count_dec(mm) == 0) {
-            exit_mmap(mm);
-            put_pgdir(mm);
-            bool intr_flag;
-            local_intr_save(intr_flag);
-            {
-                list_del(&(mm->proc_mm_link));
-            }
+      mm->lapic = -1;
+      mp_set_mm_pagetable(NULL);
+      if (mm_count_dec(mm) == 0) {
+        exit_mmap(mm);
+        put_pgdir(mm);
+        bool intr_flag;
+        local_intr_save(intr_flag);
+        {
+          list_del(&(mm->proc_mm_link));
+        }
             local_intr_restore(intr_flag);
             mm_destroy(mm);
         }
@@ -894,11 +927,10 @@ do_execve(const char *name, int argc, const char **argv) {
     }
     sem_queue_count_inc(current->sem_queue);
 
-    if ((ret = load_icode(fd, argc, kargv)) != 0) {
+    if ((ret = load_icode(fd, argc, kargv, envc, kenvp)) != 0) {
         goto execve_exit;
     }
 
-    de_thread(current);
     set_proc_name(current, local_name);
 
 	if (do_execve_arch_hook (argc, kargv) < 0)
@@ -909,6 +941,7 @@ do_execve(const char *name, int argc, const char **argv) {
 
 execve_exit:
     put_kargv(argc, kargv);
+    put_kargv(envc, kenvp);
 /* exec should return -1 if failed */
     //return ret;
     do_exit(ret);
@@ -1245,9 +1278,10 @@ out_unlock:
 
 #define __KERNEL_EXECVE(name, path, ...) ({                         \
             const char *argv[] = {path, ##__VA_ARGS__, NULL};       \
+            const char *envp[] = {"PATH=/bin/", NULL};              \
             kprintf("kernel_execve: pid = %d, name = \"%s\".\n",    \
                     current->pid, name);                            \
-            kernel_execve(name, argv);                              \
+            kernel_execve(path, argv, envp);                              \
         })
 
 #define KERNEL_EXECVE(x, ...)                   __KERNEL_EXECVE(#x, "bin/"#x, ##__VA_ARGS__)

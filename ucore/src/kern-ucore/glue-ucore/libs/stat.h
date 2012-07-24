@@ -2,23 +2,12 @@
 #define __LIBS_STAT_H__
 
 #include <types.h>
-#include <arm-posix_types.h>
 
-#if 0
-typedef uint32_t      blksize_t;
-typedef int64_t     blkcnt_t; 
-typedef uint32_t __kernel_dev_t;
-
-typedef __kernel_ino_t		ino_t;
-typedef __kernel_nlink_t	nlink_t;
-typedef uint32_t uid_t;
-typedef uint32_t gid_t;
-typedef __kernel_time_t  _st_time_t;
-typedef __kernel_off_t   _st_off_t;
-//typedef __kernel_timer_t	timer_t;
-#endif
-
+#ifndef __NO_UCORE_STAT__
 struct stat {
+#else 
+struct ucore_stat {
+#endif
     uint32_t st_mode;                   // protection mode and file type
     size_t st_nlinks;                   // number of hard links
     size_t st_blocks;                   // number of blocks file is using
@@ -44,6 +33,7 @@ struct stat {
 
 #if defined(__KERNEL__) || !defined(__GLIBC__) || (__GLIBC__ < 2)
 
+#ifndef __NO_UCORE_STAT__
 #define S_IFMT  00170000
 #define S_IFSOCK 0140000
 #define S_IFLNK	 0120000
@@ -80,7 +70,7 @@ struct stat {
 #define S_IXOTH 00001
 
 #endif
-
+#endif
 
 #endif /* !__LIBS_STAT_H__ */
 

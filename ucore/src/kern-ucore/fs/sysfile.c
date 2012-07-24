@@ -191,6 +191,15 @@ sysfile_fstat(int fd, struct stat *__stat) {
     return ret;
 }
 
+int 
+sysfile_linux_fstat(int fd, void* buf)
+{
+  int lstat_size = __ucore_linux_stat_getsize();
+  int ret = 0;
+  
+  return -1;
+}
+
 int
 sysfile_fsync(int fd) {
     return file_fsync(fd);

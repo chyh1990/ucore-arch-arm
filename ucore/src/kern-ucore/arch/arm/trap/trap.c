@@ -74,7 +74,7 @@ bool
 trap_in_kernel(struct trapframe *tf) {
   //return (tf->tf_cs == (uint16_t)KERNEL_CS);
   //kprintf("trap_in_kernel: at pc:0x%08x\n", tf->tf_epc);
-  return (tf->tf_epc >= KERNBASE && tf->tf_epc <= KERNTOP);
+  return (tf->tf_sr & 0xF)!=0;
 }
 
 void
@@ -150,6 +150,13 @@ pgfault_handler(struct trapframe *tf) {
   return do_pgfault(mm, error_code, far());
 }
 
+static void killed_by_kernel()
+{
+  kprintf("Process %d killed by kernel.\n", 
+    pls_read(current)?pls_read(current)->pid:-1);
+  do_exit(-E_KILLED);
+}
+
 static int udef_handler(struct trapframe *tf)
 {
 //  print_trapframe(tf);
@@ -158,7 +165,11 @@ static int udef_handler(struct trapframe *tf)
     return kgdb_trap(tf);
   }else{
     print_trapframe(tf);
-    panic("undefined instruction\n");
+    if(trap_in_kernel(tf)){
+      panic("undefined instruction\n");
+    }else{
+      killed_by_kernel();
+    }
   }
   return 0;
 }
@@ -188,8 +199,7 @@ trap_dispatch(struct trapframe *tf) {
           if (trap_in_kernel(tf)) {
             panic("handle pgfault failed in kernel mode. %e\n", ret);
           }
-          kprintf("killed by kernel.\n");
-          do_exit(-E_KILLED);
+          killed_by_kernel();
         }
       }
       break;

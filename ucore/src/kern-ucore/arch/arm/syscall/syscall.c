@@ -411,25 +411,6 @@ __sys_linux_sched_yield(uint32_t arg[])
   return do_yield();
 }
 
-static uint32_t
-__sys_linux_fork(uint32_t arg[])
-{
-  //print_trapframe(pls_read(current)->tf);
-    struct trapframe *tf = pls_read(current)->tf;
-    uintptr_t stack = tf->tf_esp;
-    kprintf("FORK :");
-    print_trapframe(tf);
-    return do_fork(0, stack, tf);
-}
-
-#if 0
-static uint32_t
-__sys_linux_fork(uint32_t args[])
-{
-  return do_fork(0, stack, tf);
-}
-#endif
-
 #define __UCORE_SYSCALL(x) [__NR_##x]  sys_##x
 #define __LINUX_SYSCALL(x) [__NR_##x]  __sys_linux_##x
 
@@ -439,7 +420,7 @@ __sys_linux_fork(uint32_t args[])
 
 static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __UCORE_SYSCALL(exit),
-  __LINUX_SYSCALL(fork),
+  __UCORE_SYSCALL(fork),
   __UCORE_SYSCALL(read),
   __UCORE_SYSCALL(write),
   __UCORE_SYSCALL(open),
@@ -482,7 +463,8 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
 /* Linux EABI
  * r7 = syscall num
  * r0 - r3 = args
- *
+ * NOTE: EABI requires kernel to save lr,
+ * while it is saved by user code in OABI
  */
 
 static int __sys_linux_entry(struct trapframe *tf)

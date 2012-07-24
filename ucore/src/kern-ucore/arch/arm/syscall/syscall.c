@@ -396,6 +396,39 @@ __sys_linux_stat(uint32_t args[])
   return -1;
 }
 
+static uint32_t
+__sys_linux_waitpid(uint32_t arg[]) {
+	int pid = (int)arg[0];
+	int *store = (int *)arg[1];
+  kprintf("__sys_linux_waitpid %d, %p\n", pid, store);
+	return do_linux_waitpid(pid, store);
+}
+#define __sys_linux_wait4 __sys_linux_waitpid
+
+static uint32_t
+__sys_linux_sched_yield(uint32_t arg[])
+{
+  return do_yield();
+}
+
+static uint32_t
+__sys_linux_fork(uint32_t arg[])
+{
+  //print_trapframe(pls_read(current)->tf);
+    struct trapframe *tf = pls_read(current)->tf;
+    uintptr_t stack = tf->tf_esp;
+    kprintf("FORK :");
+    print_trapframe(tf);
+    return do_fork(0, stack, tf);
+}
+
+#if 0
+static uint32_t
+__sys_linux_fork(uint32_t args[])
+{
+  return do_fork(0, stack, tf);
+}
+#endif
 
 #define __UCORE_SYSCALL(x) [__NR_##x]  sys_##x
 #define __LINUX_SYSCALL(x) [__NR_##x]  __sys_linux_##x
@@ -406,7 +439,7 @@ __sys_linux_stat(uint32_t args[])
 
 static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __UCORE_SYSCALL(exit),
-  __UCORE_SYSCALL(fork),
+  __LINUX_SYSCALL(fork),
   __UCORE_SYSCALL(read),
   __UCORE_SYSCALL(write),
   __UCORE_SYSCALL(open),
@@ -434,10 +467,13 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __LINUX_SYSCALL(stat),
   __UCORE_SYSCALL(fstat),
 
+  __LINUX_SYSCALL(wait4),
   __UCORE_SYSCALL(fsync),
   __UCORE_SYSCALL(getcwd),
 
   __LINUX_SYSCALL(getdents),
+
+  __LINUX_SYSCALL(sched_yield),
 
 };
 

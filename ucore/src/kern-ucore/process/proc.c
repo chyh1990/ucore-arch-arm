@@ -1035,6 +1035,87 @@ found:
     return ret;
 }
 
+
+
+int
+do_linux_waitpid(int pid, int *code_store) {
+    struct mm_struct *mm = current->mm;
+    if (code_store != NULL) {
+        if (!user_mem_check(mm, (uintptr_t)code_store, sizeof(int), 1)) {
+            return -E_INVAL;
+        }
+    }
+
+    struct proc_struct *proc, *cproc;
+    bool intr_flag, haskid;
+repeat:
+    cproc = current;
+    haskid = 0;
+    if (pid != 0) {
+        proc = find_proc(pid);
+        if (proc != NULL) {
+            do {
+                if (proc->parent == cproc) {
+                    haskid = 1;
+                    if (proc->state == PROC_ZOMBIE) {
+                        goto found;
+                    }
+                    break;
+                }
+                cproc = next_thread(cproc);
+            } while (cproc != current);
+        }
+    }
+    else {
+        do {
+            proc = cproc->cptr;
+            for (; proc != NULL; proc = proc->optr) {
+                haskid = 1;
+                if (proc->state == PROC_ZOMBIE) {
+                    goto found;
+                }
+            }
+            cproc = next_thread(cproc);
+        } while (cproc != current);
+    }
+    if (haskid) {
+        current->state = PROC_SLEEPING;
+        current->wait_state = WT_CHILD;
+        schedule();
+        may_killed();
+        goto repeat;
+    }
+    return -E_BAD_PROC;
+
+found:
+    if (proc == idleproc || proc == initproc) {
+        panic("wait idleproc or initproc.\n");
+    }
+    int exit_code = proc->exit_code;
+    int return_pid = proc->pid;
+    local_intr_save(intr_flag);
+    {
+        unhash_proc(proc);
+        remove_links(proc);
+    }
+    local_intr_restore(intr_flag);
+    put_kstack(proc);
+    kfree(proc);
+
+    int ret = 0;
+    if (code_store != NULL) {
+        lock_mm(mm);
+        {
+            int status = exit_code << 8;
+            if (!copy_to_user(mm, code_store, &status, sizeof(int))) {
+                ret = -E_INVAL;
+            }
+        }
+        unlock_mm(mm);
+    }
+    return (ret == 0) ? return_pid : ret;
+}
+
 // __do_kill - kill a process with PCB by set this process's flags with PF_EXITING
 static int
 __do_kill(struct proc_struct *proc, int error_code) {

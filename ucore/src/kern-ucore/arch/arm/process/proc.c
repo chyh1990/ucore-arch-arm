@@ -107,8 +107,6 @@ alloc_proc(void) {
 //       after switch_to, the current proc will execute here.
 static void
 forkret(void) {
-//	kprintf("forkret:tf to restore, %08x\n", current->tf->tf_epc);
-	//print_trapframe(current->tf);
   forkrets(current->tf);
 }
 

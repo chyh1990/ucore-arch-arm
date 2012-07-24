@@ -5,7 +5,7 @@ x/2i $pc
 end
 
 target remote 127.0.0.1:1234
-#file obj/user-sfs/test1
+#file obj/user-sfs/tt
 #b *0x30800000
 #c
 #b switch_to

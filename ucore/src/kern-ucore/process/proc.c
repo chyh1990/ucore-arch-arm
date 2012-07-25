@@ -1051,7 +1051,7 @@ do_linux_waitpid(int pid, int *code_store) {
 repeat:
     cproc = current;
     haskid = 0;
-    if (pid != 0) {
+    if (pid > 0) {
         proc = find_proc(pid);
         if (proc != NULL) {
             do {
@@ -1066,7 +1066,8 @@ repeat:
             } while (cproc != current);
         }
     }
-    else {
+    /* we do NOT have group id, so..*/
+    else if(pid==0 || pid==-1){ /* pid == 0 */
         do {
             proc = cproc->cptr;
             for (; proc != NULL; proc = proc->optr) {
@@ -1077,6 +1078,9 @@ repeat:
             }
             cproc = next_thread(cproc);
         } while (cproc != current);
+    }else{ //pid<-1
+      //TODO
+      return -E_INVAL;
     }
     if (haskid) {
         current->state = PROC_SLEEPING;

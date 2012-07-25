@@ -219,8 +219,8 @@ __trapret:
 __restore_user:
   msr spsr_c, r1
 	# restoring the registers to the user banks, including sp,lr
-	ldmfd sp!,{r0-r12,sp,lr}^
-	#add sp, sp, #56
+	ldmfd sp, {r0-r12, sp, lr}^
+	add   sp, sp, #60
 
   #we may modify rs in trap(privilege switch), so load cpsr from stack, r1
 	ldmfd sp!,{pc}^
@@ -256,7 +256,4 @@ forkrets:
 	add sp, sp, #8
 	ldmfd sp!,{pc}
 
-
-.globl __abort
-__abort:
 

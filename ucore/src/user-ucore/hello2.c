@@ -36,7 +36,7 @@ void test(){
       printf("Fork Child %d\n", pid);
     }
   }
-  int status;
+  int status = 0;
 #if 1
   for(i=0;i<FORK_CNT;i++){
     //waitpid(pids[i], &status, 0);

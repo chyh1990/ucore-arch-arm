@@ -36,7 +36,7 @@ sys_wait(uint32_t arg[]) {
 }
 
 static uint32_t
-sys_exec(uint32_t arg[]) {
+sys_execve(uint32_t arg[]) {
 	const char *name = (const char *)arg[0];
 	const char **argv = (const char **)arg[1];
 	const char **envp = (const char **)arg[2];
@@ -400,7 +400,10 @@ static uint32_t
 __sys_linux_waitpid(uint32_t arg[]) {
 	int pid = (int)arg[0];
 	int *store = (int *)arg[1];
-  kprintf("__sys_linux_waitpid %d, %p\n", pid, store);
+  int options = (int)arg[2];
+  void *rusage = (void*)arg[3];
+  if(options && rusage)
+    return -E_INVAL;
 	return do_linux_waitpid(pid, store);
 }
 #define __sys_linux_wait4 __sys_linux_waitpid
@@ -428,7 +431,7 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
 
   __UCORE_SYSCALL(link),
   __UCORE_SYSCALL(unlink),
-  /* execve */
+  __UCORE_SYSCALL(execve),
   __UCORE_SYSCALL(chdir),
 
   __UCORE_SYSCALL(rename),
@@ -487,7 +490,7 @@ static uint32_t (*syscalls[])(uint32_t arg[]) = {
     [SYS_exit]              sys_exit,
     [SYS_fork]              sys_fork,
     [SYS_wait]              sys_wait,
-    [SYS_exec]              sys_exec,
+    [SYS_exec]              sys_execve,
     [SYS_clone]             sys_clone,
     [SYS_exit_thread]       sys_exit_thread,
     [SYS_yield]             sys_yield,

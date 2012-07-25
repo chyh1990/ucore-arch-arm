@@ -13,6 +13,7 @@
 #include <kio.h>
 #include <error.h>
 #include <syscall.h>
+#include <resource.h>
 
 
 static uint32_t
@@ -414,6 +415,14 @@ __sys_linux_sched_yield(uint32_t arg[])
   return do_yield();
 }
 
+static uint32_t
+__sys_linux_ugetrlimit(uint32_t arg[])
+{
+  int res = (int)arg[0];
+  struct linux_rlimit *lim = (struct linux_rlimit*)arg[1];
+  return do_linux_ugetrlimit(res,lim);
+}
+
 #define __UCORE_SYSCALL(x) [__NR_##x]  sys_##x
 #define __LINUX_SYSCALL(x) [__NR_##x]  __sys_linux_##x
 
@@ -456,6 +465,8 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __UCORE_SYSCALL(getcwd),
 
   __LINUX_SYSCALL(getdents),
+
+  __LINUX_SYSCALL(ugetrlimit),
 
   __LINUX_SYSCALL(sched_yield),
 

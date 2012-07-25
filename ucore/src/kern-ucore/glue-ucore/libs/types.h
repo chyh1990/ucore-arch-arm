@@ -105,6 +105,10 @@ typedef uint32_t mode_t;
 
 typedef uint32_t          dev_t;
 
+#ifndef __user
+#define __user
+#endif
+
 #endif /* __NO_UCORE_TYPE__ */
 
 /* sem_t is used for semaphore id */

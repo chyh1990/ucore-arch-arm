@@ -20,6 +20,8 @@ enum proc_state {
     PROC_ZOMBIE,      // almost dead, and wait parent proc to reclaim his resource
 };
 
+
+
 #define PROC_IS_IDLE(proc)   (((proc)->attribute & PROC_ATTR_ROLE) == PROC_ATTR_ROLE_IDLE)
 
 #define PROC_NAME_LEN               15

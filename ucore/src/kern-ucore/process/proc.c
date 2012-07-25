@@ -22,6 +22,7 @@
 #include <kio.h>
 #include <stdio.h>
 #include <mp.h>
+#include <resource.h>
 
 /* ------------- process/thread mechanism design&implementation -------------
 (an simplified Linux process/thread mechanism )
@@ -1538,5 +1539,26 @@ proc_init_ap(void)
 	pls_write(current, idleproc);
 
 	assert(idleproc != NULL && idleproc->pid == lcpu_idx);
+}
+
+int do_linux_ugetrlimit(int res, struct linux_rlimit * __user __limit)
+{
+  struct linux_rlimit limit;
+  switch(res){
+    case RLIMIT_STACK:
+      limit.rlim_cur = USTACKSIZE;
+      limit.rlim_max = USTACKSIZE;
+      break;
+    default:
+      return -E_INVAL;
+  }
+  struct mm_struct *mm = current->mm;
+  lock_mm(mm);
+  int ret = 0;
+  if(!copy_to_user(mm, __limit, &limit, sizeof(struct linux_rlimit))){
+    ret = -E_INVAL;
+  }
+  unlock_mm(mm);
+  return ret;
 }
 

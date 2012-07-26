@@ -423,17 +423,24 @@ sysfile_mkfifo(const char *__name, uint32_t open_flags) {
 
 int sysfile_ioctl(int fd, unsigned int cmd, unsigned long arg)
 {
+  if (!file_testfd(fd, 1, 0)) {
+    return -E_INVAL;
+  }
   if(!__is_linux_devfile(fd)){
     return -E_INVAL;
   }
   return linux_devfile_ioctl(fd, cmd, arg);
 }
 
-void* sysfile_linux_mmap(void *addr, size_t len, int fd, size_t off)
+void* sysfile_linux_mmap2(void *addr, size_t len, int prot, int flags,
+      int fd, size_t pgoff)
 {
-  if(!__is_linux_devfile(fd)){
-    return -E_INVAL;
+  if (!file_testfd(fd, 1, 0)) {
+    return NULL;
   }
-  return linux_devfile_mmap(addr, len, fd, off);
+  if(!__is_linux_devfile(fd)){
+    return NULL;
+  }
+  return linux_devfile_mmap2(addr, len, prot, flags, fd, pgoff);
 }
 

@@ -122,7 +122,7 @@ int __ucore_linux_inode_fops_stub_write(struct ucore_device *dev,
   return ret;
 }
 
-void *__ucore_linux_inode_fops_stub_mmap(struct ucore_device *dev, void *addr, size_t len, int unused1, int unused2, size_t off)
+void *__ucore_linux_inode_fops_stub_mmap2(struct ucore_device *dev, void *addr, size_t len, int unused1, int unused2, size_t pgoff)
 {
   int ret = -EINVAL;
   struct vm_area_struct *vma = NULL;
@@ -131,7 +131,7 @@ void *__ucore_linux_inode_fops_stub_mmap(struct ucore_device *dev, void *addr, s
     return NULL;
   //struct inode *node = (struct inode*)dev->linux_inode;
   struct file *file = (struct file*)dev->linux_file;
-  unsigned long pgoff = (off & PAGE_MASK) >> PAGE_SHIFT;
+  //unsigned long pgoff = (off & PAGE_MASK) >> PAGE_SHIFT;
   assert(file);
   len = PAGE_ALIGN(len);
   vma->vm_start = addr;
@@ -143,7 +143,7 @@ void *__ucore_linux_inode_fops_stub_mmap(struct ucore_device *dev, void *addr, s
   kfree(vma);
   if(ret)
     return NULL;
-  kprintf("## dd %08x\n", r);
+  //kprintf("## dd %08x\n", r);
   return r;
 }
 

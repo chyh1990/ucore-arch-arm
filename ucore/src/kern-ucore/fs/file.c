@@ -497,7 +497,7 @@ int linux_devfile_ioctl(int fd, unsigned int cmd, unsigned long arg)
   return ret;
 }
 
-void *linux_devfile_mmap(void *addr, size_t len, int fd, size_t off)
+void *linux_devfile_mmap2(void *addr, size_t len, int prot, int flags, int fd, size_t pgoff)
 {
   int ret = -E_INVAL;
   struct file *file;
@@ -507,7 +507,7 @@ void *linux_devfile_mmap(void *addr, size_t len, int fd, size_t off)
   filemap_acquire(file);
   struct device *dev = vop_info(file->node, device);
   assert(dev);
-  void* r = dev->d_linux_mmap(dev, addr, len, 0, 0, off);
+  void* r = dev->d_linux_mmap(dev, addr, len, prot, flags, pgoff);
   filemap_release(file);
   return r;
 }

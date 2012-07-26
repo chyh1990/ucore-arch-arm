@@ -348,14 +348,32 @@ sys_linux_mmap(uint32_t arg[])
   size_t len = arg[1];
   int fd = (int)arg[2];
   size_t off = (size_t)arg[3];
-  return (uint32_t)sysfile_linux_mmap(addr, len, fd, off);
+  return (uint32_t)sysfile_linux_mmap2(addr, len, 0,0,fd, off);
 }
 
 ///////////////////////////////////////////
 
 static uint32_t __sys_linux_ioctl(uint32_t args[])
 {
-  return 0;
+  int fd = (int)args[0];
+  //FIXME
+  if(fd < 3)
+    return 0;
+  unsigned int cmd = args[1];
+  unsigned long data = (unsigned long)args[2];
+  return sysfile_ioctl(fd, cmd, data);
+}
+
+static uint32_t __sys_linux_mmap2(uint32_t arg[])
+{
+  void *addr = (void*)arg[0];
+  size_t len = arg[1];
+  int prot = (int)arg[2];
+  int flags = (int)arg[3];
+  int fd = (int)arg[4];
+  size_t off = (size_t)arg[5];
+  print_trapframe(pls_read(current)->tf);
+  return (uint32_t)sysfile_linux_mmap2(addr, len, prot, flags,fd, off);
 }
 
 static uint32_t
@@ -380,7 +398,7 @@ static uint32_t
 __sys_linux_getdents(uint32_t arg[])
 {
   int fd = (int)arg[0];
-  struct linux_dirent *dir = (struct linux_dirent*)arg[1];
+  struct dirent *dir = (struct dirent*)arg[1];
   uint32_t count = arg[2];
   if(count < sizeof(struct dirent))
     return -1;
@@ -468,6 +486,8 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
 
   __LINUX_SYSCALL(ugetrlimit),
 
+  __LINUX_SYSCALL(mmap2),
+
   __LINUX_SYSCALL(sched_yield),
 
 };
@@ -485,11 +505,13 @@ static int __sys_linux_entry(struct trapframe *tf)
 {
   unsigned int num = tf->tf_regs.reg_r[7];
   if(num < NUM_LINUX_SYSCALLS && _linux_syscalls[num]){
-    uint32_t arg[4];
+    uint32_t arg[6];
     arg[0] = tf->tf_regs.reg_r[0]; // arg0
     arg[1] = tf->tf_regs.reg_r[1]; // arg1
     arg[2] = tf->tf_regs.reg_r[2]; // arg2
     arg[3] = tf->tf_regs.reg_r[3]; // arg3
+    arg[4] = tf->tf_regs.reg_r[4]; // arg3
+    arg[5] = tf->tf_regs.reg_r[5]; // arg3
     tf->tf_regs.reg_r[0] = _linux_syscalls[num](arg); // calling the system call, return value in r0
     return 0;
   }

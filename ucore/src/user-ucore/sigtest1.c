@@ -8,6 +8,7 @@ void handler(int sign) {
 
 int child() {
 	int pid = getpid();
+  cprintf("IM child %d\n", pid);
 
 	signal(SIGUSR1, handler);
 	signal(SIGUSR2, handler);

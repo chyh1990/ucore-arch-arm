@@ -413,6 +413,85 @@ put_sem_queue(struct proc_struct *proc) {
 }
 
 static int
+copy_signal(uint32_t clone_flags, struct proc_struct *proc) {
+	struct signal_struct *signal, *oldsig = current->signal_info.signal;
+
+	if ( oldsig == NULL ) {
+		return 0;
+	}
+
+	if ( clone_flags & CLONE_THREAD ) {
+		signal = oldsig;
+		goto good_signal;
+	}
+
+    int ret = -E_NO_MEM;
+    if ( (signal = signal_create()) == NULL ) {
+        goto bad_signal;
+    }
+
+good_signal:
+	signal_count_inc(signal);
+    proc->signal_info.signal = signal;
+    return 0;
+
+bad_signal:
+    return ret;
+}
+
+// copy_thread - setup the trapframe on the  process's kernel stack top and
+//             - setup the kernel entry point and stack of process
+static void
+put_signal(struct proc_struct *proc) {
+	struct signal_struct *sig = proc->signal_info.signal;
+	if ( sig != NULL ) {
+		if ( signal_count_dec(sig) == 0 ) {
+			signal_destroy(sig);
+		}
+	}
+	proc->signal_info.signal = NULL;
+}
+
+static int
+copy_sighand(uint32_t clone_flags, struct proc_struct *proc) {
+	struct sighand_struct *sighand, *oldsh = current->signal_info.sighand;
+
+	if ( oldsh == NULL ) {
+		return 0;
+	}
+
+	if ( clone_flags & (CLONE_SIGHAND | CLONE_THREAD) ) {
+		sighand = oldsh;
+		goto good_sighand;
+	}
+
+    int ret = -E_NO_MEM;
+    if ( (sighand = sighand_create()) == NULL ) {
+        goto bad_sighand;
+    }
+
+good_sighand:
+    sighand_count_inc(sighand);
+    proc->signal_info.sighand = sighand;
+    return 0;
+
+bad_sighand:
+    return ret;
+}
+
+static void put_sighand(struct proc_struct *proc) {
+	struct sighand_struct *sh = proc->signal_info.sighand;
+	if ( sh != NULL ) {
+		if ( sighand_count_dec(sh) == 0 ) {
+			sighand_destroy(sh);
+		}
+	}
+	proc->signal_info.sighand = NULL;
+}
+
+
+
+static int
 copy_fs(uint32_t clone_flags, struct proc_struct *proc) {
     struct fs_struct *fs_struct, *old_fs_struct = current->fs_struct;
     assert(old_fs_struct != NULL);
@@ -497,11 +576,17 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     if (copy_fs(clone_flags, proc) != 0) {
         goto bad_fork_cleanup_sem;
     }
+    if ( copy_signal(clone_flags, proc) != 0 ) {
+      goto bad_fork_cleanup_fs;
+    }
+    if ( copy_sighand(clone_flags, proc) != 0 ) {
+      goto bad_fork_cleanup_signal;
+    }
     if (copy_mm(clone_flags, proc) != 0) {
-        goto bad_fork_cleanup_fs;
+        goto bad_fork_cleanup_sighand;
     }
     if (copy_thread(clone_flags, proc, stack, tf) != 0) {
-      goto bad_fork_cleanup_sem;
+      goto bad_fork_cleanup_sighand;
     }
 
     bool intr_flag;
@@ -525,7 +610,10 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     ret = proc->pid;
 fork_out:
     return ret;
-
+bad_fork_cleanup_sighand:
+    put_sighand(proc);
+bad_fork_cleanup_signal:
+    put_signal(proc);
 bad_fork_cleanup_fs:
     put_fs(proc);
 bad_fork_cleanup_sem:
@@ -536,6 +624,7 @@ bad_fork_cleanup_proc:
     kfree(proc);
     goto fork_out;
 }
+
 
 // __do_exit - cause a thread exit (use do_exit, do_exit_thread instead)
 //   1. call exit_mmap & put_pgdir & mm_destroy to free the almost all memory space of process
@@ -567,6 +656,8 @@ __do_exit(void) {
         }
         current->mm = NULL;
     }
+    put_sighand(current);
+    put_signal(current);
     put_fs(current);
     put_sem_queue(current);
     current->state = PROC_ZOMBIE;
@@ -927,13 +1018,26 @@ do_execve(const char *filename, const char **argv, const char **envp) {
     put_sem_queue(current);
 
     ret = -E_NO_MEM;
+    /* init signal */
+    put_sighand(current);
+    if ((current->signal_info.sighand = sighand_create()) == NULL) {
+      goto execve_exit;
+    }
+    sighand_count_inc(current->signal_info.sighand);
+
+    put_signal(current);
+    if ((current->signal_info.signal = signal_create()) == NULL) {
+      goto execve_exit;
+    }
+    signal_count_inc(current->signal_info.signal);
+
     if ((current->sem_queue = sem_queue_create()) == NULL) {
-        goto execve_exit;
+      goto execve_exit;
     }
     sem_queue_count_inc(current->sem_queue);
 
     if ((ret = load_icode(fd, argc, kargv, envc, kenvp)) != 0) {
-        goto execve_exit;
+      goto execve_exit;
     }
 
     set_proc_name(current, local_name);
@@ -1258,9 +1362,44 @@ do_sleep(unsigned int time) {
     return 0;
 }
 
+int
+__do_linux_mmap(uintptr_t __user *addr_store, size_t len, uint32_t mmap_flags) {
+    struct mm_struct *mm = current->mm;
+    if (mm == NULL) {
+        panic("kernel thread call mmap!!.\n");
+    }
+    if (addr_store == NULL || len == 0) {
+        return -E_INVAL;
+    }
+
+    int ret = -E_INVAL;
+
+    uintptr_t addr;
+    addr = *addr_store;
+
+    uintptr_t start = ROUNDDOWN(addr, PGSIZE), end = ROUNDUP(addr + len, PGSIZE);
+    addr = start, len = end - start;
+
+    uint32_t vm_flags = VM_READ;
+    if (mmap_flags & MMAP_WRITE) vm_flags |= VM_WRITE;
+    if (mmap_flags & MMAP_STACK) vm_flags |= VM_STACK;
+
+    ret = -E_NO_MEM;
+    if (addr == 0) {
+      if ((addr = get_unmapped_area(mm, len)) == 0) {
+        goto out_unlock;
+      }
+    }
+    if ((ret = mm_map(mm, addr, len, vm_flags, NULL)) == 0) {
+      *addr_store = addr;
+    }
+out_unlock:
+    return ret;
+}
+
 // do_mmap - add a vma with addr, len and flags(VM_READ/M_WRITE/VM_STACK)
 int
-do_mmap(uintptr_t *addr_store, size_t len, uint32_t mmap_flags) {
+do_mmap(uintptr_t __user *addr_store, size_t len, uint32_t mmap_flags) {
     struct mm_struct *mm = current->mm;
     if (mm == NULL) {
         panic("kernel thread call mmap!!.\n");
@@ -1275,7 +1414,7 @@ do_mmap(uintptr_t *addr_store, size_t len, uint32_t mmap_flags) {
 
     lock_mm(mm);
     if (!copy_from_user(mm, &addr, addr_store, sizeof(uintptr_t), 1)) {
-        goto out_unlock;
+      goto out_unlock;
     }
 
     uintptr_t start = ROUNDDOWN(addr, PGSIZE), end = ROUNDUP(addr + len, PGSIZE);
@@ -1287,12 +1426,12 @@ do_mmap(uintptr_t *addr_store, size_t len, uint32_t mmap_flags) {
 
     ret = -E_NO_MEM;
     if (addr == 0) {
-        if ((addr = get_unmapped_area(mm, len)) == 0) {
-            goto out_unlock;
-        }
+      if ((addr = get_unmapped_area(mm, len)) == 0) {
+        goto out_unlock;
+      }
     }
     if ((ret = mm_map(mm, addr, len, vm_flags, NULL)) == 0) {
-		copy_to_user (mm, addr_store, &addr, sizeof (uintptr_t));
+      copy_to_user (mm, addr_store, &addr, sizeof (uintptr_t));
     }
 out_unlock:
     unlock_mm(mm);

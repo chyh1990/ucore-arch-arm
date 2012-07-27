@@ -109,15 +109,6 @@ sighand_count_dec(struct sighand_struct *sh) {
     return atomic_sub_return(&(sh->count), 1);
 }
 
-struct sigframe {
-	uintptr_t pretcode;
-	int sign;
-	struct trapframe tf;
-	sigset_t old_blocked;
-	//there's fpstate in linux, but nothing here
-	uint64_t retcode;
-};
-
 struct signal_struct *signal_create(void);
 void signal_destroy(struct signal_struct *sig);
 
@@ -142,6 +133,10 @@ int do_sigwaitinfo(const sigset_t *set, struct siginfo_t *info);
 int raise_signal(struct proc_struct *proc, int sign, bool group);
 
 int do_signal(struct trapframe *tf, sigset_t *old);
+
+void sig_recalc_pending(struct proc_struct *proc);
+
+int __sig_setup_frame(int sign, struct sigaction *act, sigset_t oldset, struct trapframe *tf);
 
 #endif // _HERN_PROCESS_SIGNAL_H_
 

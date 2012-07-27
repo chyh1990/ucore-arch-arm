@@ -273,7 +273,7 @@ trap(struct trapframe *tf) {
       if (pls_read(current)->need_resched) {
         schedule();
       }
-      //do_signal(tf, NULL);
+      do_signal(tf, NULL);
     }
   }
 }

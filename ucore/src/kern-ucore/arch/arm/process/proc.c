@@ -75,7 +75,6 @@ void switch_to(struct context *from, struct context *to);
 
 static void proc_signal_init(struct proc_signal* ps)
 {
-    memset(ps, 0, sizeof(struct proc_signal));
 		sigset_initwith(ps->pending.signal, 0);
 		ps->signal = NULL;
 		ps->sighand = NULL;
@@ -91,6 +90,7 @@ struct proc_struct *
 alloc_proc(void) {
     struct proc_struct *proc = kmalloc(sizeof(struct proc_struct));
     if (proc != NULL) {
+        memset(proc, 0, sizeof(struct proc_struct));
         proc->state = PROC_UNINIT;
         proc->pid = -1;
         proc->runs = 0;

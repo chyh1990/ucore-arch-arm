@@ -355,32 +355,67 @@ static uint32_t
 sys_linux_sigaction(uint32_t arg[]) {
 	return do_sigaction((int)arg[0], (const struct sigaction *)arg[1], (struct sigaction *)arg[2]);
 }
+#define __sys_linux_sigaction sys_linux_sigaction
+#define __sys_linux_rt_sigaction sys_linux_sigaction
 
 static uint32_t
 sys_linux_sigprocmask(uint32_t arg[]) {
 	return do_sigprocmask((int)arg[0], (const sigset_t *)arg[1], (sigset_t *)arg[2]);
 }
+#define __sys_linux_sigprocmask sys_linux_sigprocmask
+#define __sys_linux_rt_sigprocmask sys_linux_sigprocmask
 
 static uint32_t
 sys_linux_sigpending(uint32_t arg[]) {
 	return do_sigpending((sigset_t *)arg[0]);
 }
+#define __sys_linux_sigpending sys_linux_sigpending
+#define __sys_linux_rt_sigpending sys_linux_sigpending
 
 static uint32_t
 sys_linux_sigtkill(uint32_t arg[]) {
 	return do_sigtkill((int)arg[0], (int)arg[1]);
 }
+#define __sys_linux_sigtkill sys_linux_sigtkill
 
 static uint32_t
 sys_linux_sigsuspend(uint32_t arg[]) {
 	return do_sigsuspend(arg[2]);
 }
+#define __sys_linux_sigsuspend sys_linux_sigsuspend
+#define __sys_linux_rt_sigsuspend sys_linux_sigsuspend
 
 
 static uint32_t
 sys_linux_sigkill(uint32_t arg[]) {
 	return do_sigkill((int)arg[0], (int)arg[1]);
 }
+#define __sys_linux_sigkill sys_linux_sigkill
+#define __sys_linux_kill    sys_linux_sigkill
+
+static uint32_t
+sys_linux_sigaltstack(uint32_t arg[]) {
+	const stack_t *stack = (const stack_t *)arg[0];
+	stack_t *old = (stack_t *)arg[1];
+	return do_sigaltstack(stack, old);
+}
+#define __sys_linux_sigaltstack sys_linux_sigaltstack
+
+static uint32_t
+sys_linux_sigwaitinfo(uint32_t arg[]) {
+	const sigset_t *set = (const sigset_t *)arg[0];
+	struct siginfo_t *info = (struct siginfo_t *)arg[1];
+	return do_sigwaitinfo(set, info);
+}
+#define __sys_linux_sigwaitinfo sys_linux_sigwaitinfo
+
+//this never used by user program
+static uint32_t
+sys_linux_sigreturn(uint32_t arg[]) {
+	return do_sigreturn();
+}
+#define __sys_linux_sigreturn sys_linux_sigreturn
+#define __sys_linux_rt_sigreturn sys_linux_sigreturn
 
 ///////////////////////////////////////////
 
@@ -397,14 +432,23 @@ static uint32_t __sys_linux_ioctl(uint32_t args[])
 
 static uint32_t __sys_linux_mmap2(uint32_t arg[])
 {
+  //TODO
   void *addr = (void*)arg[0];
   size_t len = arg[1];
   int prot = (int)arg[2];
   int flags = (int)arg[3];
   int fd = (int)arg[4];
   size_t off = (size_t)arg[5];
-  print_trapframe(pls_read(current)->tf);
-  return (uint32_t)sysfile_linux_mmap2(addr, len, prot, flags,fd, off);
+  if(fd == -1){
+  //print_trapframe(pls_read(current)->tf);
+    int ret = __do_linux_mmap((uintptr_t)&addr, len, flags);
+    //kprintf("@@@ ret=%d %e %08x\n", ret,ret, addr);
+    if(ret)
+      return NULL;
+    return addr;
+  }else{
+    return (uint32_t)sysfile_linux_mmap2(addr, len, prot, flags,fd, off);
+  }
 }
 
 static uint32_t
@@ -472,6 +516,51 @@ __sys_linux_ugetrlimit(uint32_t arg[])
   return do_linux_ugetrlimit(res,lim);
 }
 
+static uint32_t
+__sys_linux_clone(uint32_t arg[])
+{
+  struct trapframe *tf = pls_read(current)->tf;
+  uint32_t clone_flags = (uint32_t)arg[2];
+  uintptr_t stack = (uintptr_t)arg[1];
+  if (stack == 0) {
+    stack = tf->tf_esp;
+  }
+  return do_fork(clone_flags, stack, tf);
+}
+
+
+static uint32_t
+__sys_linux_pipe(uint32_t arg[]) {
+    int *fd_store = (int *)arg[0];
+    return sysfile_pipe(fd_store)?-1:0;
+}
+
+static uint32_t
+__sys_linux_getppid(uint32_t arg[])
+{
+  struct proc_struct *parent = pls_read(current)->parent;
+  if(!parent)
+    return 0;
+  return parent->pid;
+}
+
+struct linux_pollfd {
+  int   fd;         /* file descriptor */
+  short events;     /* requested events */
+  short revents;    /* returned events */
+};
+
+static uint32_t
+__sys_linux_poll(uint32_t arg[])
+{
+  struct linux_pollfd *fd = (struct linux_pollfd*)arg[0];
+  int nfds = (int)arg[1];
+  int timeout = (int)arg[2]; //ms
+  fd->revents |= 0xffff;
+  return 1;
+}
+
+
 #define __UCORE_SYSCALL(x) [__NR_##x]  sys_##x
 #define __LINUX_SYSCALL(x) [__NR_##x]  __sys_linux_##x
 
@@ -492,28 +581,46 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __UCORE_SYSCALL(execve),
   __UCORE_SYSCALL(chdir),
 
+  __LINUX_SYSCALL(kill),
+
   __UCORE_SYSCALL(rename),
   __UCORE_SYSCALL(mkdir),
   /* rmdir */
   __LINUX_SYSCALL(dup),
-  __UCORE_SYSCALL(pipe),
+  __LINUX_SYSCALL(pipe),
   /* times */
   __LINUX_SYSCALL(brk),
 
   __UCORE_SYSCALL(getpid),
+  __LINUX_SYSCALL(getppid),
   __LINUX_SYSCALL(ioctl),
   __LINUX_SYSCALL(fcntl),
 
   __UCORE_SYSCALL(dup2),
+
+  __LINUX_SYSCALL(sigaction),
 
   __LINUX_SYSCALL(stat),
   __UCORE_SYSCALL(fstat),
 
   __LINUX_SYSCALL(wait4),
   __UCORE_SYSCALL(fsync),
+  __LINUX_SYSCALL(sigreturn),
+  __LINUX_SYSCALL(clone),
+  __LINUX_SYSCALL(sigprocmask),
+
   __UCORE_SYSCALL(getcwd),
 
   __LINUX_SYSCALL(getdents),
+
+  __LINUX_SYSCALL(poll),
+
+  __LINUX_SYSCALL(rt_sigreturn),
+  __LINUX_SYSCALL(rt_sigaction),
+  __LINUX_SYSCALL(rt_sigprocmask),
+  __LINUX_SYSCALL(rt_sigpending),
+  //__LINUX_SYSCALL(rt_sigtimedwait),
+  __LINUX_SYSCALL(rt_sigsuspend),
 
   __LINUX_SYSCALL(ugetrlimit),
 
@@ -604,6 +711,7 @@ static uint32_t (*syscalls[])(uint32_t arg[]) = {
     [SYS_linux_kill]       sys_linux_sigkill,
     [SYS_linux_sigprocmask]       sys_linux_sigprocmask,
     [SYS_linux_sigsuspend]       sys_linux_sigsuspend,
+    [SYS_linux_sigreturn]        sys_linux_sigreturn,
 };
 
 

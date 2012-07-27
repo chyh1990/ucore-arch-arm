@@ -57,8 +57,8 @@ remove_from_queue(int sign, struct sigpending *queue) {
 }
 
 // calculate is there a signal in proc
-static inline void
-recalc_pending(struct proc_struct *proc) {
+void
+sig_recalc_pending(struct proc_struct *proc) {
 	if ( (get_si(proc)->pending.signal & ~(get_si(proc)->blocked)) != 0 
     || (get_si(proc)->signal->shared_pending.signal & ~(get_si(proc)->blocked)) != 0 ) {
 		proc->flags |= TIF_SIGPENDING;
@@ -75,7 +75,7 @@ dequeue_signal(struct proc_struct *proc) {
 		while ( ++sign < 64 ) {
 			if ( !sigismember(get_si(proc)->blocked, sign) && sigismember(get_si(proc)->pending.signal, sign) ) {
 				remove_from_queue(sign, &(get_si(proc)->pending));
-				recalc_pending(proc);
+				sig_recalc_pending(proc);
 				return sign;
 			}
 		}
@@ -85,7 +85,7 @@ dequeue_signal(struct proc_struct *proc) {
 		while ( ++sign < 64 ) {
 			if ( !sigismember(get_si(proc)->blocked, sign) && sigismember(get_si(proc)->signal->shared_pending.signal, sign) ) {
 				remove_from_queue(sign, &(get_si(proc)->signal->shared_pending));
-				recalc_pending(proc);
+				sig_recalc_pending(proc);
 				return sign;
 			}
 		}
@@ -174,6 +174,7 @@ ignore_sig(int sign, struct proc_struct *proc) {
 // do syscall sigaction
 int
 do_sigaction(int sign, const struct sigaction *act, struct sigaction *old) {
+  assert(get_si(current)->sighand);
 #ifdef DEBUG
 	kprintf("do_sigaction(): sign = %d, pid = %d\n", sign, current->pid);
 #endif
@@ -205,7 +206,7 @@ do_sigaction(int sign, const struct sigaction *act, struct sigaction *old) {
 		struct proc_struct *proc = current;
 		do {
 			remove_from_queue(sign, &(get_si(proc)->pending));
-			recalc_pending(proc);
+			sig_recalc_pending(proc);
 			proc = next_thread(proc);
 		} while ( proc != current );
 	}
@@ -217,6 +218,7 @@ out:
 // do syscall sigpending
 int
 do_sigpending(sigset_t *set) {
+  assert(get_si(current)->sighand);
 	sigset_t pending;
 	pending = get_si(current)->pending.signal | get_si(current)->signal->shared_pending.signal;
 	pending &= get_si(current)->blocked;
@@ -234,6 +236,7 @@ do_sigpending(sigset_t *set) {
 // do syscall sigprocmask
 int
 do_sigprocmask(int how, const sigset_t *set, sigset_t *old) {
+  assert(get_si(current)->signal);
 	sigset_t new;
 	int ret = -E_INVAL;
 	if ( set == NULL ) {
@@ -266,7 +269,7 @@ do_sigprocmask(int how, const sigset_t *set, sigset_t *old) {
 		default:
 			ret = -E_INVAL;
 	}
-	recalc_pending(current);
+	sig_recalc_pending(current);
 out:
 	return ret;
 }
@@ -375,7 +378,7 @@ handle_stop_signal(int sign, struct proc_struct *to) {
 		struct proc_struct *proc = current;
 		do {
 			remove_from_queue(SIGCONT, &(get_si(proc)->pending));
-			recalc_pending(proc);
+			sig_recalc_pending(proc);
 			proc = next_thread(proc);
 		} while ( proc != current );
 	} else if ( sign == SIGCONT ) {
@@ -389,7 +392,7 @@ handle_stop_signal(int sign, struct proc_struct *to) {
 			remove_from_queue(SIGTSTP, &(get_si(proc)->pending));
 			remove_from_queue(SIGTTIN, &(get_si(proc)->pending));
 			remove_from_queue(SIGTTOU, &(get_si(proc)->pending));
-			recalc_pending(proc);
+			sig_recalc_pending(proc);
 			proc = next_thread(proc);
 		} while ( proc != current );
 	}
@@ -461,11 +464,11 @@ out:
 	return ret;
 }
 
+#if 0
 // set user stack for signal handler, also set eip to handler
 static int
 setup_frame(int sign, struct sigaction *act, sigset_t oldset, struct trapframe *tf) {
   panic("TODO");
-#if 0
 	uintptr_t stack = get_si(current)->sas_ss_sp;
 	if ( stack == 0 ) {
 		stack = tf->tf_esp;
@@ -488,32 +491,16 @@ setup_frame(int sign, struct sigaction *act, sigset_t oldset, struct trapframe *
 	tf->tf_regs.reg_ecx = tf->tf_regs.reg_edx = 0;
 
 	//we don't need to assign cs ds ss es...
-  #endif
 	return 0;
 }
+  #endif
 
-// do syscall sigreturn, reset the user stack and eip
-int
-do_sigreturn() {
-	struct sigframe *frame = (struct sigframe *)(current->tf->tf_esp - sizeof(void *));
 
-	lock_sig(get_si(current)->sighand);
-	get_si(current)->blocked = frame->old_blocked;
-	recalc_pending(current);
-	unlock_sig(get_si(current)->sighand);
-
-	*(current->tf) = frame->tf;
-
-panic("TODO");
-#if 0
-	return current->tf->tf_regs.reg_eax;
-#endif
-}
 
 // prepare block for signal handler
 static int
 handle_signal(int sign, struct sigaction *act, sigset_t oldset, struct trapframe *tf) {
-	int ret = setup_frame(sign, act, oldset, tf);
+	int ret = __sig_setup_frame(sign, act, oldset, tf);
 
 	if ( ret != 0 ) {
 		return ret;
@@ -523,7 +510,7 @@ handle_signal(int sign, struct sigaction *act, sigset_t oldset, struct trapframe
 		lock_sig(get_si(current)->sighand);
 		get_si(current)->blocked |= act->sa_mask;
 		sigset_add(get_si(current)->blocked, sign);
-		recalc_pending(current);
+		sig_recalc_pending(current);
 		unlock_sig(get_si(current)->sighand);
 	}
 	return ret;
@@ -549,6 +536,8 @@ do_signal_stop(struct proc_struct *proc) {
 int
 do_signal(struct trapframe *tf, sigset_t *old) {
   assert(!trap_in_kernel(tf));
+  if (!get_si(current)->signal || !get_si(current)->sighand)
+    return -1;
 	if ( !signal_pending(current) )
 		return 0;
 	int sign;
@@ -623,6 +612,7 @@ do_sigkill(int pid, int sign) {
   if ( proc == NULL || proc->state == PROC_ZOMBIE ) {
     return -E_INVAL;
   }
+  kprintf("do_sigkill: pid=%d sig=%d\n",pid,sign);
   return raise_signal(proc, sign, 1);
 }
 
@@ -657,7 +647,7 @@ int do_sigwaitinfo(const sigset_t *setp, struct siginfo_t *info) {
   if ( setp == NULL || !copy_from_user(mm, &set, setp, sizeof(sigset_t), 0) ) {
     assert(0);
     unlock_mm(mm);
-		return -1;
+    return -1;
 	}
 	unlock_mm(mm);
 

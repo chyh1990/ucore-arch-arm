@@ -351,6 +351,37 @@ sys_linux_mmap(uint32_t arg[])
   return (uint32_t)sysfile_linux_mmap2(addr, len, 0,0,fd, off);
 }
 
+static uint32_t
+sys_linux_sigaction(uint32_t arg[]) {
+	return do_sigaction((int)arg[0], (const struct sigaction *)arg[1], (struct sigaction *)arg[2]);
+}
+
+static uint32_t
+sys_linux_sigprocmask(uint32_t arg[]) {
+	return do_sigprocmask((int)arg[0], (const sigset_t *)arg[1], (sigset_t *)arg[2]);
+}
+
+static uint32_t
+sys_linux_sigpending(uint32_t arg[]) {
+	return do_sigpending((sigset_t *)arg[0]);
+}
+
+static uint32_t
+sys_linux_sigtkill(uint32_t arg[]) {
+	return do_sigtkill((int)arg[0], (int)arg[1]);
+}
+
+static uint32_t
+sys_linux_sigsuspend(uint32_t arg[]) {
+	return do_sigsuspend(arg[2]);
+}
+
+
+static uint32_t
+sys_linux_sigkill(uint32_t arg[]) {
+	return do_sigkill((int)arg[0], (int)arg[1]);
+}
+
 ///////////////////////////////////////////
 
 static uint32_t __sys_linux_ioctl(uint32_t args[])
@@ -568,6 +599,11 @@ static uint32_t (*syscalls[])(uint32_t arg[]) = {
     [SYS_mkfifo]            sys_mkfifo,
     [SYS_ioctl]             sys_ioctl,
     [SYS_linux_mmap]        sys_linux_mmap,
+    [SYS_linux_tkill]       sys_linux_sigtkill,
+    [SYS_linux_sigaction]       sys_linux_sigaction,
+    [SYS_linux_kill]       sys_linux_sigkill,
+    [SYS_linux_sigprocmask]       sys_linux_sigprocmask,
+    [SYS_linux_sigsuspend]       sys_linux_sigsuspend,
 };
 
 

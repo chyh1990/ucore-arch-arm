@@ -5,6 +5,7 @@
 #include <mboxbuf.h>
 #include <stat.h>
 #include <dirent.h>
+#include <signal.h>
 
 #ifndef ARCH_ARM
 
@@ -363,6 +364,11 @@ _syscall1(int, pipe,int *, fd);
 _syscall2(int, mkfifo,const char *, name, uint32_t , open);
 _syscall3(int, ioctl, int, d, int, request, unsigned long, data);
 _syscall4(void*, linux_mmap, void*, addr, size_t, length, int, fd, size_t, offset);
+_syscall2(int, linux_tkill, int ,pid, int,sign);
+_syscall2(int, linux_kill, int ,pid, int,sign);
+_syscall3(int, linux_sigprocmask,int,how, const sigset_t*, set, sigset_t*, old);
+_syscall1(int, linux_sigsuspend, unsigned int, mask);
+_syscall3(int, linux_sigaction, int, sign, struct sigaction* ,act,struct sigaction *, old);
 
 
 int

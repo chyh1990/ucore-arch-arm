@@ -508,10 +508,14 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     local_intr_save(intr_flag);
     {
         proc->pid = get_pid();
+		    proc->tid = proc->pid;
         hash_proc(proc);
         set_links(proc);
         if (clone_flags & CLONE_THREAD) {
-            list_add_before(&(current->thread_group), &(proc->thread_group));
+          list_add_before(&(current->thread_group), &(proc->thread_group));
+          proc->gid = current->gid;
+        }else{
+          proc->gid = proc->pid;
         }
     }
     local_intr_restore(intr_flag);

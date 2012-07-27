@@ -56,6 +56,12 @@
 /* chenyh 2012/7 */
 #define SYS_ioctl           142
 #define SYS_linux_mmap      143
+#define SYS_linux_tkill     144
+#define SYS_linux_sigaction 145
+#define SYS_linux_kill      146
+#define SYS_linux_sigprocmask   147
+#define SYS_linux_sigsuspend   148
+
 
 /* SYS_fork flags */
 #define CLONE_VM            0x00000100  // set if VM shared between processes

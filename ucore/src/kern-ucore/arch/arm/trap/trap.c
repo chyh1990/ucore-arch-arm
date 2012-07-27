@@ -15,6 +15,7 @@
 #include <picirq.h>
 #include <syscall.h>
 #include <error.h>
+#include <signal.h>
 #include <kgdb-stub.h>
 
 #define TICK_NUM 5
@@ -272,6 +273,7 @@ trap(struct trapframe *tf) {
       if (pls_read(current)->need_resched) {
         schedule();
       }
+      //do_signal(tf, NULL);
     }
   }
 }

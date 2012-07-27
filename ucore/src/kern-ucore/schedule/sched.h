@@ -62,6 +62,8 @@ struct run_queue {
 
 void sched_init(void);
 void wakeup_proc(struct proc_struct *proc);
+void stop_proc(struct proc_struct *proc, uint32_t wait);
+int try_to_wakeup(struct proc_struct *proc);
 void schedule(void);
 void add_timer(timer_t *timer);
 void del_timer(timer_t *timer);

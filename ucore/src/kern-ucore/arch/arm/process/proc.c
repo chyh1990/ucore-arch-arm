@@ -16,6 +16,7 @@
 #include <sched.h>
 #include <assert.h>
 #include <syscall.h>
+#include <signal.h>
 
 /* ------------- process/thread mechanism design&implementation -------------
 (an simplified Linux process/thread mechanism )
@@ -72,6 +73,19 @@ extern void forkrets(struct trapframe*tf);
 
 void switch_to(struct context *from, struct context *to);
 
+static void proc_signal_init(struct proc_signal* ps)
+{
+    memset(ps, 0, sizeof(struct proc_signal));
+		sigset_initwith(ps->pending.signal, 0);
+		ps->signal = NULL;
+		ps->sighand = NULL;
+		sigset_initwith(ps->blocked, 0);
+		sigset_initwith(ps->rt_blocked, 0);
+		list_init(&(ps->pending.list));
+		ps->sas_ss_sp = 0;
+		ps->sas_ss_size = 0;
+}
+
 // alloc_proc - create a proc struct and init fields
 struct proc_struct *
 alloc_proc(void) {
@@ -98,6 +112,10 @@ alloc_proc(void) {
         proc->sem_queue = NULL;
         event_box_init(&(proc->event_box));
         proc->fs_struct = NULL;
+
+        proc->tid = -1;
+        proc->gid = -1;
+        proc_signal_init(&proc->signal_info);
     }
     return proc;
 }

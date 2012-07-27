@@ -210,10 +210,19 @@ void mutex_lock(struct mutex *lock)
 {
   //TODO
 }
+int mutex_lock_interruptible(struct mutex *lock)
+{
+  return 0;
+}
 
 void mutex_unlock(struct mutex *lock)
 {
   //TODO
+}
+
+void synchronize_rcu(void)
+{
+
 }
 
 /* notifier */
@@ -436,6 +445,16 @@ struct proc_dir_entry *proc_create_data(const char *name, mode_t mode,
   return NULL;
 }
 
+void remove_proc_entry(const char *name, struct proc_dir_entry *parent)
+{
+
+}
+
+struct proc_dir_entry *proc_mkdir(const char *name,struct proc_dir_entry * p)
+{
+  return NULL;
+}
+
 int seq_open(struct file *file, const struct seq_operations *op)
 {
   return -EINVAL;
@@ -477,6 +496,11 @@ int seq_printf(struct seq_file *m, const char *f, ...)
 {
   return -EINVAL;
 }
+struct list_head *seq_list_start(struct list_head *head, loff_t pos)
+{return NULL;}
+
+struct list_head *seq_list_next(void *v, struct list_head *head, loff_t *ppos)
+{return NULL;}
 
 /* vmm */
 int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,

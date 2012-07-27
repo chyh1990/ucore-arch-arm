@@ -118,8 +118,13 @@
 #define SHARED_KERNMEM_PAGES 256 /* 1M */
 #endif
 
+#define UCORE_IOREMAP_BASE 0xEF000000
+#define UCORE_IOREMAP_SIZE 0x01000000
+#define UCORE_IOREMAP_END  (UCORE_IOREMAP_BASE+UCORE_IOREMAP_SIZE)
 
+#ifndef __NO_UCORE_TYPE__
 #include <memlayout_common.h>
+#endif
 
 #endif /* !__KERN_MM_MEMLAYOUT_H__ */
 

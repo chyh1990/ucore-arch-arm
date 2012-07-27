@@ -28,6 +28,7 @@
 #include <asm/mach/time.h>
 
 #define __NO_UCORE_TYPE__
+#include <memlayout.h>
 #include <pmm_glue.h>
 
 extern uintptr_t *boot_pgdir;
@@ -64,5 +65,19 @@ void *dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle
   void *cpuaddr = ucore_kva_alloc_pages( (size+PAGE_SIZE-1)/PAGE_SIZE );
   *handle = cpuaddr;
   return cpuaddr;
+}
+
+static u32 __current_ioremap_base = UCORE_IOREMAP_BASE;
+
+void __iomem *  
+__arm_ioremap(unsigned long phys_addr, size_t size, unsigned int mtype)
+{
+  //TODO
+  if(__current_ioremap_base + size > UCORE_IOREMAP_END)
+    return NULL;
+  __boot_map_iomem(__current_ioremap_base, size, phys_addr);
+  u32 oldaddr = __current_ioremap_base;
+  __current_ioremap_base += size;
+  return oldaddr;
 }
 

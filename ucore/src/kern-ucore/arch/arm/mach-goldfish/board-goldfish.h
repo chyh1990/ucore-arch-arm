@@ -30,7 +30,9 @@
 
 #define GOLDFISH_VIC_BASE      (GOLDFISH_IO_START+0x00)
 
+#ifndef __io_address
 #define __io_address(x) (x)
+#endif
 
 //IRQ 
 #define TIMER0_IRQ 3
@@ -47,7 +49,7 @@
 
 #define HAS_RAMDISK
 #define HAS_SIM_YAFFS
-#define HAS_FRAMEBUFFER
+//#define HAS_FRAMEBUFFER
 //#define HAS_SHARED_KERNMEM
 //#define KERNEL_PHY_BASE 0x100000
 

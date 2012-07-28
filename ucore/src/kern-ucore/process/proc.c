@@ -420,23 +420,25 @@ copy_signal(uint32_t clone_flags, struct proc_struct *proc) {
 		return 0;
 	}
 
-	if ( clone_flags & CLONE_THREAD ) {
-		signal = oldsig;
-		goto good_signal;
-	}
+#if 0
+  if ( clone_flags & CLONE_THREAD ) {
+    signal = oldsig;
+    goto good_signal;
+  }
+#endif
 
-    int ret = -E_NO_MEM;
-    if ( (signal = signal_create()) == NULL ) {
-        goto bad_signal;
-    }
+  int ret = -E_NO_MEM;
+  if ( (signal = signal_create()) == NULL ) {
+    goto bad_signal;
+  }
 
 good_signal:
-	signal_count_inc(signal);
-    proc->signal_info.signal = signal;
-    return 0;
+  signal_count_inc(signal);
+  proc->signal_info.signal = signal;
+  return 0;
 
 bad_signal:
-    return ret;
+  return ret;
 }
 
 // copy_thread - setup the trapframe on the  process's kernel stack top and
@@ -1343,6 +1345,7 @@ out_unlock:
 
 // do_sleep - set current process state to sleep and add timer with "time"
 //          - then call scheduler. if process run again, delete timer first.
+//      time is jiffies
 int
 do_sleep(unsigned int time) {
     if (time == 0) {
@@ -1360,6 +1363,35 @@ do_sleep(unsigned int time) {
 
     del_timer(timer);
     return 0;
+}
+
+int do_linux_sleep(const struct linux_timespec __user *req,
+ struct linux_timespec __user *rem)
+{
+    struct mm_struct *mm = current->mm;
+    struct linux_timespec kts;
+    lock_mm(mm);
+    if(!copy_from_user(mm, &kts, req, sizeof(struct linux_timespec),1)){
+      unlock_mm(mm);
+      return -E_INVAL;
+    }
+    unlock_mm(mm);
+    long msec = kts.tv_sec * 1000 + kts.tv_nsec / 1000000;
+    if(msec < 0)
+      return -E_INVAL;
+    unsigned long j = msecs_to_jiffies(msec);
+    //kprintf("do_linux_sleep: sleep %d msec, %d jiffies\n", msec, j);
+    int ret = do_sleep(j);
+    if(rem){
+      memset(&kts, 0, sizeof(struct linux_timespec));
+      lock_mm(mm);
+      if(!copy_to_user(mm, rem, &kts, sizeof(struct linux_timespec))){
+        unlock_mm(mm);
+        return -E_INVAL;
+      }
+      unlock_mm(mm);
+    }
+    return ret;
 }
 
 int

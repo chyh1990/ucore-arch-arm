@@ -69,6 +69,12 @@ struct proc_struct {
   struct proc_signal signal_info;
 };
 
+struct linux_timespec {
+  long   tv_sec;        /* seconds */
+  long   tv_nsec;       /* nanoseconds */
+};
+
+
 #define PF_EXITING                  0x00000001      // getting shutdown
 
 //the wait state

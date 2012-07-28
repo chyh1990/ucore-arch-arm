@@ -21,9 +21,17 @@
 #include <proc.h>
 #include <assert.h>
 
-void* ucore_kva_alloc_pages(size_t n)
+void* ucore_kva_alloc_pages(size_t n, unsigned int flags)
 {
-  return page2kva(alloc_pages(n));
+  struct Page* pages = alloc_pages(n);
+  if(!pages)
+    return NULL;
+  if(flags & UCORE_KAP_IO){
+    int i;
+    for(i=0;i<n;i++)
+      SetPageIO(&pages[i]);
+  }
+  return page2kva(pages);
 }
 
 void *ucore_map_pfn_range(unsigned long addr, unsigned long pfn, unsigned long size, unsigned long flags)

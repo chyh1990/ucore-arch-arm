@@ -62,7 +62,7 @@ void dde_call_machine_init()
 void *dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle, gfp_t gfp)
 {
   printk(KERN_ALERT "dma_alloc_writecombine size %08x\n", size);
-  void *cpuaddr = ucore_kva_alloc_pages( (size+PAGE_SIZE-1)/PAGE_SIZE );
+  void *cpuaddr = ucore_kva_alloc_pages( (size+PAGE_SIZE-1)/PAGE_SIZE ,UCORE_KAP_IO);
   *handle = cpuaddr;
   return cpuaddr;
 }

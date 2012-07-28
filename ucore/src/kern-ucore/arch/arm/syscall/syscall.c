@@ -380,7 +380,7 @@ sys_linux_sigtkill(uint32_t arg[]) {
 
 static uint32_t
 sys_linux_sigsuspend(uint32_t arg[]) {
-	return do_sigsuspend(arg[2]);
+	return do_sigsuspend((sigset_t*)arg[0]);
 }
 #define __sys_linux_sigsuspend sys_linux_sigsuspend
 #define __sys_linux_rt_sigsuspend sys_linux_sigsuspend
@@ -553,11 +553,35 @@ struct linux_pollfd {
 static uint32_t
 __sys_linux_poll(uint32_t arg[])
 {
+  //FIXME
   struct linux_pollfd *fd = (struct linux_pollfd*)arg[0];
   int nfds = (int)arg[1];
   int timeout = (int)arg[2]; //ms
-  fd->revents |= 0xffff;
-  return 1;
+  fd->revents = fd->events;
+  return nfds;
+}
+
+static uint32_t
+__sys_linux_exit(uint32_t arg[])
+{
+  int error_code = (int)arg[0];
+  return do_exit_thread(error_code);
+}
+
+static uint32_t
+__sys_linux_exit_group(uint32_t arg[])
+{
+  int error_code = (int)arg[0];
+  return do_exit(error_code);
+}
+
+static uint32_t
+__sys_linux_nanosleep(uint32_t arg[])
+{
+  //TODO: handle signal interrupt
+  struct linux_timespec *req = (struct linux_timespec*)arg[0];
+  struct linux_timespec *rem = (struct linux_timespec*)arg[1];
+  return do_linux_sleep(req, rem);
 }
 
 
@@ -569,7 +593,7 @@ __sys_linux_poll(uint32_t arg[])
 #include <linux_unistd.h>
 
 static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
-  __UCORE_SYSCALL(exit),
+  __LINUX_SYSCALL(exit),
   __UCORE_SYSCALL(fork),
   __UCORE_SYSCALL(read),
   __UCORE_SYSCALL(write),
@@ -608,6 +632,7 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __LINUX_SYSCALL(sigreturn),
   __LINUX_SYSCALL(clone),
   __LINUX_SYSCALL(sigprocmask),
+  __LINUX_SYSCALL(exit_group),
 
   __UCORE_SYSCALL(getcwd),
 
@@ -627,6 +652,7 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __LINUX_SYSCALL(mmap2),
 
   __LINUX_SYSCALL(sched_yield),
+  __LINUX_SYSCALL(nanosleep),
 
 };
 

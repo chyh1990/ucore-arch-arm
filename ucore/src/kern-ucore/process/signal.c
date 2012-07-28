@@ -70,7 +70,7 @@ sig_recalc_pending(struct proc_struct *proc) {
 // return a signal every time, until empty then return 0
 static int
 dequeue_signal(struct proc_struct *proc) {
-	static int sign = 0;
+	int sign = 0;
 	if ( get_si(proc)->pending.signal != 0 ) {
 		while ( ++sign < 64 ) {
 			if ( !sigismember(get_si(proc)->blocked, sign) && sigismember(get_si(proc)->pending.signal, sign) ) {
@@ -79,8 +79,8 @@ dequeue_signal(struct proc_struct *proc) {
 				return sign;
 			}
 		}
-		sign = 0;
 	}
+	sign = 0;
 	if ( get_si(proc)->signal->shared_pending.signal != 0 ) {
 		while ( ++sign < 64 ) {
 			if ( !sigismember(get_si(proc)->blocked, sign) && sigismember(get_si(proc)->signal->shared_pending.signal, sign) ) {
@@ -89,10 +89,8 @@ dequeue_signal(struct proc_struct *proc) {
 				return sign;
 			}
 		}
-		sign = 0;
 	}
-	sign = 0;
-	return sign;
+	return 0;
 }
 
 // clean the pending queue
@@ -175,7 +173,7 @@ ignore_sig(int sign, struct proc_struct *proc) {
 int
 do_sigaction(int sign, const struct sigaction *act, struct sigaction *old) {
   assert(get_si(current)->sighand);
-#ifdef DEBUG
+#ifdef __SIGDEBUG
 	kprintf("do_sigaction(): sign = %d, pid = %d\n", sign, current->pid);
 #endif
 	struct sigaction *k = &(get_si(current)->sighand->action[sign - 1]);
@@ -276,12 +274,27 @@ out:
 
 // do syscall sigsuspend
 int
-do_sigsuspend(uint32_t mask) {
+do_sigsuspend(sigset_t __user *pmask) {
+  struct mm_struct *mm = pls_read(current)->mm;
+  sigset_t mask;
+  lock_mm(mm);
+  {
+    if (!copy_from_user(mm, &mask, pmask, sizeof(sigset_t),0))
+    {
+      unlock_mm(mm);
+      return -E_INVAL;
+    }
+  }
+  unlock_mm(mm);
+  //kprintf("## %llx\n", mask);
+
 	sigset_t set;
 	sigset_initwith(set, 0);
 	sigset_addmask(set, mask);
 	sigset_del(set, SIGKILL);
 	sigset_del(set, SIGSTOP);
+  //kprintf("do_sigsuspend() %d\n", current->pid);
+  //print_trapframe(current->tf);
 
 	sigset_t old_blocked = get_si(current)->blocked;
 	get_si(current)->blocked = set;
@@ -290,8 +303,10 @@ do_sigsuspend(uint32_t mask) {
 		current->state = PROC_SLEEPING;
 		current->wait_state = WT_SIGNAL;
 		schedule();
-		if ( do_signal(current->tf, &old_blocked) ) {
-			return -E_INTR;
+    //kprintf("# HERE %08x %08x\n", current->state, current->wait_state);
+    int ret;
+		if ( (ret = do_signal(current->tf, &old_blocked))!=0 ) {
+			return ret;
 		}
 	}
 }
@@ -464,38 +479,6 @@ out:
 	return ret;
 }
 
-#if 0
-// set user stack for signal handler, also set eip to handler
-static int
-setup_frame(int sign, struct sigaction *act, sigset_t oldset, struct trapframe *tf) {
-  panic("TODO");
-	uintptr_t stack = get_si(current)->sas_ss_sp;
-	if ( stack == 0 ) {
-		stack = tf->tf_esp;
-	}
-	
-	struct sigframe *frame = (struct sigframe *)((stack - sizeof(struct sigframe)) & 0xfffffff8);
-
-	frame->pretcode = (uintptr_t)&(frame->retcode);
-	frame->sign = sign;
-	frame->tf = *tf;
-	frame->old_blocked = oldset;
-	// this magic number is code of "movl $400, %eax    int $0x80"
-	// by setting the top of user stack a pointer to this,
-	// the handler will call sigreturn syscall when is returns
-	frame->retcode = 0x0080cd00000190b8ull;
-
-	tf->tf_esp = (uintptr_t)frame;
-	tf->tf_eip = (uintptr_t)act->sa_handler;
-	tf->tf_regs.reg_eax = (uint32_t)sign;
-	tf->tf_regs.reg_ecx = tf->tf_regs.reg_edx = 0;
-
-	//we don't need to assign cs ds ss es...
-	return 0;
-}
-  #endif
-
-
 
 // prepare block for signal handler
 static int
@@ -537,7 +520,7 @@ int
 do_signal(struct trapframe *tf, sigset_t *old) {
   assert(!trap_in_kernel(tf));
   if (!get_si(current)->signal || !get_si(current)->sighand)
-    return -1;
+    return 0;
 	if ( !signal_pending(current) )
 		return 0;
 	int sign;
@@ -546,7 +529,7 @@ do_signal(struct trapframe *tf, sigset_t *old) {
 	}
 
   while ( (sign = dequeue_signal(current)) != 0 ) {
-#ifdef DEBUG
+#ifdef __SIGDEBUG
     kprintf("do_signal(): sign = %d, pid = %d\n", sign, current->pid);
 #endif
     struct sigaction *act = &(get_si(current)->sighand->action[sign - 1]);
@@ -566,7 +549,7 @@ do_signal(struct trapframe *tf, sigset_t *old) {
         // because there's only one user, it's idle is always there, and no thread is orphane
         continue;
       } else {
-#ifdef DEBUG
+#ifdef __SIGDEBUG
         kprintf("do_signal() exit pid = %d\n", current->pid);
 #endif
         do_exit(-E_KILLED);
@@ -574,6 +557,9 @@ do_signal(struct trapframe *tf, sigset_t *old) {
       }
       /* user callback */
     } else {
+#ifdef __SIGDEBUG
+      kprintf("do_signal() call user %d\n", sign);
+#endif
       handle_signal(sign, act, *old, tf);
       if ( (act->sa_flags & SA_ONESHOT) != 0 ) {
         act->sa_handler = SIG_DFL;
@@ -612,7 +598,9 @@ do_sigkill(int pid, int sign) {
   if ( proc == NULL || proc->state == PROC_ZOMBIE ) {
     return -E_INVAL;
   }
+#ifdef __SIGDEBUG
   kprintf("do_sigkill: pid=%d sig=%d\n",pid,sign);
+#endif
   return raise_signal(proc, sign, 1);
 }
 
@@ -655,7 +643,7 @@ int do_sigwaitinfo(const sigset_t *setp, struct siginfo_t *info) {
 	sigset_add(set, SIGSTOP);
 	sigset_t old_blocked = get_si(current)->blocked;
 	get_si(current)->blocked = ~set;
-#ifdef DEBUG
+#ifdef __SIGDEBUG
 	kprintf("do_sigwaitinfo(): set = %016llx, pid = %d\n", set, current->pid);
 #endif
 	
@@ -665,7 +653,7 @@ int do_sigwaitinfo(const sigset_t *setp, struct siginfo_t *info) {
 		schedule();
 		int sign = do_signal(current->tf, &old_blocked);
 		if ( sign != 0 ) {
-#ifdef DEBUG
+#ifdef __SIGDEBUG
 			kprintf("do_sigwaitinfo(): set = %016llx, sign = %d, pid = %d\n", set, sign, current->pid);
 #endif
 			return sign;

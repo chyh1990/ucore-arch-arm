@@ -163,35 +163,35 @@ wakeup_proc(struct proc_struct *proc) {
 
 int
 try_to_wakeup(struct proc_struct *proc) {
-    assert(proc->state != PROC_ZOMBIE);
-	int ret;
-    bool intr_flag;
-    local_intr_save(intr_flag);
-    {
-        if (proc->state != PROC_RUNNABLE) {
-            proc->state = PROC_RUNNABLE;
-            proc->wait_state = 0;
-            if (proc != current) {
-                sched_class_enqueue(proc);
-            }
-			ret = 1;
-        }
-        else {
-			ret = 0;
-        }
-		struct proc_struct *next = proc;
-		while ( (next = next_thread(next)) != proc ) {
-			if ( next->state == PROC_SLEEPING && next->wait_state == WT_SIGNAL ) {
-				next->state = PROC_RUNNABLE;
-				next->wait_state = 0;
-				if ( next != current ) {
-					sched_class_enqueue(next);
-				}
-			}
-		}
+  assert(proc->state != PROC_ZOMBIE);
+  int ret;
+  bool intr_flag;
+  local_intr_save(intr_flag);
+  {
+    if (proc->state != PROC_RUNNABLE) {
+      proc->state = PROC_RUNNABLE;
+      proc->wait_state = 0;
+      if (proc != current) {
+        sched_class_enqueue(proc);
+      }
+      ret = 1;
     }
-    local_intr_restore(intr_flag);
-	return ret;
+    else {
+      ret = 0;
+    }
+    struct proc_struct *next = proc;
+    while ( (next = next_thread(next)) != proc ) {
+      if ( next->state == PROC_SLEEPING && next->wait_state == WT_SIGNAL ) {
+        next->state = PROC_RUNNABLE;
+        next->wait_state = 0;
+        if ( next != current ) {
+          sched_class_enqueue(next);
+        }
+      }
+    }
+  }
+  local_intr_restore(intr_flag);
+  return ret;
 }
 
 
@@ -201,17 +201,17 @@ try_to_wakeup(struct proc_struct *proc) {
 
 void
 schedule(void) {
-    bool intr_flag;
-    struct proc_struct *next;
+  bool intr_flag;
+  struct proc_struct *next;
 #ifndef MT_SUPPORT
-	list_entry_t head;
-	int lapic_id = pls_read(lapic_id);
+  list_entry_t head;
+  int lapic_id = pls_read(lapic_id);
 #endif
-	
-    local_intr_save(intr_flag);
-	int lcpu_count = pls_read(lcpu_count);
-    {
-        current->need_resched = 0;
+
+  local_intr_save(intr_flag);
+  int lcpu_count = pls_read(lcpu_count);
+  {
+    current->need_resched = 0;
 #ifndef MT_SUPPORT
 		if (current->mm)
 		{
@@ -281,8 +281,12 @@ schedule(void) {
 			next->mm->lapic = lapic_id;
 #endif
         if (next != current) {
-          //kprintf("N %d\n", next->pid);
-            proc_run(next);
+#if 0
+          kprintf("N %d to %d\n", current->pid, next->pid);
+          if(current->pid == 3)
+            kprintf("$$ %08x\n", current->wait_state);
+#endif
+          proc_run(next);
         }
     }
     local_intr_restore(intr_flag);
@@ -348,7 +352,9 @@ run_timer_list(void) {
                 else {
                     warn("process %d's wait_state == 0.\n", proc->pid);
                 }
-                wakeup_proc(proc);
+                if(proc->wait_state != WT_SIGNAL){
+                  wakeup_proc(proc);
+                }
                 del_timer(timer);
                 if (le == &timer_list) {
                     break;

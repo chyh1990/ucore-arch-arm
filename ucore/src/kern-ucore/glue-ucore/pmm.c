@@ -133,7 +133,9 @@ page_remove_pte(pgd_t *pgdir, uintptr_t la, pte_t *ptep) {
         struct Page *page = pte2page(*ptep);
         if (!PageSwap(page)) {
             if (page_ref_dec(page) == 0) {
-                free_page(page);
+                //Don't free dma pages
+                if (!PageIO(page))
+                  free_page(page);
             }
         }
         else {

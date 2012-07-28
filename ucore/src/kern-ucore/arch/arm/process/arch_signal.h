@@ -1,12 +1,12 @@
 /*
  * =====================================================================================
  *
- *       Filename:  pmm_glue.h
+ *       Filename:  arch_signal.h
  *
  *    Description:  
  *
  *        Version:  1.0
- *        Created:  07/21/2012 03:36:23 PM
+ *        Created:  07/27/2012 06:49:50 PM
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -16,11 +16,18 @@
  * =====================================================================================
  */
 
-#ifndef PMM_GLUE_H
-#define PMM_GLUE_H
+#ifndef __ARCH_ARM_ARCH_SIGNAL_H
+#define __ARCH_ARM_ARCH_SIGNAL_H
+#include <signal.h>
 
-#define UCORE_KAP_IO 0x00000001
+struct sigframe {
+	uintptr_t pretcode;
+	int sign;
+	struct trapframe tf;
+	sigset_t old_blocked;
+	//there's fpstate in linux, but nothing here
+	unsigned int retcode[2];
+};
 
-extern void* ucore_kva_alloc_pages(size_t n, unsigned int flags);
 
 #endif

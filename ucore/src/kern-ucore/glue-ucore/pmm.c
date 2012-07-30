@@ -211,6 +211,8 @@ struct Page *
 pgdir_alloc_page(pgd_t *pgdir, uintptr_t la, uint32_t perm) {
     struct Page *page = alloc_page();
     if (page != NULL) {
+        //zero it!
+        memset(page2kva(page), 0, PGSIZE);
         if (page_insert(pgdir, page, la, perm) != 0) {
             free_page(page);
             return NULL;

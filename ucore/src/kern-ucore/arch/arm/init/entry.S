@@ -51,28 +51,37 @@ kern_entry:
 relocated:
     ldr sp,=bootstacktop
 
-	
-    # now kernel stack is ready , call the first C function
+#if 0
+    # enable the FPU
+    mrc p15, 0, r0, c1, c0, 2
+    orr r0, r0, #0x300000            /* single precision */
+    orr r0, r0, #0xC00000            /* double precision */
+    mcr p15, 0, r0, c1, c0, 2
+    mov r0, #0x40000000
+    fmxr fpexc,r0
+#endif
+
+# now kernel stack is ready , call the first C function
     b kern_init
 
 # should never get here
-spin:
+    spin:
     b spin
 
-.data
+    .data
 # There might be a alignment problem, as should be aligned to a page size
 
-irq_stack:
+    irq_stack:
     .space KSTACKSIZE
-irq_stacktop:
+    irq_stacktop:
 fiq_stack:
-    .space KSTACKSIZE
+.space KSTACKSIZE
 fiq_stacktop:
 abt_stack:
-    .space KSTACKSIZE
+.space KSTACKSIZE
 abt_stacktop:
 und_stack:
-    .space KSTACKSIZE
+.space KSTACKSIZE
 und_stacktop:
 sys_stack:
     .space KSTACKSIZE

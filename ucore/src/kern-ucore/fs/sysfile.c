@@ -191,69 +191,106 @@ sysfile_fstat(int fd, struct stat *__stat) {
     return ret;
 }
 
-int 
-sysfile_linux_fstat(int fd, void* buf)
+int
+sysfile_linux_fstat(int fd, struct linux_stat __user *buf)
 {
-  int lstat_size = __ucore_linux_stat_getsize();
-  int ret = 0;
-  
-  return -1;
+  struct mm_struct *mm = pls_read(current)->mm;
+  int ret;
+  struct stat __local_stat, *kstat = &__local_stat;
+  if ((ret = file_fstat(fd, kstat)) != 0) {
+    return -1;
+  }
+  struct linux_stat *kls = kmalloc(sizeof(struct linux_stat));
+  if(!kls){
+    return -1;
+  }
+  memset(kls, 0, sizeof(struct linux_stat));
+  kls->st_ino = 1;
+  /* ucore never check access permision */
+  kls->st_mode = kstat->st_mode|0777;
+  kls->st_nlink = kstat->st_nlinks;
+  kls->st_blksize = 512;
+  kls->st_blocks = kstat->st_blocks;
+  kls->st_size = kstat->st_size;
+
+  ret = 0;
+  lock_mm(mm);
+  {
+    if (!copy_to_user(mm, buf, kls, sizeof(struct linux_stat))) {
+      ret = -1;
+    }
+  }
+  unlock_mm(mm);
+  kfree(kls);
+  return ret;
+}
+
+  int 
+sysfile_linux_stat(const char __user *fn,struct linux_stat* __user buf)
+{
+  int fd = sysfile_open(fn, O_RDONLY);
+  if(fd < 0)
+    return -1;
+  int ret = sysfile_linux_fstat(fd, buf);
+  sysfile_close(fd);
+
+  return ret;
 }
 
 int
 sysfile_fsync(int fd) {
-    return file_fsync(fd);
+  return file_fsync(fd);
 }
 
 int
 sysfile_chdir(const char *__path) {
-    int ret;
-    char *path;
-    if ((ret = copy_path(&path, __path)) != 0) {
-        return ret;
-    }
-    ret = vfs_chdir(path);
-    kfree(path);
+  int ret;
+  char *path;
+  if ((ret = copy_path(&path, __path)) != 0) {
     return ret;
+  }
+  ret = vfs_chdir(path);
+  kfree(path);
+  return ret;
 }
 
 int
 sysfile_mkdir(const char *__path) {
-    int ret;
-    char *path;
-    if ((ret = copy_path(&path, __path)) != 0) {
-        return ret;
-    }
-    ret = vfs_mkdir(path);
-    kfree(path);
+  int ret;
+  char *path;
+  if ((ret = copy_path(&path, __path)) != 0) {
     return ret;
+  }
+  ret = vfs_mkdir(path);
+  kfree(path);
+  return ret;
 }
 
 int
 sysfile_link(const char *__path1, const char *__path2) {
-    int ret;
-    char *old_path, *new_path;
-    if ((ret = copy_path(&old_path, __path1)) != 0) {
-        return ret;
-    }
-    if ((ret = copy_path(&new_path, __path2)) != 0) {
-        kfree(old_path);
-        return ret;
-    }
-    ret = vfs_link(old_path, new_path);
-    kfree(old_path), kfree(new_path);
+  int ret;
+  char *old_path, *new_path;
+  if ((ret = copy_path(&old_path, __path1)) != 0) {
     return ret;
+  }
+  if ((ret = copy_path(&new_path, __path2)) != 0) {
+    kfree(old_path);
+    return ret;
+  }
+  ret = vfs_link(old_path, new_path);
+  kfree(old_path), kfree(new_path);
+  return ret;
 }
 
 int
 sysfile_rename(const char *__path1, const char *__path2) {
-    int ret;
-    char *old_path, *new_path;
-    if ((ret = copy_path(&old_path, __path1)) != 0) {
-        return ret;
-    }
-    if ((ret = copy_path(&new_path, __path2)) != 0) {
-        kfree(old_path);
+  int ret;
+  char *old_path, *new_path;
+  if ((ret = copy_path(&old_path, __path1)) != 0) {
+    return ret;
+  }
+  if ((ret = copy_path(&new_path, __path2)) != 0) {
+    kfree(old_path);
         return ret;
     }
     ret = vfs_rename(old_path, new_path);
@@ -436,10 +473,10 @@ void* sysfile_linux_mmap2(void *addr, size_t len, int prot, int flags,
       int fd, size_t pgoff)
 {
   if (!file_testfd(fd, 1, 0)) {
-    return NULL;
+    return MAP_FAILED;
   }
   if(!__is_linux_devfile(fd)){
-    return NULL;
+    return MAP_FAILED;
   }
   return linux_devfile_mmap2(addr, len, prot, flags, fd, pgoff);
 }

@@ -2,6 +2,7 @@
 #include <trap.h>
 #include <stdio.h>
 #include <pmm.h>
+#include <vmm.h>
 #include <clock.h>
 #include <assert.h>
 #include <sem.h>
@@ -252,6 +253,7 @@ sys_seek(uint32_t arg[]) {
     int whence = (int)arg[2];
     return sysfile_seek(fd, pos, whence);
 }
+#define __sys_linux_lseek sys_seek
 
 static uint32_t
 sys_fstat(uint32_t arg[]) {
@@ -439,12 +441,18 @@ static uint32_t __sys_linux_mmap2(uint32_t arg[])
   int flags = (int)arg[3];
   int fd = (int)arg[4];
   size_t off = (size_t)arg[5];
-  if(fd == -1){
+  kprintf("TODO __sys_linux_mmap2 addr=%08x len=%08x prot=%08x flags=%08x fd=%d off=%08x\n",
+      addr,len,prot,flags, fd, off);
+  if(fd == -1 || flags & MAP_ANONYMOUS){
   //print_trapframe(pls_read(current)->tf);
-    int ret = __do_linux_mmap((uintptr_t)&addr, len, flags);
+    uint32_t ucoreflags = 0;
+    if(prot & PROT_WRITE)
+      ucoreflags |= MMAP_WRITE;
+    int ret = __do_linux_mmap((uintptr_t)&addr, len, ucoreflags);
     //kprintf("@@@ ret=%d %e %08x\n", ret,ret, addr);
     if(ret)
-      return NULL;
+      return MAP_FAILED;
+    kprintf("__sys_linux_mmap2 ret=%08x\n", addr);
     return addr;
   }else{
     return (uint32_t)sysfile_linux_mmap2(addr, len, prot, flags,fd, off);
@@ -487,7 +495,19 @@ __sys_linux_getdents(uint32_t arg[])
 static uint32_t
 __sys_linux_stat(uint32_t args[])
 {
-  return -1;
+  char *fn = (char*)args[0];
+  struct linux_stat *st = (struct linux_stat*)args[1];
+  kprintf("TODO __sys_linux_stat, %s %d\n", fn, sizeof(struct linux_stat));
+  return sysfile_linux_stat(fn, st);
+}
+
+static uint32_t
+__sys_linux_fstat(uint32_t args[])
+{
+  int fd = (int)args[0];
+  struct linux_stat *st = (struct linux_stat*)args[1];
+  kprintf("TODO __sys_linux_fstat, %d %d\n", fd, sizeof(struct linux_stat));
+  return sysfile_linux_fstat(fd, st);
 }
 
 static uint32_t
@@ -516,11 +536,19 @@ __sys_linux_ugetrlimit(uint32_t arg[])
   return do_linux_ugetrlimit(res,lim);
 }
 
+/*
+  Clone a task - this clones the calling program thread.
+  * This is called indirectly via a small wrapper
+  
+ asmlinkage int sys_clone(unsigned long clone_flags, unsigned long newsp,
+                          int __user *parent_tidptr, int tls_val,
+                          int __user *child_tidptr, struct pt_regs *regs)
+ */
 static uint32_t
 __sys_linux_clone(uint32_t arg[])
 {
   struct trapframe *tf = pls_read(current)->tf;
-  uint32_t clone_flags = (uint32_t)arg[2];
+  uint32_t clone_flags = (uint32_t)arg[0];
   uintptr_t stack = (uintptr_t)arg[1];
   if (stack == 0) {
     stack = tf->tf_esp;
@@ -585,6 +613,27 @@ __sys_linux_nanosleep(uint32_t arg[])
 }
 
 
+/* always root */
+static uint32_t
+__sys_linux_getuid()
+{
+  return 0;
+}
+#define __sys_linux_geteuid __sys_linux_getuid
+#define __sys_linux_getuid32 __sys_linux_getuid
+#define __sys_linux_geteuid32 __sys_linux_geteuid
+
+static uint32_t
+__sys_linux_getgid()
+{
+  return 0;
+}
+#define __sys_linux_getegid __sys_linux_getgid
+#define __sys_linux_getgid32 __sys_linux_getgid
+#define __sys_linux_getegid32 __sys_linux_getegid
+
+
+
 #define __UCORE_SYSCALL(x) [__NR_##x]  sys_##x
 #define __LINUX_SYSCALL(x) [__NR_##x]  __sys_linux_##x
 
@@ -615,6 +664,7 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   /* times */
   __LINUX_SYSCALL(brk),
 
+  __LINUX_SYSCALL(lseek),
   __UCORE_SYSCALL(getpid),
   __LINUX_SYSCALL(getppid),
   __LINUX_SYSCALL(ioctl),
@@ -625,7 +675,7 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __LINUX_SYSCALL(sigaction),
 
   __LINUX_SYSCALL(stat),
-  __UCORE_SYSCALL(fstat),
+  __LINUX_SYSCALL(fstat),
 
   __LINUX_SYSCALL(wait4),
   __UCORE_SYSCALL(fsync),
@@ -650,9 +700,19 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __LINUX_SYSCALL(ugetrlimit),
 
   __LINUX_SYSCALL(mmap2),
+  __UCORE_SYSCALL(munmap),
 
   __LINUX_SYSCALL(sched_yield),
   __LINUX_SYSCALL(nanosleep),
+
+  __LINUX_SYSCALL(getuid),
+  __LINUX_SYSCALL(geteuid),
+  __LINUX_SYSCALL(getuid32),
+  __LINUX_SYSCALL(geteuid32),
+  __LINUX_SYSCALL(getgid),
+  __LINUX_SYSCALL(getegid),
+  __LINUX_SYSCALL(getgid32),
+  __LINUX_SYSCALL(getegid32),
 
 };
 

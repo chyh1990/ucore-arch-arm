@@ -37,7 +37,7 @@ ${SWAPIMG}:
 
 ${FSIMG}: mod-user-ucore
 	@echo "Making FS IMG"
-	dd if=/dev/zero of=$@ bs=1M count=30
+	dd if=/dev/zero of=$@ bs=1M count=48
 	$(T_OBJ)/tools-mksfs $@ $(T_OBJ)/user-sfs
 
 ${RAMIMG}: ${T_OBJ}/$(KERNEL_FILENAME)

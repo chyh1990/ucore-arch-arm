@@ -14,6 +14,8 @@
 #define current (pls_read(current))
 #define get_si(x) (&((x)->signal_info))
 
+//#define __SIGDEBUG
+
 void
 lock_sig(struct sighand_struct *sh) {
 	if ( sh != NULL ) {

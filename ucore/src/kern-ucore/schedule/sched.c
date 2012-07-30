@@ -283,8 +283,6 @@ schedule(void) {
         if (next != current) {
 #if 0
           kprintf("N %d to %d\n", current->pid, next->pid);
-          if(current->pid == 3)
-            kprintf("$$ %08x\n", current->wait_state);
 #endif
           proc_run(next);
         }
@@ -352,9 +350,9 @@ run_timer_list(void) {
                 else {
                     warn("process %d's wait_state == 0.\n", proc->pid);
                 }
-                if(proc->wait_state != WT_SIGNAL){
-                  wakeup_proc(proc);
-                }
+
+                wakeup_proc(proc);
+
                 del_timer(timer);
                 if (le == &timer_list) {
                     break;

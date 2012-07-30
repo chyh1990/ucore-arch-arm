@@ -29,7 +29,7 @@ export TARGET_CC_SYSTEM_LIB ?=  -L/opt/FriendlyARM/toolschain/4.4.3/lib/gcc/arm-
 
 export HOST_CC_PREFIX	?=
 export TARGET_CC_PREFIX	?= arm-linux-
-export TARGET_CC_FLAGS_COMMON	?= -fno-builtin -nostdinc -fno-stack-protector -nostartfiles -march=$(ARCH_ARM_MACH) $(PLATFORM_DEF) -DARCH_ARM $(MACH_MACRO)
+export TARGET_CC_FLAGS_COMMON	?= -fno-builtin -nostdinc -fno-stack-protector -nostartfiles -march=$(ARCH_ARM_MACH) $(PLATFORM_DEF) -DARCH_ARM $(MACH_MACRO)  -ggdb
 export TARGET_CC_FLAGS_BL		?=
 export TARGET_CC_FLAGS_KERNEL	?=
 export TARGET_CC_FLAGS_SV		?=

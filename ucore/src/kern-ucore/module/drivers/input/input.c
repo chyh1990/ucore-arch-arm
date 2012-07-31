@@ -1680,9 +1680,11 @@ static int __init input_init(void)
 		return err;
 	}
 
+#if 0
 	err = input_proc_init();
 	if (err)
 		goto fail1;
+#endif
 
 	err = register_chrdev(INPUT_MAJOR, "input", &input_fops);
 	if (err) {

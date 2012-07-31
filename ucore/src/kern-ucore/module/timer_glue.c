@@ -21,6 +21,21 @@
 u64 __jiffy_data jiffies_64;
 unsigned long volatile __jiffy_data jiffies;
 
+inline unsigned int jiffies_to_msecs(const unsigned long j)
+{
+#if HZ <= MSEC_PER_SEC && !(MSEC_PER_SEC % HZ)
+        return (MSEC_PER_SEC / HZ) * j;
+#elif HZ > MSEC_PER_SEC && !(HZ % MSEC_PER_SEC)
+        return (j + (HZ / MSEC_PER_SEC) - 1)/(HZ / MSEC_PER_SEC);
+#else
+# if BITS_PER_LONG == 32
+        return (HZ_TO_MSEC_MUL32 * j) >> HZ_TO_MSEC_SHR32;
+# else
+        return (j * HZ_TO_MSEC_NUM) / HZ_TO_MSEC_DEN;
+# endif
+#endif
+}
+
 /* HZ defined in autoconfig.h */
 /* timer */
 unsigned long msecs_to_jiffies(const unsigned int m)
@@ -77,3 +92,24 @@ int mod_timer(struct timer_list *timer, unsigned long expires){
 void init_timer(struct timer_list *timer)
 {
 }
+
+bool printk_timed_ratelimit(unsigned long *caller_jiffies,
+                        unsigned int interval_msecs)
+{
+        if (*caller_jiffies == 0
+                        || !time_in_range(jiffies, *caller_jiffies,
+                                        *caller_jiffies
+                                        + msecs_to_jiffies(interval_msecs))) {
+                *caller_jiffies = jiffies;
+                return true;
+        }
+        return false;
+}
+
+void ktime_get_ts(struct timespec *ts)
+{
+  int msecs = jiffies_to_msecs(jiffies);
+  ts->tv_sec = msecs / MSEC_PER_SEC;
+  ts->tv_nsec = msecs * NSEC_PER_MSEC;
+}
+

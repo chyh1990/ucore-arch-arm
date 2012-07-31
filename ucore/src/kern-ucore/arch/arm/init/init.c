@@ -169,6 +169,8 @@ kern_init(void) {
 #endif
 
    ucore_vfs_add_device("fb0", 29, 0);
+   //ucore_vfs_add_device("input0", 13, 0);
+   ucore_vfs_add_device("event0", 13, 64);
    ucore_vfs_add_device("hzfchar", 222, 0);
 
 

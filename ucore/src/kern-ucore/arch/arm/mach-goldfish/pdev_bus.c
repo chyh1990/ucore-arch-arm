@@ -23,7 +23,6 @@
 #include <serial.h>
 #include <clock.h>
 #include <string.h>
-#include <framebuffer.h>
 
 struct pdev_device{
   uint32_t id, base, size, irq, irq_count, name_len;

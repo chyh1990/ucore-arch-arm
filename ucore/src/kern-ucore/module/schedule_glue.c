@@ -27,7 +27,9 @@
 #define __NO_UCORE_TYPE__
 #include <module.h>
 
+
 #define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
+//#define _TODO_()
 
 /* schedule */
 int wake_up_process(struct task_struct *tsk)
@@ -90,5 +92,10 @@ int schedule_work(struct work_struct *work)
   work_func_t f = work->func;
   f(work);
   return 0;
+}
+
+pid_t pid_vnr(struct pid *pid)
+{
+  return -1;
 }
 

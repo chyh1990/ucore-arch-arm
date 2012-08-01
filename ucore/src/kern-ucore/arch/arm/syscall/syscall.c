@@ -615,7 +615,7 @@ __sys_linux_nanosleep(uint32_t arg[])
 
 /* always root */
 static uint32_t
-__sys_linux_getuid()
+__sys_linux_getuid(uint32_t arg[])
 {
   return 0;
 }
@@ -624,13 +624,22 @@ __sys_linux_getuid()
 #define __sys_linux_geteuid32 __sys_linux_geteuid
 
 static uint32_t
-__sys_linux_getgid()
+__sys_linux_getgid(uint32_t arg[])
 {
   return 0;
 }
 #define __sys_linux_getegid __sys_linux_getgid
 #define __sys_linux_getgid32 __sys_linux_getgid
 #define __sys_linux_getegid32 __sys_linux_getegid
+
+#include <linux_misc_struct.h>
+static uint32_t
+__sys_linux_gettimeofday(uint32_t arg[])
+{
+  struct linux_timeval* tv = (struct linux_timeval*)arg[0];
+  struct linux_timezone *tz = (struct linux_timezone*)arg[1];
+  return ucore_gettimeofday(tv,tz);
+}
 
 
 
@@ -713,6 +722,7 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __LINUX_SYSCALL(getegid),
   __LINUX_SYSCALL(getgid32),
   __LINUX_SYSCALL(getegid32),
+  __LINUX_SYSCALL(gettimeofday),
 
 };
 

@@ -1,0 +1,16 @@
+menu Filesystem
+
+config HAVE_SFS
+  bool "Enable Simple Filesystem(SFS)"
+  default y
+
+config HAVE_YAFFS2
+  bool "Enable YAFFS2"
+  default n
+
+config HAVE_YAFFS2_RAMDISK
+  depends HAVE_YAFFS2
+  bool "Enable YAFFS2 Ramdisk (for debugging)"
+  default n
+
+endmenu

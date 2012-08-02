@@ -1,51 +1,96 @@
-.PHONY: all clean qemu
-.DEFAULT_GOAL	:= all
+# Makefile for buildroot2
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
 
-export ARCH				?= arm
-export V        		?= @
-export T_BASE   		?= ${PWD}
-export T_OBJ    		?= ${PWD}/obj
-export MAKE     		:= make -s
+#--------------------------------------------------------------
+# Just run 'make menuconfig', configure stuff, then run 'make'.
+# You shouldn't need to mess with anything beyond this point...
+#--------------------------------------------------------------
+TOPDIR=./
 
-SUPPORTED_ARCH := i386 x86_64 um or32 arm
-ifneq (,$(findstring $(ARCH),$(SUPPORTED_ARCH)))
-include mk/config-${ARCH}.mk
+KTREE = $(TOPDIR)/src/kern-ucore
+CONFIG = package/config
+
+CONFIG_SHELL:=$(shell if [ -x "$$BASH" ]; then echo $$BASH; \
+	else if [ -x /bin/bash ]; then echo /bin/bash; \
+	else echo sh; fi; fi)
+
+MAKEFLAGS += -rR --no-print-directory
+
+ARCH ?= arm
+CROSS_COMPILE ?= arm-linux-
+
+KCONFIG_AUTOCONFIG=config/auto.conf
+KCONFIG_AUTOHEADER=config/autoconf.h
+CONFIG_CONFIG_IN = $(KTREE)/arch/$(ARCH)/Kconfig
+CONFIG_DEFCONFIG = .defconfig
+
+export CONFIG_SHELL quiet Q KBUILD_VERBOSE
+export ARCH CROSS_COMPILE
+export KCONFIG_AUTOHEADER KCONFIG_AUTOCONFIG
+
+ifndef HOSTAR
+HOSTAR:=ar
 endif
-
-export OBJDUMP			?= objdump
-export OBJCOPY 			?= objcopy
-export STRIP   			?= strip
-
-export BRANCH   		?= ucore
-
-HAS_DRIVER_OS   		?= n
-ifneq (${HAS_DRIVER_OS},n)
-override HAS_DRIVER_OS := y
+ifndef HOSTAS
+HOSTAS:=as
 endif
-export HAS_DRIVER_OS
-
-ifeq (${BRANCH},linux-dos-module)
-all: ${T_OBJ}
-	${V}${MAKE} -f mk/mods.mk all
+ifndef HOSTCC
+HOSTCC:=gcc
 else
-ifeq (,$(findstring $(ARCH),$(SUPPORTED_ARCH)))
-all:
-	$(V)echo "*** ERROR: No architecture names \""$(ARCH)\"
-else
-all: ${T_OBJ}
-	${V}${MAKE} -f mk/arch-${ARCH}.mk all
 endif
+ifndef HOSTCXX
+HOSTCXX:=g++
 endif
+ifndef HOSTLD
+HOSTLD:=ld
+endif
+ifndef HOSTLN
+HOSTLN:=ln
+endif
+HOSTAR:=$(shell $(CONFIG_SHELL) -c "which $(HOSTAR)" || type -p $(HOSTAR) || echo ar)
+HOSTAS:=$(shell $(CONFIG_SHELL) -c "which $(HOSTAS)" || type -p $(HOSTAS) || echo as)
+HOSTCC:=$(shell $(CONFIG_SHELL) -c "which $(HOSTCC)" || type -p $(HOSTCC) || echo gcc)
+HOSTCXX:=$(shell $(CONFIG_SHELL) -c "which $(HOSTCXX)" || type -p $(HOSTCXX) || echo g++)
+HOSTLD:=$(shell $(CONFIG_SHELL) -c "which $(HOSTLD)" || type -p $(HOSTLD) || echo ld)
+HOSTLN:=$(shell $(CONFIG_SHELL) -c "which $(HOSTLN)" || type -p $(HOSTLN) || echo ln)
+ifndef CFLAGS_FOR_BUILD
+CFLAGS_FOR_BUILD:=-g -O2
+endif
+export HOSTAR HOSTAS HOSTCC HOSTCXX HOSTLD
 
-${T_OBJ}:
-	@mkdir -p ${T_OBJ}
+HOSTCFLAGS=$(CFLAGS_FOR_BUILD)
+export HOSTCFLAGS
 
-ifeq (${BRANCH},linux-dos-module)
+$(CONFIG)/mconf:
+	$(MAKE) CC="$(HOSTCC)" -C $(CONFIG) conf mconf
+	-@if [ ! -f .config ]; then \
+		cp $(CONFIG_DEFCONFIG) .config; \
+	fi
+
+menuconfig: $(CONFIG)/mconf
+	@if ! $(CONFIG)/mconf $(CONFIG_CONFIG_IN); then \
+		test -f .config.cmd || rm -f .config; \
+	fi
+	
 clean:
-	${V}${MAKE} -C src/linux-dos-module clean
-	-${V}rm -rf ${T_OBJ}/dosm.ko
-else
-clean:
-	-${V}rm -rf ${T_OBJ}/*
-endif
+	rm -f .config.old .config.cmd .tmpconfig.h
+	rm -f $(KCONFIG_AUTOCONFIG) $(KCONFIG_AUTOHEADER)
+	-$(MAKE) -C $(CONFIG) clean
+
 

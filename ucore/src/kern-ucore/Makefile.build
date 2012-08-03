@@ -4,9 +4,10 @@ endif
 
 PHONY+=all subdir clean
 
-TARGET_CFLAGS := -g -ggdb
+#TARGET_CFLAGS := -g -ggdb
 TARGET_CFLAGS += -fno-builtin -nostdlib  -nostdinc
 TARGET_CFLAGS += -D__KERNEL__ -D__KERN__ 
+TARGET_CFLAGS += $(shell echo $(UCONFIG_ADDITIONAL_CFLAGS))
 
 KTREE_OBJ_ROOT := $(OBJPATH_ROOT)/kernel
 
@@ -37,11 +38,11 @@ export TARGET_CFLAGS
 KERNEL_BUILTIN_O := $(KTREE_OBJ_ROOT)/kernel-builtin.o
 
 all: $(KTREE_OBJ_ROOT) $(KERNEL_BUILTIN_O)
-	$(MAKE) KERNEL_BUILTIN=$(KERNEL_BUILTIN_O)  -C $(KTREE)/arch/$(ARCH) -f $(KTREE)/arch/$(ARCH)/Makefile.image all
+	$(Q)$(MAKE) KERNEL_BUILTIN=$(KERNEL_BUILTIN_O)  -C $(KTREE)/arch/$(ARCH) -f $(KTREE)/arch/$(ARCH)/Makefile.image all
 
 $(KERNEL_BUILTIN_O): subdir
 	@echo Building uCore Kernel for $(UCONFIG_ARCH)
-	$(TARGET_LD) -r -o $@ $(shell xargs < .builtinlist.tmp)
+	$(Q)$(TARGET_LD) -r -o $@ $(shell xargs < .builtinlist.tmp)
 
 $(KTREE_OBJ_ROOT):
 	mkdir -p $@

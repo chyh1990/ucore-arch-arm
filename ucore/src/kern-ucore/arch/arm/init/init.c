@@ -49,7 +49,7 @@ exception_vector_init(void) {
 
 int kern_init(void) __attribute__((noreturn));
 
-
+#ifdef UCONFIG_HAVE_YAFFS2
 static void test_yaffs()
 {
 //  mtd_erase_partition(get_nand_chip(),"data");
@@ -77,6 +77,7 @@ static void test_yaffs()
 
 
 }
+#endif
 
 static void __test_bp()
 {
@@ -127,8 +128,10 @@ kern_init(void) {
   print_kerninfo();
 
   pmm_init();                 // init physical memory management
-  dde_call_mapio_early();
   pmm_init_ap();
+#ifdef UCONFIG_HAVE_LINUX_DDE_BASE
+  dde_call_mapio_early();
+#endif
 
   kprintf("pmm_init() done.\n");
 
@@ -144,7 +147,9 @@ kern_init(void) {
   proc_init();                // init process table
   _PROBE_();
     sync_init();                // init sync struct
+#ifdef UCONFIG_HAVE_LINUX_DDE_BASE
   dde_init();
+#endif
 
   ide_init();                 // init ide devices
   _PROBE_();
@@ -153,6 +158,7 @@ kern_init(void) {
   fs_init();                  // init fs
   _PROBE_();
 
+#ifdef UCONFIG_HAVE_YAFFS2
 #ifdef HAS_NANDFLASH
   yaffs_start_up();
   //test_yaffs();
@@ -167,11 +173,14 @@ kern_init(void) {
   yaffs_vfs_init();
 
 #endif
+#endif /* UCONFIG_HAVE_YAFFS2 */
 
+#ifdef UCONFIG_HAVE_LINUX_DDE_BASE
    ucore_vfs_add_device("fb0", 29, 0);
    //ucore_vfs_add_device("input0", 13, 0);
    ucore_vfs_add_device("event0", 13, 64);
    ucore_vfs_add_device("hzfchar", 222, 0);
+#endif
 
 
   intr_enable();              // enable irq interrupt

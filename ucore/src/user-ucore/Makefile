@@ -1,27 +1,36 @@
-E_ENCODE = $(shell echo $(1) | sed -e 's!_!_1!g' -e 's!/!_2!g')
-E_DECODE = $(shell echo $(1) | sed -e 's!_1!_!g' -e 's!_2!/!g')
+.PHONY: all clean
 
-.PHONY: all
+-include $(TOPDIR)/$(KCONFIG_AUTOCONFIG)
 
-SRCFILES   := $(filter %.c, $(wildcard *))
-T_CC_FLAGS := 	-I../libs-user-ucore/ -I../libs-user-ucore/common -I../libs-user-ucore/arch/${ARCH}
+TARGET_CFLAGS:= 	-I../libs-user-ucore/ -I../libs-user-ucore/common -I../libs-user-ucore/arch/$(ARCH) -nostdinc -nostdlib -fno-builtin
 
 TARGET_CC_SYSTEM_LIB ?=  -L/opt/FriendlyARM/toolschain/4.4.3/lib/gcc/arm-none-linux-gnueabi/4.4.3/ 
 
-include ${T_BASE}/mk/compu.mk
-include ${T_BASE}/mk/template.mk
+USER_LIB_SRCDIR:= ../libs-user-ucore
+USER_LIB := $(USER_LIB_SRCDIR)/ulib.a
+BIN:=bin
 
-BINFILES := $(addprefix ${T_OBJ}/user-sfs/bin/,${SRCFILES:.c=})
+USER_APPLIST:= pwd cat sh ls forktest yield hello faultreadkernel faultread badarg waitkill pgdir exit sleep sigtest1
 
-all: ${T_OBJ}/user-sfs ${BINFILES}
-	${V}cp -r _initial/* ${T_OBJ}/user-sfs/
+USER_APP_BINS:= $(addprefix $(BIN)/, $(USER_APPLIST))
 
-${T_OBJ}/user-sfs/bin/%: ${T_OBJ}/user-ucore-$(call E_ENCODE,%).c.o
-	@echo LD $@
-#	${V}${LD} -T ../libs-user-ucore/arch/${ARCH}/user.ld $< ${T_OBJ}/libs-user-ucore-*.o -o$@
-	${V}${LD} $(TARGET_CC_SYSTEM_LIB) -T ../libs-user-ucore/arch/${ARCH}/user.ld $< ${T_OBJ}/ulib.a -lgcc -o$@
-	@touch ${T_OBJ}/user-sfs-timestamp
+all:  $(BIN) $(USER_LIB) $(USER_APP_BINS)
 
-${T_OBJ}/user-sfs:
-	${V}mkdir -p $@
-	${V}mkdir -p $@/bin
+#user applications
+define make-user-app
+$(BIN)/$1: $(addsuffix .o,$1) $(USER_LIB)
+	@echo LINK $$@
+	$(TARGET_LD)  -static -T $(USER_LIB_SRCDIR)/arch/$(ARCH)/user.ld  $(addsuffix .o,$1) $(USER_LIB) -o $$@
+endef
+
+$(foreach bdir,$(USER_APPLIST),$(eval $(call make-user-app,$(bdir))))
+
+%.o: %.c
+	$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $<
+
+$(BIN):
+	-mkdir $(BIN)
+
+clean:
+	find . -name \*.o -exec rm -f {} \;
+	rm -rf $(BIN)

@@ -351,22 +351,6 @@ sprintputch(int ch, struct sprintbuf *b) {
 }
 
 /* *
- * snprintf - format a string and place it in a buffer
- * @str:        the buffer to place the result into
- * @size:       the size of buffer, including the trailing null space
- * @fmt:        the format string to use
- * */
-int
-snprintf(char *str, size_t size, const char *fmt, ...) {
-    va_list ap;
-    int cnt;
-    va_start(ap, fmt);
-    cnt = vsnprintf(str, size, fmt, ap);
-    va_end(ap);
-    return cnt;
-}
-
-/* *
  * vsnprintf - format a string and place it in a buffer, it's called with a va_list
  * instead of a variable number of arguments
  * @str:        the buffer to place the result into
@@ -380,9 +364,8 @@ snprintf(char *str, size_t size, const char *fmt, ...) {
  * Call this function if you are already dealing with a va_list.
  * Or you probably want snprintf() instead.
  * */
-#if 0
-int
-vsnprintf(char *str, size_t size, const char *fmt, va_list ap) {
+static int
+ucore_vsnprintf(char *str, size_t size, const char *fmt, va_list ap) {
     struct sprintbuf b = {str, str + size - 1, 0};
     if (str == NULL || b.buf > b.ebuf) {
         return -E_INVAL;
@@ -393,4 +376,21 @@ vsnprintf(char *str, size_t size, const char *fmt, va_list ap) {
     *b.buf = '\0';
     return b.cnt;
 }
-#endif
+
+/* *
+ * snprintf - format a string and place it in a buffer
+ * @str:        the buffer to place the result into
+ * @size:       the size of buffer, including the trailing null space
+ * @fmt:        the format string to use
+ * */
+int
+snprintf(char *str, size_t size, const char *fmt, ...) {
+    va_list ap;
+    int cnt;
+    va_start(ap, fmt);
+    cnt = ucore_vsnprintf(str, size, fmt, ap);
+    va_end(ap);
+    return cnt;
+}
+
+

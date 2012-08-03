@@ -1,6 +1,6 @@
 menu "Linux Device Driver Environment"
 
-config LINUX_DDE_BASE
+config HAVE_LINUX_DDE_BASE
 	bool "Enable Linux DDE base"
 	default y
 	help
@@ -8,13 +8,13 @@ config LINUX_DDE_BASE
 
 config DDE_GOLDFISH_FB
   depends ARM_BOARD_GOLDFISH
-  depends LINUX_DDE_BASE
+  depends HAVE_LINUX_DDE_BASE
   bool "Enable Goldfish Framebuffer"
   default n
 
 config DDE_GOLDFISH_EVENT
   depends ARM_BOARD_GOLDFISH
-  depends LINUX_DDE_BASE
+  depends HAVE_LINUX_DDE_BASE
   bool "Enable Goldfish Event Input"
   default n
 

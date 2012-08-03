@@ -1379,7 +1379,11 @@ int do_linux_sleep(const struct linux_timespec __user *req,
     long msec = kts.tv_sec * 1000 + kts.tv_nsec / 1000000;
     if(msec < 0)
       return -E_INVAL;
+#ifdef UCONFIG_HAVE_LINUX_DDE_BASE
     unsigned long j = msecs_to_jiffies(msec);
+#else
+    unsigned long j = msec / 10;
+#endif
     //kprintf("do_linux_sleep: sleep %d msec, %d jiffies\n", msec, j);
     int ret = do_sleep(j);
     if(rem){

@@ -1,8 +1,7 @@
-.PHONY: all
-SRCFILES   := $(shell find . '(' '!' -regex '.*/_.*' ')' -and '(' -iname "*.c" -or -iname "*.S" ')' -and -not -regex '\./arch.*' | sed -e 's!\./!!g')
-T_CC_FLAGS := -D__KERNEL__ -D__KERN__ -I../glue-kern/arch/${ARCH} -Iglue-ucore -Iglue-ucore/libs \
-			  -Ilibs -Isyscall -Idebug -Idriver -Imm -Isync -Ischedule -Iprocess -Ifs \
-			  -Ifs/swap -Ifs/vfs -Ifs/pipe -Ifs/sfs -Ifs/devs -Imodule -Imodule/include  -include linux/autoconf.h
+#dirs-y := fs libs mm process  schedule sync syscall
+#dirs-y += arch/$(ARCH)
 
-include arch/$(ARCH)/ucore.mk
+#dirs-$(UCONFIG_LINUX_DDE_BASE) += module
+dirs-y := schedule syscall fs process mm libs glue-ucore sync
 
+dirs-y += arch/$(ARCH)

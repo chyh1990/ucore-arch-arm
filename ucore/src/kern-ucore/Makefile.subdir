@@ -1,0 +1,39 @@
+include $(TOPDIR)/$(KCONFIG_AUTOCONFIG)
+
+include Makefile
+
+
+all: builtin.o $(dirs-y) FORCE
+	@echo $(obj-y)
+	@echo $(dirs-y)
+ifneq ($(obj-y),)
+	echo $(LOCALPATH)/builtin.o >> $(BUILTINLIST)
+endif
+
+ifneq ($(obj-y),)
+builtin.o: $(obj-y)
+	$(TARGET_LD) -r -o $@ $(obj-y)
+else
+builtin.o:
+	touch $@
+endif
+
+%.o: %.c
+	$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $<
+
+%.o: %.S
+	$(TARGET_CC) -D__ASSEMBLY__ $(TARGET_CFLAGS) -c -o $@ $<
+
+define make-subdir
+$1: FORCE
+	$(MAKE) -f $(KTREE)/Makefile.subdir -C $(LOCALPATH)/$1 KTREE=$(KTREE) LOCALPATH=$(LOCALPATH)/$1 BUILTINLIST=$(BUILTINLIST)
+endef
+
+$(foreach bdir,$(dirs-y),$(eval $(call make-subdir,$(bdir))))
+
+PHONY +=FORCE
+FORCE:
+
+# Declare the contents of the .PHONY variable as phony.  We keep that
+# information in a variable so we can use it in if_changed and friends.
+.PHONY: $(PHONY)

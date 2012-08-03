@@ -1,0 +1,51 @@
+ifneq ($(MAKECMDGOALS),clean)
+include $(TOPDIR)/$(KCONFIG_AUTOCONFIG)
+endif
+
+PHONY+=all subdir clean
+
+TARGET_CC := $(CROSS_COMPILE)gcc
+TARGET_LD := $(CROSS_COMPILE)ld
+TARGET_AR := $(CROSS_COMPILE)ar
+TARGET_STRIP := $(CROSS_COMPILE)strip
+
+export TARGET_CC TARGET_LD TARGET_AR TARGET_LD
+
+TARGET_CFLAGS := -g -ggdb
+TARGET_CFLAGS += -fno-builtin -nostdlib  -nostdinc
+TARGET_CFLAGS += -D__KERNEL__ -D__KERN__ 
+
+KERN_INCLUDES :=../glue-kern/arch/${ARCH} glue-ucore glue-ucore/libs \
+libs syscall debug driver mm sync schedule process fs \
+fs/swap fs/vfs fs/pipe fs/sfs fs/devs module module/include 
+TARGET_CFLAGS += $(addprefix -I$(KTREE)/, $(KERN_INCLUDES))
+
+ifneq ($(MAKECMDGOALS),clean)
+include $(KTREE)/arch/$(ARCH)/include.mk
+endif
+TARGET_CFLAGS += $(addprefix -I$(KTREE)/arch/$(ARCH)/, $(ARCH_INLUCDES))
+TARGET_CFLAGS += $(ARCH_CFLAGS)
+
+TARGET_CFLAGS += $(shell echo $(UCONFIG_ADDITIONAL_CFLAGS))
+
+export TARGET_CFLAGS
+
+all: kernel-builtin.o
+
+kernel-builtin.o: subdir
+	@echo Building uCore Kernel for $(UCONFIG_ARCH)
+	$(TARGET_LD) -r -o $@ $(shell xargs < .builtinlist.tmp)
+
+clean:
+	rm -f .builtinlist.tmp
+	find . -name \*.o -exec rm -f {} \;
+
+subdir: FORCE
+	rm -f .builtinlist.tmp
+	touch .builtinlist.tmp
+	$(MAKE) -f Makefile.subdir KTREE=$(KTREE) LOCALPATH=$(KTREE) BUILTINLIST=$(KTREE)/.builtinlist.tmp
+
+PHONY +=FORCE
+FORCE:
+
+.PHONY: $(PHONY)

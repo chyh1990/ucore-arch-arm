@@ -21,7 +21,8 @@
 # Just run 'make menuconfig', configure stuff, then run 'make'.
 # You shouldn't need to mess with anything beyond this point...
 #--------------------------------------------------------------
-TOPDIR=./
+TOPDIR=`pwd`
+Q :=@
 
 KTREE = $(TOPDIR)/src/kern-ucore
 CONFIG = package/config
@@ -77,6 +78,8 @@ export HOSTAR HOSTAS HOSTCC HOSTCXX HOSTLD
 HOSTCFLAGS=$(CFLAGS_FOR_BUILD)
 export HOSTCFLAGS
 
+PHONY+=menuconfig clean
+
 $(CONFIG)/mconf:
 	$(MAKE) CC="$(HOSTCC)" -C $(CONFIG) conf mconf
 	-@if [ ! -f .config ]; then \
@@ -89,8 +92,13 @@ menuconfig: $(CONFIG)/mconf
 	fi
 	
 clean:
-	rm -f .config.old .config.cmd .tmpconfig.h
+	rm -f .config .config.old .config.cmd .tmpconfig.h
 	rm -f $(KCONFIG_AUTOCONFIG) $(KCONFIG_AUTOHEADER)
 	-$(MAKE) -C $(CONFIG) clean
+	$(MAKE) -C $(KTREE) -f Makefile.build clean
 
+PHONY+=kernel
+
+kernel: $(KCONFIG_AUTOHEADER) $(KCONFIG_AUTOCONFIG)
+	$(Q)$(MAKE) KTREE=$(KTREE) TOPDIR=$(TOPDIR) -C $(KTREE) -f $(KTREE)/Makefile.build
 

@@ -307,7 +307,7 @@ pmm_init(void) {
 
 
   boot_map_segment(boot_pgdir, 0xFFFF0000, PGSIZE, 0, PTE_W|PTE_PWT); // high location of vector table
-#ifdef HAS_RAMDISK
+#ifdef UCONFIG_HAVE_RAMDISK 
   if(CHECK_INITRD_EXIST()){
     boot_map_segment(boot_pgdir, DISK_FS_VBASE, ROUNDUP(initrd_end-initrd_begin, PGSIZE), (uintptr_t)initrd_begin,PTE_W);
     kprintf("mapping initrd to 0x%08x\n", DISK_FS_VBASE);

@@ -108,7 +108,7 @@ kern_init(void) {
   memset(edata, 0, end - edata);
 
   exception_vector_init();
-#ifdef HAS_RAMDISK
+#ifdef UCONFIG_HAVE_RAMDISK 
   check_initrd();
 #endif
 
@@ -163,14 +163,16 @@ kern_init(void) {
   yaffs_start_up();
   //test_yaffs();
   yaffs_vfs_init();
-#elif defined HAS_SIM_YAFFS 
+#else
   kprintf("init: using yramsim\n");
   //emulated yaffs start up
+#ifdef UCONFIG_HAVE_YAFFS2_RAMDISK
   yaffsfs_OSInitialisation();
   yramsim_CreateRamSim("data", 1,20, 2, 16);
   //test_yaffs();
 
   yaffs_vfs_init();
+#endif
 
 #endif
 #endif /* UCONFIG_HAVE_YAFFS2 */

@@ -25,7 +25,6 @@
 
 #include "yaffs_nandif.h"
 
-#ifdef HAS_SIM_YAFFS
 
 #define DATA_SIZE	2048
 #define SPARE_SIZE	64
@@ -304,5 +303,4 @@ struct yaffs_dev *yramsim_CreateRamSim(const YCHAR *name,
 	return yaffs_add_dev_from_geometry(&yramsim_dev0, yramsim_name0,g);
 }
 
-#endif
 

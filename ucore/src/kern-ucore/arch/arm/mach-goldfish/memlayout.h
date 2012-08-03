@@ -110,7 +110,7 @@
     (KERNBASE <= (start) && (start) < (end) && (end) <= KERNTOP)
 
 
-#ifdef HAS_RAMDISK
+#ifdef UCONFIG_HAVE_RAMDISK
 #define DISK_FS_VBASE             0xB0000000 
 #endif
 #ifdef HAS_SHARED_KERNMEM

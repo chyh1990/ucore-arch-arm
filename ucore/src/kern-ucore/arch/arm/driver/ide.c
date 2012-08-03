@@ -92,7 +92,7 @@ void
 ide_init(void) {
   int i;
   for(i=0;i<MAX_IDE;i++) ide_devices[i].valid = 0;
-#ifdef HAS_RAMDISK
+#ifdef UCONFIG_HAVE_RAMDISK
   int devno = DISK0_DEV_NO;
   assert(devno<MAX_IDE);
   ramdisk_init_struct(&ide_devices[devno]);

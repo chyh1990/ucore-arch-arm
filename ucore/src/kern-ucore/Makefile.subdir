@@ -2,31 +2,46 @@ include $(TOPDIR)/$(KCONFIG_AUTOCONFIG)
 
 include Makefile
 
+DEPS := $(addprefix $(OBJPATH)/, $(obj-y:.o=.d))
+BUILTIN_O := $(OBJPATH)/builtin.o
+OBJ_Y := $(addprefix $(OBJPATH)/,$(obj-y))
 
-all: builtin.o $(dirs-y) FORCE
-	@echo $(obj-y)
-	@echo $(dirs-y)
+all: $(OBJPATH) $(BUILTIN_O) $(dirs-y) FORCE
 ifneq ($(obj-y),)
-	echo $(LOCALPATH)/builtin.o >> $(BUILTINLIST)
+	$(Q)echo $(BUILTIN_O) >> $(BUILTINLIST)
 endif
 
 ifneq ($(obj-y),)
-builtin.o: $(obj-y)
-	$(TARGET_LD) -r -o $@ $(obj-y)
+$(BUILTIN_O): $(OBJ_Y)
+	@echo LD $@
+	$(Q)$(TARGET_LD) -r -o $@ $(OBJ_Y)
+
+-include $(DEPS)
+
 else
-builtin.o:
-	touch $@
+$(BUILTIN_O):
+	$(Q)touch $@
 endif
 
-%.o: %.c
-	$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $<
 
-%.o: %.S
-	$(TARGET_CC) -D__ASSEMBLY__ $(TARGET_CFLAGS) -c -o $@ $<
+$(OBJPATH)/%.o: %.c
+	@echo CC $<
+	$(Q)$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $<
+
+$(OBJPATH)/%.o: %.S
+	@echo CC $<
+	$(Q)$(TARGET_CC) -D__ASSEMBLY__ $(TARGET_CFLAGS) -c -o $@ $<
+
+$(OBJPATH)/%.d: %.c
+	@echo DEP $<
+	@set -e; rm -f $@; \
+		$(TARGET_CC) -MM -MT "$*.o $@" $(TARGET_CFLAGS) $< > $@; 
 
 define make-subdir
 $1: FORCE
-	$(MAKE) -f $(KTREE)/Makefile.subdir -C $(LOCALPATH)/$1 KTREE=$(KTREE) LOCALPATH=$(LOCALPATH)/$1 BUILTINLIST=$(BUILTINLIST)
+	@echo Enter $(LOCALPATH)/$1
+	$(Q)-mkdir -p $(OBJPATH)/$1
+	$(Q)$(MAKE) -f $(KTREE)/Makefile.subdir -C $(LOCALPATH)/$1 KTREE=$(KTREE) OBJPATH=$(OBJPATH)/$1 LOCALPATH=$(LOCALPATH)/$1 BUILTINLIST=$(BUILTINLIST)
 endef
 
 $(foreach bdir,$(dirs-y),$(eval $(call make-subdir,$(bdir))))

@@ -8,7 +8,8 @@ Q :=@
 
 
 KTREE = $(TOPDIR)/src/kern-ucore
-export TOPDIR KTREE
+OBJPATH_ROOT := $(TOPDIR)/obj
+export TOPDIR KTREE OBJPATH_ROOT
 
 CONFIG = package/config
 
@@ -91,13 +92,13 @@ menuconfig: $(CONFIG)/mconf
 
 PHONY += kernel userlib userapp
 
-kernel: $(KCONFIG_AUTOHEADER) $(KCONFIG_AUTOCONFIG)
+kernel: $(OBJPATH_ROOT) $(KCONFIG_AUTOHEADER) $(KCONFIG_AUTOCONFIG)
 	$(Q)$(MAKE)  -C $(KTREE) -f $(KTREE)/Makefile.build
 
-userlib: $(KCONFIG_AUTOCONFIG)
+userlib: $(OBJPATH_ROOT) $(KCONFIG_AUTOCONFIG)
 	$(Q)$(MAKE) -f $(TOPDIR)/src/libs-user-ucore/Makefile -C $(TOPDIR)/src/libs-user-ucore  all
 
-userapp: $(KCONFIG_AUTOCONFIG)
+userapp: $(OBJPATH_ROOT) $(KCONFIG_AUTOCONFIG)
 	$(Q)$(MAKE) -f $(TOPDIR)/src/user-ucore/Makefile -C $(TOPDIR)/src/user-ucore  all
 
 ## TOOLS 
@@ -107,14 +108,14 @@ userapp: $(KCONFIG_AUTOCONFIG)
 ifdef UCONFIG_HAVE_SFS
 TOOLS_MKSFS_DIR := $(TOPDIR)/src/ht-mksfs
 TOOLS_MKSFS := $(TOOLS_MKSFS_DIR)/mksfs
-$(TOOLS_MKSFS):
+$(TOOLS_MKSFS): $(OBJPATH_ROOT)
 	$(Q)$(MAKE) CC=$(HOSTCC) -f $(TOOLS_MKSFS_DIR)/Makefile -C $(TOOLS_MKSFS_DIR) all
 
 ## image
 SFSIMG_FILE := sfs.img
 sfsimg: $(SFSIMG_FILE)
 
-$(SFSIMG_FILE): $(TOOLS_MKSFS) userlib userapp FORCE
+$(SFSIMG_FILE): $(OBJPATH_ROOT) $(TOOLS_MKSFS) userlib userapp FORCE
 	@echo Making $@
 	mkdir .tmpsfs
 	cp -r $(TOPDIR)//src/user-ucore/bin .tmpsfs/
@@ -125,14 +126,17 @@ $(SFSIMG_FILE): $(TOOLS_MKSFS) userlib userapp FORCE
 
 endif
 
+$(OBJPATH_ROOT):
+	-mkdir $@
 
 clean:
-	rm -f  .config.old .config.cmd .tmpconfig.h
-	rm -f $(KCONFIG_AUTOCONFIG) $(KCONFIG_AUTOHEADER)
-	rm -f $(SFSIMG_FILE)
-	rm -f *.o
-	-$(MAKE) -C $(CONFIG) clean
-	$(MAKE) -C $(KTREE) -f Makefile.build clean
+	@echo CLEAN ALL
+	$(Q)rm -f  .config.old .config.cmd .tmpconfig.h
+	$(Q)rm -f $(KCONFIG_AUTOCONFIG) $(KCONFIG_AUTOHEADER)
+	$(Q)rm -f $(SFSIMG_FILE)
+	$(Q)rm -rf $(OBJPATH_ROOT)
+	-$(Q)$(MAKE) -C $(CONFIG) clean
+	$(Q)$(MAKE) -C $(KTREE) -f Makefile.build clean
 	$(Q)$(MAKE) -f $(TOPDIR)/src/libs-user-ucore/Makefile -C $(TOPDIR)/src/libs-user-ucore  clean
 	$(Q)$(MAKE) -f $(TOPDIR)/src/user-ucore/Makefile -C $(TOPDIR)/src/user-ucore  clean
 

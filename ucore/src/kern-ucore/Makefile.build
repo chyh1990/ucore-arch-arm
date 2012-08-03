@@ -11,6 +11,11 @@ TARGET_CFLAGS += -D__KERNEL__ -D__KERN__
 KERN_INCLUDES :=../glue-kern/arch/${ARCH} glue-ucore glue-ucore/libs \
 libs syscall debug driver mm sync schedule process fs \
 fs/swap fs/vfs fs/pipe fs/sfs fs/devs module module/include 
+
+ifdef UCONFIG_HAVE_LINUX_DDE_BASE
+KERN_INCLUDES += module/include
+endif
+
 TARGET_CFLAGS += $(addprefix -I$(KTREE)/, $(KERN_INCLUDES))
 
 TARGET_CFLAGS += -include $(TOPDIR)/$(KCONFIG_AUTOHEADER)

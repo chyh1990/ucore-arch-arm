@@ -5,3 +5,5 @@
 dirs-y := schedule syscall fs process mm libs glue-ucore sync
 
 dirs-y += arch/$(ARCH)
+
+dirs-$(UCONFIG_HAVE_LINUX_DDE_BASE) += module

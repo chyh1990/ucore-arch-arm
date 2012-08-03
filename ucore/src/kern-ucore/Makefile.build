@@ -52,9 +52,9 @@ clean:
 	$(Q)$(MAKE)  -C $(KTREE)/arch/$(ARCH) -f $(KTREE)/arch/$(ARCH)/Makefile.image clean
 
 subdir: $(KTREE_OBJ_ROOT) $(TOPDIR)/$(KCONFIG_AUTOHEADER) $(TOPDIR)/$(KCONFIG_AUTOCONFIG) FORCE
-	rm -f .builtinlist.tmp
-	touch .builtinlist.tmp
-	$(MAKE) -f Makefile.subdir OBJPATH=$(KTREE_OBJ_ROOT) LOCALPATH=$(KTREE) BUILTINLIST=$(KTREE)/.builtinlist.tmp
+	$(Q)rm -f .builtinlist.tmp
+	$(Q)touch .builtinlist.tmp
+	$(Q)$(MAKE) -f Makefile.subdir OBJPATH=$(KTREE_OBJ_ROOT) LOCALPATH=$(KTREE) BUILTINLIST=$(KTREE)/.builtinlist.tmp
 
 PHONY +=FORCE
 FORCE:

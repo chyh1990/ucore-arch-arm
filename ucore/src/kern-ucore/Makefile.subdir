@@ -40,8 +40,8 @@ $(OBJPATH)/%.d: %.c
 define make-subdir
 $1: FORCE
 	@echo Enter $(LOCALPATH)/$1
-	$(Q)-mkdir -p $(OBJPATH)/$1
-	$(Q)$(MAKE) -f $(KTREE)/Makefile.subdir -C $(LOCALPATH)/$1 KTREE=$(KTREE) OBJPATH=$(OBJPATH)/$1 LOCALPATH=$(LOCALPATH)/$1 BUILTINLIST=$(BUILTINLIST)
+	-$(Q)mkdir -p $(OBJPATH)/$1
+	+$(Q)$(MAKE) -f $(KTREE)/Makefile.subdir -C $(LOCALPATH)/$1 KTREE=$(KTREE) OBJPATH=$(OBJPATH)/$1 LOCALPATH=$(LOCALPATH)/$1 BUILTINLIST=$(BUILTINLIST)
 endef
 
 $(foreach bdir,$(dirs-y),$(eval $(call make-subdir,$(bdir))))

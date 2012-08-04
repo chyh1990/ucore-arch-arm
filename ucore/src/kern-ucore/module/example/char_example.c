@@ -93,7 +93,7 @@ static int __init hzf_init(void)
     if(ret)
         goto fail1;
  
-    printk("registersuccess!\n");
+    printk("char example register success!\n");
     return 0;
  
 fail1:

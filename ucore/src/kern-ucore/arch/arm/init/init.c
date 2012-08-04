@@ -24,16 +24,20 @@
 #include <kgdb-stub.h>
 #include <module.h>
 
-
+#ifdef UCONFIG_HAVE_YAFFS2
 #include <yaffs2_direct/yaffsfs.h>
+#endif
 
 #ifdef printf
 #undef printf
 #endif
 
 
-
+#ifdef DEBUG
 #define _PROBE_() kprintf("PROBE %s: %d\n", __FILE__, __LINE__);
+#else
+#define _PROBE_()
+#endif
 
 // Very important:
 // At the boot, exceptions handlers have not been defined

@@ -18,4 +18,9 @@ config DDE_GOLDFISH_EVENT
   bool "Enable Goldfish Event Input"
   default n
 
+config DDE_EXAMPLE_CHRDEV
+  depends HAVE_LINUX_DDE_BASE
+  bool "Enable Example Chrdev"
+  default n
+
 endmenu

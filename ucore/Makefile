@@ -23,6 +23,7 @@ MAKEFLAGS += -rR --no-print-directory
 ARCH ?= arm
 CROSS_COMPILE ?= arm-linux-
 
+CONFIG_DIR := config
 KCONFIG_AUTOCONFIG=config/auto.conf
 KCONFIG_AUTOHEADER=config/autoconf.h
 CONFIG_CONFIG_IN = $(KTREE)/arch/$(ARCH)/Kconfig
@@ -83,7 +84,7 @@ $(CONFIG)/mconf:
 		cp $(CONFIG_DEFCONFIG) .config; \
 	fi
 
-menuconfig: $(CONFIG)/mconf
+menuconfig: $(CONFIG_DIR) $(CONFIG)/mconf
 	rm -f $(KCONFIG_AUTOCONFIG) $(KCONFIG_AUTOHEADER)
 	@if ! $(CONFIG)/mconf $(CONFIG_CONFIG_IN); then \
 		test -f .config.cmd || rm -f .config; \
@@ -128,6 +129,9 @@ endif
 
 $(OBJPATH_ROOT):
 	-mkdir $@
+
+$(CONFIG_DIR):
+	-mkdir config
 
 clean:
 	@echo CLEAN ALL

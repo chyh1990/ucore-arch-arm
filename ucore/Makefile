@@ -123,6 +123,7 @@ $(SFSIMG_FILE): $(OBJPATH_ROOT) $(TOOLS_MKSFS) userlib userapp FORCE
 	mkdir .tmpsfs
 	cp -r $(TOPDIR)//src/user-ucore/bin .tmpsfs/
 	cp -r $(TOPDIR)//src/user-ucore/_initial/* .tmpsfs/
+	rm -f $@
 	dd if=/dev/zero of=$@ bs=1M count=$(UCONFIG_SFS_IMAGE_SIZE)
 	$(TOOLS_MKSFS) $@ .tmpsfs
 	rm -rf .tmpsfs

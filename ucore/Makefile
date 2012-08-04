@@ -76,7 +76,9 @@ export HOSTAR HOSTAS HOSTCC HOSTCXX HOSTLD
 HOSTCFLAGS=$(CFLAGS_FOR_BUILD)
 export HOSTCFLAGS
 
-PHONY+=menuconfig clean
+PHONY+=menuconfig clean all
+
+all: kernel
 
 $(CONFIG)/mconf:
 	$(MAKE) CC="$(HOSTCC)" -C $(CONFIG) conf mconf

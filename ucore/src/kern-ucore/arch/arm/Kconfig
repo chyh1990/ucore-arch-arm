@@ -27,6 +27,9 @@ config ARM_BOARD_VERSATILEPB
 config ARM_BOARD_AT91
   bool "AT91SAM"
 
+config ARM_BOARD_PANDABOARD
+  bool "Pandaboard ES rev2"
+
 endchoice
 
 config HAVE_RAMDISK

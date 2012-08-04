@@ -7,3 +7,4 @@ dirs-y += example
 dirs-$(UCONFIG_ARM_BOARD_GOLDFISH) += goldfishdrv
 
 obj-$(UCONFIG_ARM_BOARD_GOLDFISH) += arm_iomap_glue.o
+obj-$(UCONFIG_ARM_BOARD_PANDABOARD) += arm_iomap_glue.o

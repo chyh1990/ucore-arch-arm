@@ -615,7 +615,8 @@ struct mm_struct *check_mm_struct;
 // check_pgfault - check correctness of pgfault handler
 static void
 check_pgfault(void) {
-#ifdef CHECK_PGFAULT
+#ifdef UCONFIG_CHECK_PGFAULT
+  kprintf("starting check_pgfault()\n");
   size_t nr_used_pages_store = nr_used_pages();
   size_t slab_allocated_store = slab_allocated();
 

@@ -184,5 +184,7 @@ void pmm_init_ap (void);
 
 extern char bootstack[], bootstacktop[];
 
+void * __ucore_ioremap(unsigned long phys_addr, size_t size, unsigned int mtype);
+
 #endif /* !__KERN_MM_PMM_H__ */
 

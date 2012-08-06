@@ -27,33 +27,48 @@
 #include <kio.h>
 #include <memlayout.h>
 
+#define ICCICR     0x00      	// CPU Interface Control Register (RW)
+#define ICCPMR   0x04      		// CPU Interface  Priority Mask Register (RW)
+#define ICDDCR   0x000		// Distributor Control Register (RW)
+#define ICDISER0  0x100		// Distributor  Interrupt Set Enable Registers (RW) 
+#define ICDICER0  0x180		// Distributor  Interrupt Set Enable Registers (RW) 
+#define ICDISPR  0x200		// Distributor  Set Pending Register (RW)
+#define ICDIPR	   0x400		//  Distributor Interrupt Priority Register (RW)
+#define ICDSGIR  0xF00		//  Distributor Software Generated Interrupt Register (WO)
+#define ICDICFR0 0xC00
+#define ICDIPTR0 0x800
 
-enum {
-    INTERRUPT_STATUS        = 0x00, // number of pending interrupts
-    INTERRUPT_NUMBER        = 0x04,
-    INTERRUPT_DISABLE_ALL   = 0x08,
-    INTERRUPT_DISABLE       = 0x0c,
-    INTERRUPT_ENABLE        = 0x10
-};
+#define MAX_IRQS_NR  128
 
-
+static uint32_t gic_base = 0;
+static uint32_t dist_base = 0;
 
 //TODO this code is mach-dependent
 
 // Current IRQ mask
 // static uint32_t irq_mask = 0xFFFFFFFF & ~(1 << INT_UART0);
 static bool did_init = 0;
-#define VIC_VBASE __io_address(PANDABOARD_VIC_BASE)
 
 void
 pic_disable(unsigned int irq) {
-  outw(VIC_VBASE+INTERRUPT_DISABLE, irq);
 }
 
 
 void
 pic_enable(unsigned int irq) {
-  outw(VIC_VBASE+INTERRUPT_ENABLE, irq);
+  if(irq >= MAX_IRQS_NR)
+    return;
+  int off = irq / 32;
+  int j = irq % 32;
+
+	outw( gic_base  + ICCICR, 0 );         		// Disable CPU Interface (it is already disabled, but nevermind)
+	outw( dist_base + ICDDCR, 0 ); 			// Disable Distributor (it is already disabled, but nevermind)
+
+  outw(dist_base+ICDISER0+off*4, 1 << j);
+  outw(dist_base+ICDIPTR0+ (irq & ~0x3), 0x01010101);
+
+	outw( gic_base  + ICCICR, 3 ); 			// Enable CPU Interface
+	outw( dist_base + ICDDCR, 1 );	 		// Enable Distributor
 }
 
 struct irq_action{
@@ -61,11 +76,11 @@ struct irq_action{
   void *opaque;
 };
 
-struct irq_action actions[32];
+struct irq_action actions[MAX_IRQS_NR];
 
 void register_irq(int irq, ucore_irq_handler_t handler, void *opaque)
 {
-  if(irq>31){
+  if(irq>=MAX_IRQS_NR){
     kprintf("WARNING: register_irq: irq>31\n");
     return;
   }
@@ -73,53 +88,37 @@ void register_irq(int irq, ucore_irq_handler_t handler, void *opaque)
   actions[irq].opaque = opaque;
 }
 
+void pic_init_early(){}
+void pic_init(){}
+
 /* pic_init
  * initialize the interrupt, but doesn't enable them */
 void
-pic_init(void) {
+pic_init2(uint32_t g_base, uint32_t d_base) {
   if(did_init)
     return ;
 
   did_init = 1;
   //disable all
-  outw(VIC_VBASE+INTERRUPT_DISABLE_ALL, ~0);
-  kprintf("pic_init()\n");
+  gic_base = g_base;
+  dist_base = d_base;
+	outw( gic_base  + ICCICR, 0 );         		// Disable CPU Interface (it is already disabled, but nevermind)
+	outw( dist_base + ICDDCR, 0 ); 			// Disable Distributor (it is already disabled, but nevermind)
+	outw( gic_base  + ICCPMR, 0xffff );			// All interrupts whose priority is > 0xff are unmasked
+
+  int i;
+  for(i=0;i<32;i++){
+    outw( dist_base+ICDICER0+(i<<2), ~0);
+  }
+
+	outw( gic_base  + ICCICR, 3 ); 			// Enable CPU Interface
+	outw( dist_base + ICDDCR, 1 );	 		// Enable Distributor
 
 }
 
 void irq_handler(){
-  uint32_t pending = inw(VIC_VBASE+INTERRUPT_STATUS);
-  uint32_t irq = 0;
-  while(pending > 0){
-    irq = inw(VIC_VBASE+INTERRUPT_NUMBER);
-    if(actions[irq].handler){
-      (*actions[irq].handler)(irq, actions[irq].opaque);
-    }else{
-      pic_disable(irq);
-    }
-    pending = inw(VIC_VBASE+INTERRUPT_STATUS);
-  }
-#if 0
-  if(status & (1<<TIMER0_IRQ)){
-    //kprintf("@");
-    ticks++;
-		//assert(pls_read(current) != NULL);
-    run_timer_list();
-    clock_clear();
-  }
-  if( status & (1<<UART_IRQ) ){
-    //if ((c = cons_getc()) == 13) {
-    //  debug_monitor(tf);
-    //}
-    //else {
-      extern void dev_stdin_write(char c);
-      char c = cons_getc();
-      dev_stdin_write(c);
-    //}
-    //kprintf("#");
-    serial_clear();
-  }
-#endif
+  //TODO
+  kprintf("H"); 
 }
 
 /* irq_clear

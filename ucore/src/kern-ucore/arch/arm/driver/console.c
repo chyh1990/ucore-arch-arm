@@ -75,7 +75,6 @@ sds_intr(void) {
 /* cons_init - initializes the console devices */
 void
 cons_init(void) {
-	  serial_init();
     if (!serial_check()) {
         kprintf("serial port does not exist!!\n");
     }

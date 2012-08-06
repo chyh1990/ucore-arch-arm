@@ -75,7 +75,8 @@
 
 /* IO addr space */
 #define KIOBASE IO_SPACE_START
-#define KIOSIZE IO_SPACE_SIZE
+/* We dont automap it*/
+#define KIOSIZE (0)
 
 /* end IO */
 
@@ -111,7 +112,7 @@
 
 
 #ifdef UCONFIG_HAVE_RAMDISK
-#define DISK_FS_VBASE             0xB0000000 
+#define DISK_FS_VBASE            (SDRAM0_START+SDRAM0_SIZE) 
 #endif
 #ifdef HAS_SHARED_KERNMEM
 #define SHARED_KERNMEM_VBASE 0xD0008000

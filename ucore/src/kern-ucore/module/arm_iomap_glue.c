@@ -67,17 +67,9 @@ void *dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle
   return cpuaddr;
 }
 
-static u32 __current_ioremap_base = UCORE_IOREMAP_BASE;
-
 void __iomem *  
 __arm_ioremap(unsigned long phys_addr, size_t size, unsigned int mtype)
 {
-  //TODO
-  if(__current_ioremap_base + size > UCORE_IOREMAP_END)
-    return NULL;
-  __boot_map_iomem(__current_ioremap_base, size, phys_addr);
-  u32 oldaddr = __current_ioremap_base;
-  __current_ioremap_base += size;
-  return oldaddr;
+  return __ucore_ioremap(phys_addr, size, mtype);
 }
 

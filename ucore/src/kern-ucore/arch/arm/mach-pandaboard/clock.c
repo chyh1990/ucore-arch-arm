@@ -24,32 +24,15 @@
 #include <kio.h>
 #include <picirq.h>
 
-#define TIMER0_VA_BASE       __io_address(PANDABOARD_TIMER0_1_BASE)
-enum {
-    TIMER_TIME_LOW          = 0x00, // get low bits of current time and update TIMER_TIME_HIGH
-    TIMER_TIME_HIGH         = 0x04, // get high bits of time at last TIMER_TIME_LOW read
-    TIMER_ALARM_LOW         = 0x08, // set low bits of alarm and activate it
-    TIMER_ALARM_HIGH        = 0x0c, // set high bits of next alarm
-    TIMER_CLEAR_INTERRUPT   = 0x10,
-    TIMER_CLEAR_ALARM       = 0x14
-};
-
 #define TIMER0_INTERVAL  10000000 //10ms
 
 volatile size_t ticks = 0;
 
 static void reload_timer()
 {
-  unsigned long long t = 0;
-  t = inw(TIMER0_VA_BASE+TIMER_TIME_LOW);
-  t |= (long long)inw(TIMER0_VA_BASE+TIMER_TIME_HIGH) << 32;
-  t += TIMER0_INTERVAL;
-  outw(TIMER0_VA_BASE+TIMER_ALARM_HIGH, t >> 32);
-  outw(TIMER0_VA_BASE+TIMER_ALARM_LOW, t);
 }
 
 void clock_clear(void){
-  outw(TIMER0_VA_BASE + TIMER_CLEAR_INTERRUPT, 1);
 }
 
 volatile uint64_t jiffies_64;
@@ -71,8 +54,8 @@ static int clock_int_handler(int irq, void * data)
 
 void
 clock_init(void) {
-  clock_clear();
-  reload_timer(); 
+  //TODO
+  kprintf("TODO clock_init()\n");
   register_irq(TIMER0_IRQ, clock_int_handler, 0);
   pic_enable(TIMER0_IRQ);
 }

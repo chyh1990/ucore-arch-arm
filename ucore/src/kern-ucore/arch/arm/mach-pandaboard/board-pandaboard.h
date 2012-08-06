@@ -20,23 +20,23 @@
 #ifndef  MACH_BOARD_PANDABOARD_H
 #define  MACH_BOARD_PANDABOARD_H
 
-#define PANDABOARD_IO_START 0xFF000000
-#define PANDABOARD_IO_FREE_START 0xff010000
-#define PANDABOARD_UART0 (PANDABOARD_IO_FREE_START+0x2000) 
+#define PANDABOARD_IO_START 0x48000000
+#define PANDABOARD_UART0 (PANDABOARD_IO_START+0x20000) 
 
+#define PANDABOARD_TIMER_BASE (PANDABOARD_IO_START+0x240600)
 
-#define PANDABOARD_TIMER0_1_BASE (PANDABOARD_IO_START+0x3000)
+#define PANDABOARD_GIC_BASE      (PANDABOARD_IO_START+0x240100)
 
-#define PANDABOARD_VIC_BASE      (PANDABOARD_IO_START+0x00)
+#define CORTEX_A9_MPU_INSTANCE_BASE (PANDABOARD_IO_START+0x240000)
 
 #ifndef __io_address
 #define __io_address(x) (x)
 #endif
 
 //IRQ 
+#define PER_IRQ_BASE     32
+#define PANDABOARD_UART3_IRQ  74
 #define TIMER0_IRQ 3
-
-#define UART_RXIM (1<<4)
 
 //extern macro
 
@@ -56,6 +56,7 @@
 #define UART0_TX 		((volatile unsigned char*) PANDABOARD_UART0 + 0x00)
 //#define INITIAL_LOAD    ((volatile uintptr_t *) (0x1000))
 
+extern void board_init_early(void);
 extern void board_init(void);
 
 #endif

@@ -46,7 +46,7 @@ config DRAM_START
   default 0x0
 
 config DRAM_SIZE
-  hex "DRAM end address"
+  hex "DRAM size(Byte) "
   default 0x1000000
 
 config KERNEL_BASE

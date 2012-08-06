@@ -17,7 +17,7 @@ $(KERNEL_ELF) : $(LINK_FILE) $(KERNEL_BUILTIN) $(RAMDISK_OBJ)
 	@echo Linking uCore
 	$(Q)$(TARGET_LD) -L$(UCONFIG_LIBGCC_PATH) -T $(LINK_FILE) $(KERNEL_BUILTIN) $(RAMDISK_OBJ) -o $@ -lgcc
 
-$(LINK_FILE): $(LINK_FILE_IN)
+$(LINK_FILE): $(LINK_FILE_IN) $(TOPDIR)/$(KCONFIG_AUTOCONFIG)
 	@echo "creating linker script"
 	@sed  "$(SEDFLAGS)" < $< > $@
 
@@ -29,8 +29,10 @@ $(RAMDISK_OBJ): $(RAMDISK_FILE)
 	$(Q)rm -f $(INITRD_PIGGY_S)
 
 
-.PHONY: all clean
+.PHONY: all clean FORCE
 all: $(KERNEL_ELF)
+
+FORCE:
 
 clean:
 	rm -f $(KERNEL_ELF) $(LINK_FILE)

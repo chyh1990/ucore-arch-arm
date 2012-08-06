@@ -3,7 +3,7 @@
  *
  *       Filename:  versatilepd_uart.c
  *
- *    Description:  PL011 driver
+ *    Description:  NS16550
  *
  *        Version:  1.0
  *        Created:  03/17/2012 02:43:34 PM
@@ -24,26 +24,19 @@
 #include <sync.h>
 #include <board.h>
 #include <picirq.h>
+#include <pmm.h>
 
+#define UART_TX 0x00
+#define UART_RX 0x00
+#define UART_LSR 0x14
+#define UART_IER 0x04
+#define UART_LSR_SR_E (1<<5)
+#define UART_LSR_DR	0x01	/* Receiver data ready */
+
+#define UART_IER_RHR_IT (1<<0)
 
 static bool serial_exists = 0;
 static uint32_t uart_base = PANDABOARD_UART0;
-/* from qemu-android */
-enum {
-    TTY_PUT_CHAR       = 0x00,
-    TTY_BYTES_READY    = 0x04,
-    TTY_CMD            = 0x08,
-
-    TTY_DATA_PTR       = 0x10,
-    TTY_DATA_LEN       = 0x14,
-
-    TTY_CMD_INT_DISABLE    = 0,
-    TTY_CMD_INT_ENABLE     = 1,
-    TTY_CMD_WRITE_BUFFER   = 2,
-    TTY_CMD_READ_BUFFER    = 3,
-};
-
-static uint8_t tty_buffer[4];
 
 static int serial_int_handler(int irq, void * data)
 {
@@ -53,18 +46,18 @@ static int serial_int_handler(int irq, void * data)
   return 0;
 }
 
+void serial_init_early(){}
+
 void
 serial_init(uint32_t base, uint32_t irq) {
   if(serial_exists)
     return ;
 	serial_exists = 1;
-  uart_base = base;
-  /* buffer size = 1 */
-  outw(uart_base+TTY_DATA_LEN, 1);
-  outw(uart_base+TTY_DATA_PTR, (uint32_t)tty_buffer);
-  /* turn on recv interrput */
-  outw(uart_base+TTY_CMD, TTY_CMD_INT_ENABLE); 
-  //serial_clear();
+
+  void *newbase = __ucore_ioremap(base, PGSIZE, 0);
+  uart_base = (uint32_t)newbase;
+
+  outw(uart_base + UART_IER, UART_IER_RHR_IT);
   register_irq(irq, serial_int_handler, NULL);
   pic_enable(irq);
 
@@ -73,7 +66,10 @@ serial_init(uint32_t base, uint32_t irq) {
 static void
 serial_putc_sub(int c) {
   //if(serial_exists)
-    outb(uart_base + TTY_PUT_CHAR, c);
+  while((inw(uart_base + UART_LSR) & UART_LSR_SR_E) == 0);
+  if(c == '\n')
+    outw(uart_base + UART_TX, '\r');
+  outw(uart_base + UART_TX, c & 0xff);
 }
 
 /* serial_putc - print character to serial port */
@@ -94,21 +90,14 @@ serial_putc(int c) {
 int
 serial_proc_data(void) {
     //kprintf("%08x\n", inw(PANDABOARD_UART0+PL011_UARTFR));
-    /*
-    if (inw(PANDABOARD_UART0 + PL011_UARTFR) & PL011_RXFE) {
+    if ( (inw(uart_base + UART_LSR) & UART_LSR_DR) == 0 ) {
         return -1;
     }
-    int c = inb(PANDABOARD_UART0);
+    int c = inw(uart_base + UART_RX);
     if (c == 127) {
         c = '\b';
-    }*/
-    if(inw(uart_base + TTY_BYTES_READY) == 0){
-      return -1;
     }
-    outw(uart_base + TTY_CMD, TTY_CMD_READ_BUFFER);
-    if(tty_buffer[0] == 127)
-      tty_buffer[0] = '\b';
-    return tty_buffer[0];
+    return c;
 }
 
 

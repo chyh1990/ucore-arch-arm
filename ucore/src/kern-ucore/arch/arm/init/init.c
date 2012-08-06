@@ -47,7 +47,7 @@
 extern char __vector_table, __vector_table_end;
 static inline void
 exception_vector_init(void) {
-  	memcpy( (void*)0x0, (void*)&__vector_table,
+  	memcpy( (void*)SDRAM0_START, (void*)&__vector_table,
 		&__vector_table_end - &__vector_table);
 }
 
@@ -112,13 +112,11 @@ kern_init(void) {
   memset(edata, 0, end - edata);
 
   exception_vector_init();
+  board_init_early();
+
 #ifdef UCONFIG_HAVE_RAMDISK 
   check_initrd();
 #endif
-
-  board_init();
-
-  cons_init();                // init the console
 
   const char *message = "(THU.CST) os is loading ...";
   kprintf("%s\n\n", message);
@@ -142,9 +140,11 @@ kern_init(void) {
   vmm_init();                 // init virtual memory management
   _PROBE_();
 
+  cons_init();                // init the console
   clock_init();               // linux put tick_init in kernel_main, so do we~
 
-  //intr_enable();
+  intr_enable();
+  while(1);
 
   sched_init();               // init scheduler
   _PROBE_();

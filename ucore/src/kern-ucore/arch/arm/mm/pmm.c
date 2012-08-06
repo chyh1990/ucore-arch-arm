@@ -35,8 +35,6 @@ asm volatile(" MCR p15,0,%0,c7,c5,0"::"r"(c7format):"memory" ); /* flush D-cache
 }
 
 
-
-
 static Pagetable masterPT = {0,0,0,MASTER,0};
 static struct memmap masterMemmap = {1,
   { 
@@ -215,6 +213,8 @@ page_init(void) {
 //  perm: permission of this memory  
 static void
 boot_map_segment(pde_t *pgdir, uintptr_t la, size_t size, uintptr_t pa, uint32_t perm) {
+  if(size == 0)
+    return;
   assert(PGOFF(la) == PGOFF(pa));
   size_t n = ROUNDUP(size + PGOFF(la), PGSIZE) / PGSIZE;
   la = ROUNDDOWN(la, PGSIZE);
@@ -228,7 +228,7 @@ boot_map_segment(pde_t *pgdir, uintptr_t la, size_t size, uintptr_t pa, uint32_t
 }
 void
 __boot_map_iomem(uintptr_t la, size_t size, uintptr_t pa) {
-  kprintf("mapping iomem 0x%08x to 0x%08x, size 0x%08x\n", pa, la,size);
+  //kprintf("mapping iomem 0x%08x to 0x%08x, size 0x%08x\n", pa, la,size);
   boot_map_segment(boot_pgdir, la, size, pa, PTE_W|PTE_IOMEM);
 }
 
@@ -298,7 +298,7 @@ pmm_init(void) {
   // map fixed address segments
   //boot_map_segment(boot_pgdir, virtual, PGSIZE, physical, PTEX_W); // base location of vector table
   extern char __kernel_text_start[], __kernel_text_end[];
-  kprintf("## %08x %08x\n", __kernel_text_start, __kernel_text_end);
+  //kprintf("## %08x %08x\n", __kernel_text_start, __kernel_text_end);
   boot_map_segment(boot_pgdir, KERNBASE, KMEMSIZE, KERNBASE, PTE_W); // fixed address
   /* kernel code readonly protection */
   boot_map_segment(boot_pgdir, __kernel_text_start, __kernel_text_end - __kernel_text_start, __kernel_text_start,  PTE_P);
@@ -306,7 +306,7 @@ pmm_init(void) {
   boot_map_segment(boot_pgdir, KIOBASE, KIOSIZE, KIOBASE, PTE_W|PTE_IOMEM); // fixed address
 
 
-  boot_map_segment(boot_pgdir, 0xFFFF0000, PGSIZE, 0, PTE_W|PTE_PWT); // high location of vector table
+  boot_map_segment(boot_pgdir, 0xFFFF0000, PGSIZE, SDRAM0_START, PTE_W|PTE_PWT); // high location of vector table
 #ifdef UCONFIG_HAVE_RAMDISK 
   if(CHECK_INITRD_EXIST()){
     boot_map_segment(boot_pgdir, DISK_FS_VBASE, ROUNDUP(initrd_end-initrd_begin, PGSIZE), (uintptr_t)initrd_begin,PTE_W);
@@ -354,8 +354,11 @@ pmm_init(void) {
   /* enable cache and MMU */
   mmu_init();
 
+  /* ioremap */
+  board_init();
 
   kprintf("mmu enabled.\n");
+  print_pgdir(kprintf);
 
 
   //now the basic virtual memory map(see memalyout.h) is established.
@@ -674,5 +677,21 @@ void print_pgdir(int (*printf)(const char *fmt, ...)){
     }
   }
   printf("--------------------- END ---------------------\n");
+}
+
+
+static uint32_t __current_ioremap_base = UCORE_IOREMAP_BASE;
+
+void *  
+__ucore_ioremap(unsigned long phys_addr, size_t size, unsigned int mtype)
+{
+  if(__current_ioremap_base + size > UCORE_IOREMAP_END)
+    return NULL;
+  __boot_map_iomem(__current_ioremap_base, size, phys_addr);
+  uint32_t oldaddr = __current_ioremap_base;
+  __current_ioremap_base += size;
+
+  tlb_invalidate_all();
+  return oldaddr;
 }
 

@@ -121,12 +121,15 @@ fsr(void)  {
 /* flush and clean D/I cache */
 inline static void flush_clean_cache(void)
 {
+  //FIXME
+#if 0
 unsigned int c7format = 0;
 asm volatile("1: mrc p15,0, r15, c7, c14, 3 \n"
     "bne 1b \n"
     "mcr p15, 0, %0, c7, c5, 0 \n"
     "mcr p15, 0, %0, c7, c10, 4 \n"
     ::"r"(c7format):"memory" ); /* flush D-cache */
+#endif
 }
 
 

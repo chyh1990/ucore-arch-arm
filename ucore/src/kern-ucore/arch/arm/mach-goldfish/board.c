@@ -31,13 +31,17 @@ static void put_string(const char* str)
 }
 
 void 
-board_init(){
+board_init_early(){
   put_string(message);
 
   pic_init();                 // init interrupt controller
   pdev_bus_init();
 /* use pdev bus to probe devices */
   //serial_init();
+}
+
+void
+board_init(){
 }
 
 /* no nand */

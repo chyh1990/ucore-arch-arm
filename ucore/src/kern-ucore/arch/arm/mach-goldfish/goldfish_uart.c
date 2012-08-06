@@ -53,6 +53,8 @@ static int serial_int_handler(int irq, void * data)
   return 0;
 }
 
+void serial_init_early(){}
+
 void
 serial_init(uint32_t base, uint32_t irq) {
   if(serial_exists)

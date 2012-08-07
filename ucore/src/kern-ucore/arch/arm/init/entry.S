@@ -61,6 +61,12 @@ relocated:
     fmxr fpexc,r0
 #endif
 
+/* enable swp,flow prediction */
+#ifdef __MACH_ARM_ARMV7
+  ldr r1, =(1<<11)|(1<<10)
+  MCR p15, 0, r1, c1, c0, 0
+#endif
+
 # now kernel stack is ready , call the first C function
     b kern_init
 

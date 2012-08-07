@@ -248,7 +248,7 @@ init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char**
 // kernel_execve - do SYS_exec syscall to exec a user program called by user_main kernel_thread
 int
 kernel_execve(const char *name, const char **argv, const char **kenvp) {
-	//kprintf("kernel_execve: %s at 0x%08x-0x%08x\n", name, binary, size);
+	//kprintf("kernel_execve: %s  0x%08x, 0x%08x\n", name, argv, kenvp);
   int  ret;
 	//panic("unimpl");
   asm volatile (

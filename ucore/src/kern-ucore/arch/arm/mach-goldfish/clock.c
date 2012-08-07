@@ -70,7 +70,7 @@ static int clock_int_handler(int irq, void * data)
 }
 
 void
-clock_init(void) {
+clock_init_arm(uint32_t base, int irq) {
   clock_clear();
   reload_timer(); 
   register_irq(TIMER0_IRQ, clock_int_handler, 0);

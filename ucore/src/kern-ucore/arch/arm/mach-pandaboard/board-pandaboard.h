@@ -36,7 +36,7 @@
 //IRQ 
 #define PER_IRQ_BASE     32
 #define PANDABOARD_UART3_IRQ  74
-#define TIMER0_IRQ 3
+#define PRIVATE_TIMER0_IRQ 29
 
 //extern macro
 

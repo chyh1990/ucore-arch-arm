@@ -26,9 +26,13 @@
 #include <intr.h>
 #include <kio.h>
 #include <memlayout.h>
+#include <assert.h>
 
 #define ICCICR     0x00      	// CPU Interface Control Register (RW)
 #define ICCPMR   0x04      		// CPU Interface  Priority Mask Register (RW)
+#define ICCIAR   0x0C
+#define ICCEOIR  0x10
+
 #define ICDDCR   0x000		// Distributor Control Register (RW)
 #define ICDISER0  0x100		// Distributor  Interrupt Set Enable Registers (RW) 
 #define ICDICER0  0x180		// Distributor  Interrupt Set Enable Registers (RW) 
@@ -81,7 +85,7 @@ struct irq_action actions[MAX_IRQS_NR];
 void register_irq(int irq, ucore_irq_handler_t handler, void *opaque)
 {
   if(irq>=MAX_IRQS_NR){
-    kprintf("WARNING: register_irq: irq>31\n");
+    kprintf("WARNING: register_irq: irq>=%d\n", MAX_IRQS_NR);
     return;
   }
   actions[irq].handler = handler;
@@ -118,7 +122,15 @@ pic_init2(uint32_t g_base, uint32_t d_base) {
 
 void irq_handler(){
   //TODO
-  kprintf("H"); 
+  uint32_t intnr = inw(gic_base + ICCIAR) & 0x3FF;
+  if(actions[intnr].handler){
+    (*actions[intnr].handler)(intnr, actions[intnr].opaque);
+  }else{
+    panic("Unhandled HW IRQ %d\n", intnr);
+  }
+  
+  //EOI
+  outw(gic_base + ICCEOIR, intnr & 0x3FF);
 }
 
 /* irq_clear

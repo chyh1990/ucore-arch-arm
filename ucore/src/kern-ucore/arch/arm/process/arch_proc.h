@@ -20,9 +20,9 @@ struct context {
   uint32_t   r9;
   uint32_t   sl;
   uint32_t   fp;
-  uint32_t   esp;
   uint32_t   eic;
-  uint32_t   epc;
+  uint32_t   esp;
+  uint32_t   epc; //lr
   uint32_t   e_cpsr;
 };
 

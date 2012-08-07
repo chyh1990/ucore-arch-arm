@@ -30,6 +30,7 @@
 #define UART_RX 0x00
 #define UART_LSR 0x14
 #define UART_IER 0x04
+#define UART_IIR 0x08
 #define UART_LSR_SR_E (1<<5)
 #define UART_LSR_DR	0x01	/* Receiver data ready */
 
@@ -38,10 +39,14 @@
 static bool serial_exists = 0;
 static uint32_t uart_base = PANDABOARD_UART0;
 
+static void serial_clear(){
+}
+
 static int serial_int_handler(int irq, void * data)
 {
   extern void dev_stdin_write(char c);
   char c = cons_getc();
+  //serial_putc(c);
   dev_stdin_write(c);
   return 0;
 }
@@ -105,6 +110,4 @@ int serial_check(){
   return serial_exists;
 }
 
-void serial_clear(){
-}
 

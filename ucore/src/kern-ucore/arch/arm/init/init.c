@@ -141,10 +141,6 @@ kern_init(void) {
   _PROBE_();
 
   cons_init();                // init the console
-  clock_init();               // linux put tick_init in kernel_main, so do we~
-
-  intr_enable();
-  while(1);
 
   sched_init();               // init scheduler
   _PROBE_();

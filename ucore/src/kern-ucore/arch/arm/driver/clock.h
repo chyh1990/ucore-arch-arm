@@ -5,7 +5,7 @@
 
 extern volatile size_t ticks;
 
-void clock_init(void);
+void clock_init_arm(uint32_t base, int irq);
 //clear interrupt output after handling
 void clock_clear(void);
 

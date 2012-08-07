@@ -35,6 +35,8 @@ board_init_early(){
   put_string(message);
 
   pic_init();                 // init interrupt controller
+  //fixed base and irq
+  clock_init_arm(0, 0);               // linux put tick_init in kernel_main, so do we~
   pdev_bus_init();
 /* use pdev bus to probe devices */
   //serial_init();

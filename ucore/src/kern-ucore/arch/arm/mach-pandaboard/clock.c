@@ -24,15 +24,21 @@
 #include <kio.h>
 #include <picirq.h>
 
-#define TIMER0_INTERVAL  10000000 //10ms
+#define PRESCALER_VAL 0
+/* 10ms */
+#define LOAD_VALUE    (7680000/2-1)
+
+#define TIMER_LOAD    0x00
+#define TIMER_CONTROL 0x08
+#define TIMER_ISR     0x0C
+
+#define TIMER_CONTROL_VAL ((PRESCALER_VAL << 8)|0x7)
 
 volatile size_t ticks = 0;
-
-static void reload_timer()
-{
-}
+static uint32_t timer_base = 0;
 
 void clock_clear(void){
+  outw(timer_base + TIMER_ISR, 0x01);
 }
 
 volatile uint64_t jiffies_64;
@@ -47,17 +53,18 @@ static int clock_int_handler(int irq, void * data)
   //  serial_putc('A');
   extern void run_timer_list();
   run_timer_list();
-  reload_timer(); 
   clock_clear();
   return 0;
 }
 
 void
-clock_init(void) {
+clock_init_arm(uint32_t base, int irq) {
   //TODO
-  kprintf("TODO clock_init()\n");
-  register_irq(TIMER0_IRQ, clock_int_handler, 0);
-  pic_enable(TIMER0_IRQ);
+  timer_base = base;
+  outw(timer_base+TIMER_LOAD, LOAD_VALUE);
+  outw(timer_base+TIMER_CONTROL, TIMER_CONTROL_VAL);
+  register_irq(irq, clock_int_handler, 0);
+  pic_enable(irq);
 }
 
 

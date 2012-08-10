@@ -34,7 +34,7 @@ void enable_timer_list()
   sched_enabled = 1;
 }
 
-void common_timer_int_handler()
+void __common_timer_int_handler()
 {
   ticks++;
 #ifdef UCONFIG_HAVE_LINUX_DDE_BASE

@@ -1,6 +1,6 @@
 #
 # Automatically generated make config: don't edit
-# Tue Aug  7 22:26:32 2012
+# Fri Aug 10 20:03:01 2012
 #
 
 #
@@ -23,7 +23,9 @@ LIBGCC_PATH="/opt/FriendlyARM/toolschain/4.4.3/lib/gcc/arm-none-linux-gnueabi/4.
 #
 # Linux Device Driver Environment
 #
-# HAVE_LINUX_DDE_BASE is not set
+HAVE_LINUX_DDE_BASE=y
+DDE_EXAMPLE_CHRDEV=y
+# DDE_MMC_SUPPORT is not set
 
 #
 # Filesystem

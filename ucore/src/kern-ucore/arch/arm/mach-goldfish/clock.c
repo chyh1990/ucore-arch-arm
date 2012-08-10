@@ -53,7 +53,7 @@ void clock_clear(void){
 
 static int clock_int_handler(int irq, void * data)
 {
-  common_timer_int_handler();
+  __common_timer_int_handler();
   reload_timer(); 
   clock_clear();
   return 0;

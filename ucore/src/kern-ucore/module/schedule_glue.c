@@ -99,3 +99,9 @@ pid_t pid_vnr(struct pid *pid)
   return -1;
 }
 
+int _cond_resched(void)
+{
+  //No need to implement
+  return 0;
+}
+

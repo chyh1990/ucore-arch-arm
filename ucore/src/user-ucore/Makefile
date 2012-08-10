@@ -14,13 +14,16 @@ USER_APPLIST:= pwd cat sh ls forktest #yield hello faultreadkernel faultread bad
 
 USER_APP_BINS:= $(addprefix $(BIN)/, $(USER_APPLIST))
 
+include $(USER_LIB_SRCDIR)/arch/$(ARCH)/include.mk
+INITCODE_OBJ := $(USER_LIB_SRCDIR)/arch/$(ARCH)/$(ARCH_INITCODE_OBJ)
+
 all:  $(BIN) $(USER_LIB) $(USER_APP_BINS)
 
 #user applications
 define make-user-app
-$(BIN)/$1: $(addsuffix .o,$1) $(USER_LIB)
+$(BIN)/$1: $(addsuffix .o,$1) $(INITCODE_OBJ) $(USER_LIB)
 	@echo LINK $$@
-	$(TARGET_LD)  -static -T $(USER_LIB_SRCDIR)/arch/$(ARCH)/user.ld  $(addsuffix .o,$1) $(USER_LIB) -o $$@
+	$(TARGET_LD)  -static -T $(USER_LIB_SRCDIR)/arch/$(ARCH)/user.ld  $(addsuffix .o,$1) $(INITCODE_OBJ) $(USER_LIB) -o $$@
 endef
 
 $(foreach bdir,$(USER_APPLIST),$(eval $(call make-user-app,$(bdir))))

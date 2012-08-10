@@ -28,4 +28,9 @@ config DDE_MMC_SUPPORT
   bool "Enable MMC Card"
   default n
 
+#config DDE_MMC_HAVE_SDIO
+#  depends DDE_MMC_SUPPORT
+#  bool "Enable SDIO support"
+#  default n
+
 endmenu

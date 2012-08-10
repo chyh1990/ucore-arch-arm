@@ -9,9 +9,10 @@ obj-y += common/hash.o common/rand.o common/printfmt.o \
 include arch/$(ARCH)/include.mk
 
 obj-y += $(addprefix arch/$(ARCH)/, $(ARCH_OBJS))
+obj-initobj += $(addprefix arch/$(ARCH)/, $(ARCH_INITCODE_OBJ))
 TARGET_CFLAGS += $(ARCH_CFLAGS)
 
-all: ulib.a
+all: $(obj-initobj) ulib.a
 
 ulib.a: $(obj-y)
 	$(TARGET_AR) -cr $@ $+

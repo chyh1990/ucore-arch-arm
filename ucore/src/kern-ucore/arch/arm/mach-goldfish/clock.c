@@ -36,8 +36,6 @@ enum {
 
 #define TIMER0_INTERVAL  10000000 //10ms
 
-volatile size_t ticks = 0;
-
 static void reload_timer()
 {
   unsigned long long t = 0;
@@ -52,18 +50,10 @@ void clock_clear(void){
   outw(TIMER0_VA_BASE + TIMER_CLEAR_INTERRUPT, 1);
 }
 
-volatile uint64_t jiffies_64;
-unsigned long volatile jiffies;
 
 static int clock_int_handler(int irq, void * data)
 {
-  ticks++;
-  jiffies ++;
-  jiffies_64++;
-  //if(ticks % 100 == 0)
-  //  serial_putc('A');
-  extern void run_timer_list();
-  run_timer_list();
+  common_timer_int_handler();
   reload_timer(); 
   clock_clear();
   return 0;

@@ -187,6 +187,11 @@ kern_init(void) {
 
   intr_enable();              // enable irq interrupt
 
+#ifdef UCONFIG_HAVE_LINUX_DDE_BASE
+  calibrate_delay();
+#endif
+
+  enable_timer_list();
   cpu_idle();                 // run idle process
 }
 

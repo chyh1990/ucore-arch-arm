@@ -34,25 +34,16 @@
 
 #define TIMER_CONTROL_VAL ((PRESCALER_VAL << 8)|0x7)
 
-volatile size_t ticks = 0;
 static uint32_t timer_base = 0;
 
 void clock_clear(void){
   outw(timer_base + TIMER_ISR, 0x01);
 }
 
-volatile uint64_t jiffies_64;
-unsigned long volatile jiffies;
 
 static int clock_int_handler(int irq, void * data)
 {
-  ticks++;
-  jiffies ++;
-  jiffies_64++;
-  //if(ticks % 100 == 0)
-  //  serial_putc('A');
-  extern void run_timer_list();
-  run_timer_list();
+  common_timer_int_handler();
   clock_clear();
   return 0;
 }

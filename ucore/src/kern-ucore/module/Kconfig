@@ -23,4 +23,9 @@ config DDE_EXAMPLE_CHRDEV
   bool "Enable Example Chrdev"
   default n
 
+config DDE_MMC_SUPPORT
+  depends HAVE_LINUX_DDE_BASE
+  bool "Enable MMC Card"
+  default n
+
 endmenu

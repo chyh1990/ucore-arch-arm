@@ -97,7 +97,7 @@ void dde_init()
   dde_call_machine_init();
   do_initcalls();
 
-  loadable_module_init();
+  //loadable_module_init();
 }
 
 /* basic functions */

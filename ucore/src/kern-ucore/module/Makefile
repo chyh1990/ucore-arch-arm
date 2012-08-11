@@ -5,6 +5,7 @@ dirs-y := drivers fs kernel lib include
 dirs-y += example
 
 dirs-$(UCONFIG_ARM_BOARD_GOLDFISH) += goldfishdrv
+dirs-$(UCONFIG_ARM_BOARD_PANDABOARD) += pandaboarddrv
 
 obj-$(UCONFIG_ARM_BOARD_GOLDFISH) += arm_iomap_glue.o
 obj-$(UCONFIG_ARM_BOARD_PANDABOARD) += arm_iomap_glue.o

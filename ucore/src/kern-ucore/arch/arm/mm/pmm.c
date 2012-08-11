@@ -685,6 +685,7 @@ static uint32_t __current_ioremap_base = UCORE_IOREMAP_BASE;
 void *  
 __ucore_ioremap(unsigned long phys_addr, size_t size, unsigned int mtype)
 {
+  size = ROUNDUP(size, PGSIZE);
   if(__current_ioremap_base + size > UCORE_IOREMAP_END)
     return NULL;
   __boot_map_iomem(__current_ioremap_base, size, phys_addr);

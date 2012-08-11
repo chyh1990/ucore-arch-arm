@@ -44,20 +44,25 @@ void __init iotable_init(struct map_desc *io_desc, int nr)
 }
 
 
+extern struct machine_desc __arch_info_begin[], __arch_info_end[];
 void dde_call_mapio_early()
 {
-  extern struct machine_desc __arch_info_begin[], __arch_info_end[];
+  struct machine_desc *desc = &__arch_info_begin[0];
   if(__arch_info_end <= __arch_info_begin)
     return;
-  __arch_info_begin[0].map_io();
+  printk("Init map_io: %s\n", desc->name);
+  if(__arch_info_begin[0].map_io)
+    __arch_info_begin[0].map_io();
 }
 
 void dde_call_machine_init()
 {
-  extern struct machine_desc __arch_info_begin[], __arch_info_end[];
+  struct machine_desc *desc = &__arch_info_begin[0];
   if(__arch_info_end <= __arch_info_begin)
     return;
-  __arch_info_begin[0].init_machine();
+  printk("Init Machine: %s\n", desc->name);
+  if(__arch_info_begin[0].init_machine)
+    __arch_info_begin[0].init_machine();
 }
 
 
@@ -73,6 +78,7 @@ void *dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle
 void __iomem *  
 __arm_ioremap(unsigned long phys_addr, size_t size, unsigned int mtype)
 {
+  printk(KERN_INFO "ioremap %08x %08x \n", phys_addr, size);
   return __ucore_ioremap(phys_addr, size, mtype);
 }
 

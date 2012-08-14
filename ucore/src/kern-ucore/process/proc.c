@@ -1577,7 +1577,7 @@ static int
 init_main(void *arg) {
     int pid;
 #ifndef CONFIG_NO_SWAP
-    if ((pid = kernel_thread(kswapd_main, NULL, 0)) <= 0) {
+    if ((pid = ucore_kernel_thread(kswapd_main, NULL, 0)) <= 0) {
         panic("kswapd init failed.\n");
     }
     kswapd = find_proc(pid);
@@ -1597,7 +1597,7 @@ init_main(void *arg) {
 
     unsigned int nr_process_store = nr_process;
 
-    pid = kernel_thread(user_main, NULL, 0);
+    pid = ucore_kernel_thread(user_main, NULL, 0);
     if (pid <= 0) {
         panic("create user_main failed.\n");
     }
@@ -1675,7 +1675,7 @@ proc_init(void) {
 
     pls_write(current, idleproc);
 
-    int pid = kernel_thread(init_main, NULL, 0);
+    int pid = ucore_kernel_thread(init_main, NULL, 0);
     if (pid <= 0) {
         panic("create init_main failed.\n");
     }

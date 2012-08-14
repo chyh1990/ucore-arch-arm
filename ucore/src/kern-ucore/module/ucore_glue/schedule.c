@@ -105,3 +105,28 @@ int _cond_resched(void)
   return 0;
 }
 
+void wait_for_completion(struct completion *x)
+{
+  _TODO_();
+}
+
+/**
+ * complete: - signals a single thread waiting on this completion
+ * @x:  holds the state of this particular completion
+ *
+ * This will wake up a single thread waiting on this completion. Threads will be
+ * awakened in the same order in which they were queued.
+ *
+ * See also complete_all(), wait_for_completion() and related routines.
+ */
+void complete(struct completion *x)
+{
+  _TODO_();
+}
+
+int default_wake_function(wait_queue_t *curr, unsigned mode, int sync,
+    void *key)
+{
+  _TODO_();
+}
+

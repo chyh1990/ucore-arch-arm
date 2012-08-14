@@ -106,7 +106,7 @@ void proc_init(void);
 void proc_init_ap(void);
 
 void proc_run(struct proc_struct *proc);
-int kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags);
+int ucore_kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags);
 
 char *set_proc_name(struct proc_struct *proc, const char *name);
 char *get_proc_name(struct proc_struct *proc);

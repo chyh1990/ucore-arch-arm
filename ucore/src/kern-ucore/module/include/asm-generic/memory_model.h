@@ -27,9 +27,14 @@
  */
 #if defined(CONFIG_FLATMEM)
 
+#if 0
 #define __pfn_to_page(pfn)	(mem_map + ((pfn) - ARCH_PFN_OFFSET))
 #define __page_to_pfn(page)	((unsigned long)((page) - mem_map) + \
 				 ARCH_PFN_OFFSET)
+#else
+extern void* __pfn_to_page(size_t pfn);
+extern size_t __page_to_pfn(struct page* pg);
+#endif
 #elif defined(CONFIG_DISCONTIGMEM)
 
 #define __pfn_to_page(pfn)			\

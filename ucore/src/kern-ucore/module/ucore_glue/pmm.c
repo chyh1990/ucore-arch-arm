@@ -61,3 +61,15 @@ out_unlock:
     return ret;
 }
 
+/* defined in asm-generic/memory_model.h, modified */
+void * __pfn_to_page(size_t pfn)
+{
+  return (void*)&pages[pfn]; 
+}
+
+size_t __page_to_pfn(void * pg)
+{
+  return page2ppn((struct Page*)pg);
+}
+
+

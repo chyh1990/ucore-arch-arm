@@ -131,7 +131,7 @@ forkret(void) {
 
 // kernel_thread - create a kernel thread using "fn" function
 int
-kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags) {
+ucore_kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags) {
   struct trapframe tf_struct;
   memset(&tf_struct, 0, sizeof(struct trapframe));
   tf_struct.tf_regs.reg_r[0] = (uint32_t)arg;

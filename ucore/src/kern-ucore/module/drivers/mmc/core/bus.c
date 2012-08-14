@@ -185,7 +185,9 @@ static void mmc_release_card(struct device *dev)
 {
 	struct mmc_card *card = dev_to_mmc_card(dev);
 
+#ifdef UCONFIG_DDE_MMC_HAVE_SDIO
 	sdio_free_common_cis(card);
+#endif
 
 	if (card->info)
 		kfree(card->info);

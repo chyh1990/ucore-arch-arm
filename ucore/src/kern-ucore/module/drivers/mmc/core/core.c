@@ -806,6 +806,7 @@ void mmc_rescan(struct work_struct *work)
 	mmc_go_idle(host);
 	mmc_send_if_cond(host, host->ocr_avail);
 
+#ifdef UCONFIG_DDE_MMC_HAVE_SDIO
 	/*
 	 * First we search for SDIO...
 	 */
@@ -816,6 +817,7 @@ void mmc_rescan(struct work_struct *work)
 		extend_wakelock = 1;
 		goto out;
 	}
+#endif
 
 	/*
 	 * ...then normal SD...
@@ -991,9 +993,11 @@ static int __init mmc_init(void)
 	if (ret)
 		goto unregister_bus;
 
+#ifdef UCONFIG_DDE_MMC_HAVE_SDIO
 	ret = sdio_register_bus();
 	if (ret)
 		goto unregister_host_class;
+#endif
 
 	return 0;
 
@@ -1009,7 +1013,9 @@ destroy_workqueue:
 
 static void __exit mmc_exit(void)
 {
+#ifdef UCONFIG_DDE_MMC_HAVE_SDIO
 	sdio_unregister_bus();
+#endif
 	mmc_unregister_host_class();
 	mmc_unregister_bus();
 	destroy_workqueue(workqueue);

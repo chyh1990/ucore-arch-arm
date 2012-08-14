@@ -136,10 +136,10 @@ $(OBJPATH_ROOT):
 $(CONFIG_DIR):
 	-mkdir config
 
+#	$(Q)rm -f $(KCONFIG_AUTOCONFIG) $(KCONFIG_AUTOHEADER)
 clean:
 	@echo CLEAN ALL
 	$(Q)rm -f  .config.old .config.cmd .tmpconfig.h
-	$(Q)rm -f $(KCONFIG_AUTOCONFIG) $(KCONFIG_AUTOHEADER)
 	$(Q)rm -f $(SFSIMG_FILE)
 	$(Q)rm -rf $(OBJPATH_ROOT)
 	-$(Q)$(MAKE) -C $(CONFIG) clean

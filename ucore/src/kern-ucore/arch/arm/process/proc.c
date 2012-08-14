@@ -18,6 +18,9 @@
 #include <syscall.h>
 #include <signal.h>
 
+#include <elf.h>
+
+
 /* ------------- process/thread mechanism design&implementation -------------
 (an simplified Linux process/thread mechanism )
 introduction:
@@ -214,6 +217,8 @@ init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char**
   }
   stacktop = (uintptr_t)uargv;
 #endif
+
+  // reserved for dynamic linker
   stacktop = stacktop - (argc+envc+3)*sizeof(char*);
   char **esp = (char**)stacktop;
   *esp++ = (char*)argc;
@@ -231,6 +236,79 @@ init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char**
   memset(tf, 0, sizeof(struct trapframe));
   tf->tf_esp = stacktop;
   tf->tf_epc = elf->e_entry;
+  tf->tf_sr = ARM_SR_I|ARM_SR_MODE_USR; //user mode, interrput
+	/* r3 = argc, r1 = argv 
+   * initcode in user mode should copy r3 to r0
+   */
+	//tf->tf_regs.reg_r[3] = argc;
+	//tf->tf_regs.reg_r[1] = (uintptr_t)uargv;
+  tf->tf_regs.reg_r[0] = 0;
+
+  //panic("UNIMPLEMENTED");
+	return 0;
+}
+
+
+
+
+
+
+int
+init_new_context_dynamic (struct proc_struct *proc, struct elfhdr *elf, int argc, char** kargv,
+      int envc, char ** kenvp, uint32_t is_dynamic, uint32_t real_entry, uint32_t load_address,
+	  uint32_t linker_base) 
+{
+  uintptr_t stacktop = USTACKTOP - (argc+envc) * PGSIZE;
+  uintptr_t argvbase = stacktop;
+  uintptr_t envbase = stacktop + argc*PGSIZE;
+#if 0
+  char **uargv = (char **)(stacktop - argc * sizeof(char *));
+  int i;
+  for (i = 0; i < argc; i ++) {
+    uargv[i] = (char*) strcpy((char *)(stacktop + i * PGSIZE), kargv[i]);
+  }
+  stacktop = (uintptr_t)uargv;
+#endif
+
+  // reserved for dynamic linker
+  if(is_dynamic) {
+	stacktop = stacktop - 10 * sizeof(int);
+  }
+
+  stacktop = stacktop - (argc+envc+3+1)*sizeof(char*);
+  char **esp = (char**)stacktop;
+  *esp++ = (char*)argc;
+  int i;
+  for(i=0;i<argc;i++)
+    *esp++ = strcpy((char *)(argvbase + i * PGSIZE), kargv[i]);
+  *esp++ = 0;
+  for(i=0;i<envc;i++)
+    *esp++ = strcpy((char *)(envbase + i * PGSIZE), kenvp[i]);
+  kprintf("env:%d\nc", envc);
+  *esp++ = 0;
+
+  if(is_dynamic) {
+	uint32_t *aux = (uint32_t*)esp;
+	aux[0] = ELF_AT_BASE;
+	aux[1] = linker_base;
+	aux[2] = ELF_AT_PHDR;
+	aux[3] = load_address + elf->e_phoff;
+	aux[4] = ELF_AT_PHNUM;
+	aux[5] = elf->e_phnum;
+	aux[6] = ELF_AT_ENTRY;
+	aux[7] = elf->e_entry;
+	aux[8] = ELF_AT_NULL;
+	aux[9] = 0;
+  }
+
+  //*(int *)stacktop = argc;
+
+  kprintf("stacktop: 0x%08x\n", stacktop);
+
+  struct trapframe *tf = proc->tf;
+  memset(tf, 0, sizeof(struct trapframe));
+  tf->tf_esp = stacktop;
+  tf->tf_epc = real_entry; //elf->e_entry;
   tf->tf_sr = ARM_SR_I|ARM_SR_MODE_USR; //user mode, interrput
 	/* r3 = argc, r1 = argv 
    * initcode in user mode should copy r3 to r0

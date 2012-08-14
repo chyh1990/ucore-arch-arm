@@ -255,7 +255,7 @@ main(int argc, char **argv) {
                 ret = chdir(shcwd);
             }
             if (ret != 0) {
-                printf("error: %d - %e\n", ret, ret);
+                printf("here error: %d - %e\n", ret, ret);
             }
         }
     }

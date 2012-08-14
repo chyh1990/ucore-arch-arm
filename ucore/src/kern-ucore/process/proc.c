@@ -741,6 +741,84 @@ load_icode_read(int fd, void *buf, size_t len, off_t offset) {
     return 0;
 }
 
+// This function is extracted from load_icode().
+static int
+map_ph(int fd, struct proghdr *ph, struct mm_struct *mm, uint32_t bias) {
+	int ret = 0;
+	struct Page *page;
+	uint32_t vm_flags = 0;
+	pte_perm_t perm = 0;
+	ptep_set_u_read(&perm);
+
+	if(ph->p_flags & ELF_PF_X) vm_flags |= VM_EXEC;
+	if(ph->p_flags & ELF_PF_W) vm_flags |= VM_WRITE;
+	if(ph->p_flags & ELF_PF_R) vm_flags |= VM_READ;
+	if(vm_flags & VM_WRITE) ptep_set_u_write(&perm);
+
+	if((ret = mm_map(mm, ph->p_va + bias, ph->p_memsz, vm_flags, NULL)) != 0) {
+		goto bad_cleanup_mmap;
+	}
+
+	if(mm->brk_start < ph->p_va + bias + ph->p_memsz) {
+		mm->brk_start = ph->p_va + bias + ph->p_memsz;
+	}
+
+	off_t offset = ph->p_offset;
+	size_t off, size;
+	uintptr_t start = ph->p_va + bias, end, la = ROUNDDOWN(start, PGSIZE);
+
+	end = ph->p_va + bias + ph->p_filesz;
+	while(start < end) {
+		if((page = pgdir_alloc_page(mm->pgdir, la, perm)) == NULL) {
+			ret = -E_NO_MEM;
+			goto bad_cleanup_mmap;
+		}
+		off = start - la, size = PGSIZE - off, la += PGSIZE;
+		if(end < la) {
+			size -= la - end;
+		}
+		if((ret = load_icode_read(fd, page2kva(page) + off, size, offset)) != 0) {
+			goto bad_cleanup_mmap;
+		}
+		start += size, offset += size;
+	}
+
+	end = ph->p_va + bias + ph->p_memsz;
+
+	if(start < la) {
+		/* ph->p_memsz == ph->p_filesz */
+		if(start == end) {
+			goto normal_exit;
+		}
+		off = start + PGSIZE - la, size = PGSIZE - off;
+		if(end < la) {
+			size -= la - end;
+		}
+		memset(page2kva(page) + off, 0, size);
+		start += size;
+		assert((end < la && start == end) || (end >= la && start == la));
+	}
+
+	while(start < end) {
+		if((page = pgdir_alloc_page(mm->pgdir, la, perm)) == NULL) {
+			ret = -E_NO_MEM;
+			goto bad_cleanup_mmap;
+		}
+		off = start - la, size = PGSIZE - off, la += PGSIZE;
+		if(end < la) {
+			size -= la - end;
+		}
+		memset(page2kva(page) + off, 0, size);
+		start += size;
+	}
+
+normal_exit:
+	return 0;
+bad_cleanup_mmap:
+	kprintf("bad cleanup mmap!!!\n");
+	return ret;
+}
+
 static int
 load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
     assert(argc >= 0 && argc <= EXEC_MAX_ARG_NUM);
@@ -750,6 +828,8 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
     }
 
     int ret = -E_NO_MEM;
+	
+	uint32_t real_entry;
 
     struct mm_struct *mm;
     if ((mm = mm_create()) == NULL) {
@@ -773,22 +853,110 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
         ret = -E_INVAL_ELF;
         goto bad_elf_cleanup_pgdir;
     }
+	real_entry = elf->e_entry;
 
+	uint32_t load_address, load_address_flag = 0;
     struct proghdr __ph, *ph = &__ph;
     uint32_t vm_flags, phnum;
+	uint32_t is_dynamic = 0, interp_idx;
     pte_perm_t perm = 0;
     for (phnum = 0; phnum < elf->e_phnum; phnum ++) {
       off_t phoff = elf->e_phoff + sizeof(struct proghdr) * phnum;
+	  kprintf("reading phnum: %d\n", phnum);
       if ((ret = load_icode_read(fd, ph, sizeof(struct proghdr), phoff)) != 0) {
         goto bad_cleanup_mmap;
       }
+
+	  /*
+		 If this is a dynamic linked elf
+		*/
+	  if(ph->p_type == ELF_PT_INTERP) {
+		is_dynamic = 1;
+		interp_idx = phnum;
+		continue;
+		/*
+		char *interp_path = (char*) kmalloc(ph->p_filesz);
+		load_icode_read(fd, interp_path, ph->p_filesz, ph->p_offset);
+		
+		kprintf("Interpreter path: %s\n", interp_path);
+
+		int interp_fd = sysfile_open(interp_path, O_RDONLY);
+		assert(interp_fd >= 0);
+		struct elfhdr interp___elf, *interp_elf = &interp___elf;
+		assert((ret = load_icode_read(interp_fd, interp_elf, sizeof(struct elfhdr), 0)) == 0);
+		assert(interp_elf->e_magic == ELF_MAGIC);
+
+		struct proghdr interp___ph, *interp_ph = &interp___ph;
+		uint32_t interp_phnum;
+		uint32_t va_min = 0xffffffff, va_max = 0;
+		for(interp_phnum = 0; interp_phnum < interp_elf->e_phnum; ++interp_phnum) {
+			off_t interp_phoff = interp_elf->e_phoff + sizeof(struct proghdr) * interp_phnum;
+			assert((ret = load_icode_read(interp_fd, interp_ph, sizeof(struct proghdr),
+											interp_phoff)) == 0);
+			if(interp_ph->p_type != ELF_PT_LOAD) {
+				continue;
+			}
+			if(va_min > interp_ph->p_va)
+				va_min = interp_ph->p_va;
+			if(va_max < interp_ph->p_va + interp_ph->p_memsz)
+				va_max = interp_ph->p_va + interp_ph->p_memsz;
+		}
+
+		uint32_t bias = get_unmapped_area(mm, va_max - va_min + 1);
+		kprintf("my bias address: 0x%08x\n", bias);
+
+		for(interp_phnum = 0; interp_phnum < interp_elf->e_phnum; ++interp_phnum) {
+			off_t interp_phoff = interp_elf->e_phoff + sizeof(struct proghdr) * interp_phnum;
+			assert((ret = load_icode_read(interp_fd, interp_ph, sizeof(struct proghdr), 
+											interp_phoff)) == 0);
+
+			if(interp_ph->p_type != ELF_PT_LOAD) {
+				continue;
+			}
+			
+			assert((ret = map_ph(interp_fd, interp_ph, mm, bias)) == 0);
+		}
+
+		real_entry = interp_elf->e_entry + bias;
+
+		sysfile_close(interp_fd);
+		kfree(interp_path);
+		continue;
+		*/
+	  }
+
+
+
       if (ph->p_type != ELF_PT_LOAD) {
         continue ;
       }
+
+	  /*
+		 The first segment with ELF_PT_LOAD property always contains the PHDR segment
+		 */
+	  if(load_address_flag == 0)
+		  load_address = ph->p_va;
+	  ++load_address_flag;
+
       if (ph->p_filesz > ph->p_memsz) {
         ret = -E_INVAL_ELF;
         goto bad_cleanup_mmap;
       }
+
+	  if(ph->p_filesz == 0) {
+		kprintf("zero filesz, stupid man!\n");
+		continue;
+	  }
+
+	  kprintf("normal segment map_ph\n");
+	  if((ret = map_ph(fd, ph, mm, 0)) != 0) {
+		kprintf("load address: 0x%08x size: %d\n", ph->p_va, ph->p_memsz);
+		goto bad_cleanup_mmap;
+	  }
+
+
+	  /*********************************************************/
+	  /*
       vm_flags = 0;
       ptep_set_u_read(&perm);
       if (ph->p_flags & ELF_PF_X) vm_flags |= VM_EXEC;
@@ -826,8 +994,9 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 
       end = ph->p_va + ph->p_memsz;
 
+
+	  
       if (start < la) {
-        /* ph->p_memsz == ph->p_filesz */
         if (start == end) {
           continue ;
         }
@@ -852,16 +1021,99 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
         memset(page2kva(page) + off, 0, size);
         start += size;
       }
+
+	  */
+	  /**********************************************************/
     }
-    sysfile_close(fd);
 
-    mm->brk_start = mm->brk = ROUNDUP(mm->brk_start, PGSIZE);
+	mm->brk_start = mm->brk = ROUNDUP(mm->brk_start, PGSIZE);
 
+	kprintf("before stack mmap, 0x%08x\n", USTACKTOP - USTACKSIZE);
     /* setup user stack */
     vm_flags = VM_READ | VM_WRITE | VM_STACK;
     if ((ret = mm_map(mm, USTACKTOP - USTACKSIZE, USTACKSIZE, vm_flags, NULL)) != 0) {
       goto bad_cleanup_mmap;
     }
+	kprintf("after stack mmap\n");
+
+
+
+	/* load the dynamic linker */
+	uint32_t bias;
+	if(is_dynamic) {
+		off_t phoff = elf->e_phoff + sizeof(struct proghdr) * interp_idx;
+		kprintf("reading phnum: %d\n", interp_idx);
+		if ((ret = load_icode_read(fd, ph, sizeof(struct proghdr), phoff)) != 0) {
+			goto bad_cleanup_mmap;
+		}
+
+		char *interp_path = (char*) kmalloc(ph->p_filesz);
+		load_icode_read(fd, interp_path, ph->p_filesz, ph->p_offset);
+		
+		kprintf("Interpreter path: %s\n", interp_path);
+
+		int interp_fd = sysfile_open(interp_path, O_RDONLY);
+		assert(interp_fd >= 0);
+		struct elfhdr interp___elf, *interp_elf = &interp___elf;
+		assert((ret = load_icode_read(interp_fd, interp_elf, sizeof(struct elfhdr), 0)) == 0);
+		assert(interp_elf->e_magic == ELF_MAGIC);
+
+		struct proghdr interp___ph, *interp_ph = &interp___ph;
+		uint32_t interp_phnum;
+		uint32_t va_min = 0xffffffff, va_max = 0;
+		for(interp_phnum = 0; interp_phnum < interp_elf->e_phnum; ++interp_phnum) {
+			off_t interp_phoff = interp_elf->e_phoff + sizeof(struct proghdr) * interp_phnum;
+			assert((ret = load_icode_read(interp_fd, interp_ph, sizeof(struct proghdr),
+											interp_phoff)) == 0);
+			if(interp_ph->p_type != ELF_PT_LOAD) {
+				continue;
+			}
+			if(va_min > interp_ph->p_va)
+				va_min = interp_ph->p_va;
+			if(va_max < interp_ph->p_va + interp_ph->p_memsz)
+				va_max = interp_ph->p_va + interp_ph->p_memsz;
+		}
+
+		bias = get_unmapped_area(mm, va_max - va_min + 1 + PGSIZE);
+		bias = ROUNDUP(bias, PGSIZE);
+		kprintf("my bias address: 0x%08x\n", bias);
+
+		for(interp_phnum = 0; interp_phnum < interp_elf->e_phnum; ++interp_phnum) {
+			off_t interp_phoff = interp_elf->e_phoff + sizeof(struct proghdr) * interp_phnum;
+			assert((ret = load_icode_read(interp_fd, interp_ph, sizeof(struct proghdr), 
+											interp_phoff)) == 0);
+
+			if(interp_ph->p_type != ELF_PT_LOAD) {
+				continue;
+			}
+			
+			assert((ret = map_ph(interp_fd, interp_ph, mm, bias)) == 0);
+		}
+
+		kprintf("entry: 0x%08x bias: 0x%08x\n", interp_elf->e_entry, bias);
+		real_entry = interp_elf->e_entry + bias;
+		kprintf("real entry: 0x%08x\n", real_entry);
+
+		sysfile_close(interp_fd);
+		kfree(interp_path);
+	}
+
+
+
+    sysfile_close(fd);
+
+	
+    //mm->brk_start = mm->brk = ROUNDUP(mm->brk_start, PGSIZE);
+
+	//kprintf("before stack mmap, 0x%08x\n", USTACKTOP - USTACKSIZE);
+    /* setup user stack */
+	/*
+    vm_flags = VM_READ | VM_WRITE | VM_STACK;
+    if ((ret = mm_map(mm, USTACKTOP - USTACKSIZE, USTACKSIZE, vm_flags, NULL)) != 0) {
+      goto bad_cleanup_mmap;
+    }
+	kprintf("after stack mmap\n");
+	*/
 
     bool intr_flag;
     local_intr_save(intr_flag);
@@ -875,11 +1127,15 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
     mm->lapic = pls_read(lapic_id);
     mp_set_mm_pagetable(mm);
 
-    if (init_new_context (current, elf, argc, kargv, envc, kenvp) < 0)
+	kprintf("before init context\n");
+    if (init_new_context_dynamic (current, elf, argc, kargv, envc, kenvp, 
+							is_dynamic, real_entry, load_address, bias) < 0)
 		goto bad_cleanup_mmap;
+	kprintf("after init context: 0x%08x\n", bias);
 
     ret = 0;
 out:
+	kprintf("all right!\n");
     return ret;
 bad_cleanup_mmap:
     exit_mmap(mm);
@@ -1038,9 +1294,11 @@ do_execve(const char *filename, const char **argv, const char **envp) {
     }
     sem_queue_count_inc(current->sem_queue);
 
+	kprintf("before load_icode\n");
     if ((ret = load_icode(fd, argc, kargv, envc, kenvp)) != 0) {
       goto execve_exit;
     }
+	kprintf("after load_icode\n");
 
     set_proc_name(current, local_name);
 

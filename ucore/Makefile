@@ -21,7 +21,7 @@ MAKEFLAGS += -rR --no-print-directory
 
 #### CROSS COMPILE HERE ####
 ARCH ?= arm
-CROSS_COMPILE ?= arm-linux-
+CROSS_COMPILE ?= arm-eabi-
 
 CONFIG_DIR := config
 KCONFIG_AUTOCONFIG=config/auto.conf
@@ -120,11 +120,13 @@ sfsimg: $(SFSIMG_FILE)
 
 $(SFSIMG_FILE): $(OBJPATH_ROOT) $(TOOLS_MKSFS) userlib userapp FORCE
 	@echo Making $@
-	mkdir .tmpsfs
+	-mkdir .tmpsfs
 	cp -r $(TOPDIR)//src/user-ucore/bin .tmpsfs/
 	cp -r $(TOPDIR)//src/user-ucore/_initial/* .tmpsfs/
+#cp -r $(TOPDIR)//src/user-ucore/bin $(TOPDIR)//android_test/newdir
+	cp -r $(TOPDIR)//android_test/* .tmpsfs/
 	rm -f $@
-	dd if=/dev/zero of=$@ bs=1M count=$(UCONFIG_SFS_IMAGE_SIZE)
+	dd if=/dev/zero of=$@ bs=1m count=$(UCONFIG_SFS_IMAGE_SIZE)
 	$(TOOLS_MKSFS) $@ .tmpsfs
 	rm -rf .tmpsfs
 

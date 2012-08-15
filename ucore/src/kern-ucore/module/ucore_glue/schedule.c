@@ -22,10 +22,9 @@
 #include <linux/gfp.h>
 #include <linux/init.h>
 #include <linux/workqueue.h>
+#include <linux/completion.h>
 #include <linux/wait.h>
 
-#define __NO_UCORE_TYPE__
-#include <module.h>
 
 
 #define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
@@ -45,7 +44,9 @@ void async_synchronize_full(void)
 
 void msleep(unsigned int msecs)
 {
-  _TODO_();
+  extern do_sleep(int);
+  int j = msecs_to_jiffies(msecs);
+  do_sleep(j);
 }
 
 unsigned long msleep_interruptible(unsigned int msecs)
@@ -108,7 +109,9 @@ int _cond_resched(void)
 
 void wait_for_completion(struct completion *x)
 {
-  _TODO_();
+  extern schedule();
+  while(!x->done)
+    schedule();
 }
 
 /**
@@ -122,7 +125,11 @@ void wait_for_completion(struct completion *x)
  */
 void complete(struct completion *x)
 {
-  _TODO_();
+  unsigned long flags;
+  spin_lock_irqsave(&x->wait.lock, flags);
+  x->done++;
+  //__wake_up_common(&x->wait, TASK_NORMAL, 1, 0, NULL);
+  spin_unlock_irqrestore(&x->wait.lock, flags);
 }
 
 int default_wake_function(wait_queue_t *curr, unsigned mode, int sync,

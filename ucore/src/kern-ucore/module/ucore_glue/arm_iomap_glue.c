@@ -113,7 +113,7 @@ int dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
         return 0;
 #endif
         printk("TODO %s\n", __func__);
-        return -EINVAL;
+        return nents;
 }
 EXPORT_SYMBOL(dma_map_sg);
 

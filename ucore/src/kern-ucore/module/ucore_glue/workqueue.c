@@ -270,8 +270,8 @@ static int worker_thread(void *__cwq)
         for (;;) {
                 //run_workqueue(cwq);
                 run_workqueue(cwq);
-                //extern do_sleep(int);
-                do_sleep(5);
+                extern do_sleep(int);
+                do_sleep(2);
         }
 
         return 0;

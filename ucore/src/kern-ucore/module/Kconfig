@@ -40,4 +40,9 @@ config DDE_GOLDFISH_MMC
   bool "Enable Goldfish MMC Host"
   default n
 
+config DDE_MMC_TEST
+  depends DDE_MMC_SUPPORT
+  bool "Enable MMC test driver"
+  default n
+
 endmenu

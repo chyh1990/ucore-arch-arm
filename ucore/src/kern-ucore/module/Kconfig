@@ -18,6 +18,7 @@ config DDE_GOLDFISH_EVENT
   bool "Enable Goldfish Event Input"
   default n
 
+
 config DDE_EXAMPLE_CHRDEV
   depends HAVE_LINUX_DDE_BASE
   bool "Enable Example Chrdev"
@@ -31,6 +32,12 @@ config DDE_MMC_SUPPORT
 config DDE_MMC_HAVE_SDIO
   depends DDE_MMC_SUPPORT
   bool "Enable SDIO support"
+  default n
+
+config DDE_GOLDFISH_MMC
+  depends ARM_BOARD_GOLDFISH
+  depends DDE_MMC_SUPPORT
+  bool "Enable Goldfish MMC Host"
   default n
 
 endmenu

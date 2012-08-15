@@ -45,6 +45,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *data),
     kfree(ts);
     return ERR_PTR(-EINVAL);
   }
+  ts->pid = pid;
 
   pr_debug("kthread_create: %s, func = %p\n", ts->comm, (void*)threadfn);
   return ts;

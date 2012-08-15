@@ -113,3 +113,9 @@ void ktime_get_ts(struct timespec *ts)
   ts->tv_nsec = msecs * NSEC_PER_MSEC;
 }
 
+extern void __ucore_add_timer(void *linux_timer, int expires, unsigned long data, void (*function)(unsigned long));
+void linux_add_timer(struct timer_list *timer)
+{
+  __ucore_add_timer(timer, timer->expires - jiffies, timer->data, timer->function);
+}
+

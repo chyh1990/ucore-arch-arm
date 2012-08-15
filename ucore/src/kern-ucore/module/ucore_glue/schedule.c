@@ -64,6 +64,7 @@ int autoremove_wake_function(wait_queue_t *wait, unsigned mode, int sync, void *
   _TODO_();
   return 0;
 }
+
 void prepare_to_wait(wait_queue_head_t *q, wait_queue_t *wait, int state)
 {
   _TODO_();

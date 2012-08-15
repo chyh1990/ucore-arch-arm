@@ -6,9 +6,16 @@
 
 struct proc_struct;
 
+struct __ucore_linux_timer{
+  void *linux_timer;
+  unsigned long data;
+  void (*function)(unsigned long); 
+};
+
 typedef struct {
     unsigned int expires;
     struct proc_struct *proc;
+    struct __ucore_linux_timer linux_timer;
     list_entry_t timer_link;
 } timer_t;
 
@@ -19,8 +26,14 @@ static inline timer_t *
 timer_init(timer_t *timer, struct proc_struct *proc, int expires) {
     timer->expires = expires;
     timer->proc = proc;
+    timer->linux_timer.linux_timer = NULL;
     list_init(&(timer->timer_link));
     return timer;
+}
+
+static inline int __ucore_is_linux_timer(timer_t *t)
+{
+  return (t->linux_timer.linux_timer != NULL);
 }
 
 struct run_queue;

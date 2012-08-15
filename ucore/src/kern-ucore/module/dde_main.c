@@ -30,7 +30,7 @@
 #include <kio.h>
 //#include <assert.h>
 
-#ifdef DEBUG
+#ifdef __DEBUG
 #define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
 #else 
 #define _TODO_() 
@@ -171,11 +171,49 @@ void __print_symbol(const char *fmt, unsigned long address)
   printk("__print_symbol: %s, 0x%08x\n", fmt, address);
 }
 
-void __memzero(void *ptr, __kernel_size_t n)
+/* 
+ * Optimised C version of memzero for the ARM.
+ */
+void __memzero(void *s, __kernel_size_t n)
 {
+  union { void *vp; unsigned long *ulp; unsigned char *ucp; } u;
   int i;
-  for(i=0;i<n;i++)
-    *(((uint8_t*)ptr)+i) = 0;
+
+  u.vp = s;
+
+  for (i = n >> 5; i > 0; i--) {
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+  }
+
+  if (n & 1 << 4) {
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+  }
+
+  if (n & 1 << 3) {
+    *u.ulp++ = 0;
+    *u.ulp++ = 0;
+  }
+
+  if (n & 1 << 2)
+    *u.ulp++ = 0;
+
+  if (n & 1 << 1) {
+    *u.ucp++ = 0;
+    *u.ucp++ = 0;
+  }
+
+  if (n & 1)
+    *u.ucp++ = 0; 
 }
 
 char *kstrdup(const char *s, gfp_t gfp)

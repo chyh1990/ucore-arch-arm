@@ -348,6 +348,14 @@ run_timer_list(void) {
             timer->expires --;
             while (timer->expires == 0) {
                 le = list_next(le);
+                if(__ucore_is_linux_timer(timer)){
+                  struct __ucore_linux_timer *lt = &(timer->linux_timer);
+                  if(lt->function)
+                    (lt->function)(lt->data);
+                  del_timer(timer);
+                  kfree(timer);
+                  continue;
+                }
                 struct proc_struct *proc = timer->proc;
                 if (proc->wait_state != 0) {
                     assert(proc->wait_state & WT_INTERRUPTED);

@@ -6,6 +6,7 @@ kernel_thread_entry:        # void kernel_thread(void)
 	# before call, set lr
 	mov lr, pc
 	add lr, lr, #4
+  mov r0, r2
 	# call fn (r1)
 	mov pc, r1
 	

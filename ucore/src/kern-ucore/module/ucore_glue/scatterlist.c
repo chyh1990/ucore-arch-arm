@@ -103,7 +103,7 @@ EXPORT_SYMBOL(sg_init_table);
  **/
 void sg_init_one(struct scatterlist *sg, const void *buf, unsigned int buflen)
 {
-  pr_debug("### %s:%d SG %08x %d\n", __FILE__,__LINE__, buf, buflen);
+  //pr_debug("### %s:%d SG %08x %d\n", __FILE__,__LINE__, buf, buflen);
 	sg_init_table(sg, 1);
 	sg_set_page(sg, virt_to_page(buf), buflen, offset_in_page(buf));
 	//sg_set_buf(sg, buf, buflen);

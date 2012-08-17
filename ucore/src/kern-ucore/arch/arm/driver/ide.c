@@ -105,28 +105,28 @@ ide_init(void) {
 
 }
 
-bool
+int
 ide_device_valid(unsigned short ideno) {
     return VALID_IDE(ideno);
 }
 
-size_t
+unsigned long
 ide_device_size(unsigned short ideno) {
     if (ide_device_valid(ideno)) {
-        return ide_devices[ideno].size;
+        return ide_devices[ideno].lba;
     }
     return 0;
 }
 
 int
-ide_read_secs(unsigned short ideno, uint32_t secno, void *dst, size_t nsecs) {
+ide_read_secs(unsigned short ideno, unsigned long secno, void *dst, unsigned long nsecs) {
   if(CHECK_CALL(ideno, read_secs))
     return ide_devices[ideno].read_secs(&ide_devices[ideno], secno, dst, nsecs);
   return 0;
 }
 
 int
-ide_write_secs(unsigned short ideno, uint32_t secno, const void *src, size_t nsecs) {
+ide_write_secs(unsigned short ideno, unsigned long secno, const void *src, unsigned long nsecs) {
   if(CHECK_CALL(ideno, write_secs))
     return ide_devices[ideno].write_secs(&ide_devices[ideno], secno, src, nsecs);
   return 0;

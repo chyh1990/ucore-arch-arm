@@ -1,1 +1,1 @@
-dirs-y := core
+dirs-y := core card

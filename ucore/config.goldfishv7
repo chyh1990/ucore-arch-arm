@@ -1,6 +1,6 @@
 #
 # Automatically generated make config: don't edit
-# Sat Aug  4 02:05:43 2012
+# Wed Aug 15 22:17:37 2012
 #
 
 #
@@ -11,6 +11,7 @@ ARM_CPU_V7=y
 ARM_BOARD_GOLDFISH=y
 # ARM_BOARD_VERSATILEPB is not set
 # ARM_BOARD_AT91 is not set
+# ARM_BOARD_PANDABOARD is not set
 HAVE_RAMDISK=y
 RAMDISK_FILE="/home/chenyh/os/ucore-arch-arm/ucore/sfs.img"
 DRAM_START=0x0
@@ -25,6 +26,11 @@ LIBGCC_PATH="/opt/FriendlyARM/toolschain/4.4.3/lib/gcc/arm-none-linux-gnueabi/4.
 HAVE_LINUX_DDE_BASE=y
 DDE_GOLDFISH_FB=y
 DDE_GOLDFISH_EVENT=y
+# DDE_EXAMPLE_CHRDEV is not set
+DDE_MMC_SUPPORT=y
+# DDE_MMC_HAVE_SDIO is not set
+DDE_GOLDFISH_MMC=y
+DDE_MMC_TEST=y
 
 #
 # Filesystem

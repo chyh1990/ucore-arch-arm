@@ -1,12 +1,12 @@
 /*
  * =====================================================================================
  *
- *       Filename:  mmc_test.c
+ *       Filename:  ucore_mmcblk.c
  *
  *    Description:  
  *
  *        Version:  1.0
- *        Created:  08/15/2012 09:38:32 PM
+ *        Created:  08/17/2012 01:28:03 PM
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -23,6 +23,9 @@
 
 #include <linux/scatterlist.h>
 
+//ucore
+#include <ide.h>
+#include "part.h"
 
 #define RESULT_OK		0
 #define RESULT_FAIL		1
@@ -32,34 +35,26 @@
 #define BUFFER_ORDER		2
 #define BUFFER_SIZE		(PAGE_SIZE << BUFFER_ORDER)
 
-struct mmc_test_card {
+#define MAX_PARTITIONS 4
+#define MAX_LABEL_LEN  31
+
+
+//////////////////////////////
+
+struct mmc_ucore_card{
 	struct mmc_card	*card;
-
-	u8		scratch[BUFFER_SIZE];
 	u8		*buffer;
-#ifdef CONFIG_HIGHMEM
-	struct page	*highmem;
-#endif
+  struct ide_device *ucore_dev;
+  /* only use the first part */
+  int    partitioned;
+  size_t part0_start_sec;
 };
-
-static ssize_t mmc_test_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-
-	return 0;
-}
-
-static ssize_t mmc_test_store(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
-  return 0;
-}
 
 
 /*
  * Configure correct block size in card
  */
-static int mmc_test_set_blksize(struct mmc_test_card *test, unsigned size)
+static int mmc_test_set_blksize(struct mmc_ucore_card *test, unsigned size)
 {
 	struct mmc_command cmd;
 	int ret;
@@ -77,7 +72,7 @@ static int mmc_test_set_blksize(struct mmc_test_card *test, unsigned size)
 /*
  * Fill in the mmc_request structure given a set of transfer parameters.
  */
-static void mmc_test_prepare_mrq(struct mmc_test_card *test,
+static void mmc_test_prepare_mrq(struct mmc_ucore_card *test,
 	struct mmc_request *mrq, struct scatterlist *sg, unsigned sg_len,
 	unsigned dev_addr, unsigned blocks, unsigned blksz, int write)
 {
@@ -114,7 +109,7 @@ static void mmc_test_prepare_mrq(struct mmc_test_card *test,
 /*
  * Wait for the card to finish the busy state
  */
-static int mmc_test_wait_busy(struct mmc_test_card *test)
+static int mmc_test_wait_busy(struct mmc_ucore_card *test)
 {
 	int ret, busy;
 	struct mmc_command cmd;
@@ -145,7 +140,7 @@ static int mmc_test_wait_busy(struct mmc_test_card *test)
 /*
  * Transfer a single sector of kernel addressable data
  */
-static int mmc_test_buffer_transfer(struct mmc_test_card *test,
+static int mmc_test_buffer_transfer(struct mmc_ucore_card *test,
 	u8 *buffer, unsigned addr, unsigned blksz, int write)
 {
 	int ret;
@@ -184,72 +179,11 @@ static int mmc_test_buffer_transfer(struct mmc_test_card *test,
 	return 0;
 }
 
-/*******************************************************************/
-/*  Test preparation and cleanup                                   */
-/*******************************************************************/
-
-/*
- * Fill the first couple of sectors of the card with known data
- * so that bad reads/writes can be detected
- */
-static int __mmc_test_prepare(struct mmc_test_card *test, int write)
-{
-	int ret, i;
-
-	ret = mmc_test_set_blksize(test, 512);
-	if (ret)
-		return ret;
-
-	if (write)
-		memset(test->buffer, 0xDF, 512);
-	else {
-		for (i = 0;i < 512;i++)
-			test->buffer[i] = i;
-	}
-
-	for (i = 0;i < BUFFER_SIZE / 512;i++) {
-		ret = mmc_test_buffer_transfer(test, test->buffer, i * 512, 512, 1);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
-}
-
-static int mmc_test_prepare_write(struct mmc_test_card *test)
-{
-	return __mmc_test_prepare(test, 1);
-}
-
-static int mmc_test_prepare_read(struct mmc_test_card *test)
-{
-	return __mmc_test_prepare(test, 0);
-}
-
-static int mmc_test_cleanup(struct mmc_test_card *test)
-{
-	int ret, i;
-
-	ret = mmc_test_set_blksize(test, 512);
-	if (ret)
-		return ret;
-
-	memset(test->buffer, 0, 512);
-
-	for (i = 0;i < BUFFER_SIZE / 512;i++) {
-		ret = mmc_test_buffer_transfer(test, test->buffer, i * 512, 512, 1);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
-}
-
 
 /*
  * Checks that a normal transfer didn't have any errors
  */
-static int mmc_test_check_result(struct mmc_test_card *test,
+static int mmc_test_check_result(struct mmc_ucore_card *test,
 	struct mmc_request *mrq)
 {
 	int ret;
@@ -277,7 +211,7 @@ static int mmc_test_check_result(struct mmc_test_card *test,
 /*
  * Tests a basic transfer with certain parameters
  */
-static int mmc_test_simple_transfer(struct mmc_test_card *test,
+static int mmc_test_simple_transfer(struct mmc_ucore_card *test,
 	struct scatterlist *sg, unsigned sg_len, unsigned dev_addr,
 	unsigned blocks, unsigned blksz, int write)
 {
@@ -305,130 +239,134 @@ static int mmc_test_simple_transfer(struct mmc_test_card *test,
 	return mmc_test_check_result(test, &mrq);
 }
 
-static int mmc_test_basic_write(struct mmc_test_card *test)
+
+
+static int mmc_disk_read(struct ide_device* dev, unsigned long secno, void *dst, unsigned long nsecs)
 {
-	int ret;
+  struct mmc_ucore_card* ucard = (struct mmc_ucore_card*)dev->dev_data;
+  int ret = 0;
 	struct scatterlist sg;
-
-	ret = mmc_test_set_blksize(test, 512);
+  pr_debug("mmc_disk_read: secno %d, nsces %d\n", secno, nsecs);
+  sg_init_one(&sg, dst, nsecs*512);
+	ret = mmc_test_simple_transfer(ucard, &sg, 1, 0, 1, 512, 0);
 	if (ret)
 		return ret;
-
-	sg_init_one(&sg, test->buffer, 512);
-
-	ret = mmc_test_simple_transfer(test, &sg, 1, 0, 1, 512, 1);
-	if (ret)
-		return ret;
-
-	return 0;
+  return nsecs;
 }
 
-static int mmc_test_basic_read(struct mmc_test_card *test)
+static int mmc_disk_write(struct ide_device* dev, unsigned long secno,const  void *src, unsigned long nsecs)
 {
-	int ret;
-	struct scatterlist sg;
+  pr_debug("mmc_disk_write: secno %d, nsces %d\n", secno, nsecs);
+  return 0;
+}
 
-	ret = mmc_test_set_blksize(test, 512);
-	if (ret)
-		return ret;
+static void mmc_disk_init(struct ide_device* dev)
+{
+}
 
-  memset(test->buffer, 0, 512);
-	sg_init_one(&sg, test->buffer, 512);
+static void __init_mmc_ide_device(struct ide_device* dev)
+{
+  struct mmc_ucore_card* ucard = (struct mmc_ucore_card*)dev->dev_data;
+  struct mmc_card *card = ucard->card;
+  dev->valid = 1;
+  dev->sets = ~0;
+  dev->blksz = 512;
+  dev->if_type = IF_TYPE_SD;
 
-	ret = mmc_test_simple_transfer(test, &sg, 1, 0, 1, 512, 0);
-	if (ret)
-		return ret;
-
-	return 0;
+	if (!mmc_card_sd(card) && mmc_card_blockaddr(card)) {
+		/*
+		 * The EXT_CSD sector count is in number or 512 byte
+		 * sectors.
+		 */
+    dev->lba = card->ext_csd.sectors;
+	} else {
+		/*
+		 * The CSD capacity field is in units of read_blkbits.
+		 * set_capacity takes units of 512 bytes.
+		 */
+    dev->lba = card->csd.capacity << (card->csd.read_blkbits - 9);
+	}
+  printk("ucore_mmcblk: lba: %d\n", dev->lba);
+  strcpy(dev->model, "MMC");
+  dev->init = mmc_disk_init;
+  dev->read_secs = mmc_disk_read;
+  dev->write_secs = mmc_disk_write;
 }
 
 
-static int test_now(struct mmc_card *card)
+static int ucore_mmcblk_probe(struct mmc_card *card)
 {
-  struct mmc_test_card* test = NULL;
-	test = kzalloc(sizeof(struct mmc_test_card), GFP_KERNEL);
-	if (!test)
-		return -ENOMEM;
-
-	test->card = card;
-
-	test->buffer = kzalloc(BUFFER_SIZE, GFP_KERNEL);
-
-  dev_info(&card->dev, "MMC start testing...\n");
-	mmc_claim_host(card->host);
-
-  int i, bad = 0, ret;
-#if 0
-  for(i=0;i<512;i++)
-    test->buffer[i] = (u8)i;
-
-  ret = mmc_test_basic_write(test);
-  dev_info(&card->dev, "MMC basic wr test... %d\n", ret);
-#endif
-
-  ret = mmc_test_basic_read(test);
-  dev_info(&card->dev, "MMC basic rd test... %d\n", ret);
-
-  for(i=0;i<512;i++)
-    if(test->buffer[i] != (u8)i){
-      bad = 1;
-      break;
-    }
-
-  if(bad){
-    dev_info(&card->dev, "MMC check test failed... %d\n", i);
-  }else{
-    dev_info(&card->dev, "MMC check done\n");
+  struct mmc_ucore_card *ucard = kzalloc(sizeof(struct mmc_ucore_card), GFP_KERNEL);
+  if(!ucard)
+    return -ENOMEM;
+  struct ide_device *ucore_dev = kzalloc(sizeof(struct ide_device), GFP_KERNEL);
+  if(!ucore_dev){
+    kfree(ucore_dev);
+    return -ENOMEM;
   }
 
+
+  ucore_dev->dev_data = ucard;
+
+  ucard->card = card;
+  ucard->ucore_dev = ucore_dev;
+
+  int ret = 0;
+	mmc_claim_host(card->host);
+  ret = mmc_test_set_blksize(ucard, 512);
+  if(ret)
+    goto error;
+
+  dev_info(&card->dev, "init MMC block for ucore\n");
+
+  __init_mmc_ide_device(ucore_dev); 
+  dev_info(&card->dev, "init MMC partitions for ucore\n");
+  ret = test_part_dos(ucore_dev);
+  /* only pbr supported */
+#define DOS_PBR 1
+  if(ret == DOS_PBR){
+    print_part_dos(ucore_dev);
+  }else{
+  /* dos mbr or other types */
+    ret = -EINVAL;
+    goto error;
+  }
+
+
+  return 0;
+error:
+  mmc_release_host(card->host);
+  dev_info(&card->dev, "Failed mmc blk (only support PBR) init\n");
+  kfree(ucore_dev);
+  kfree(ucard);
+  return ret;
+}
+
+static void ucore_mmcblk_remove(struct mmc_card *card)
+{
 	mmc_release_host(card->host);
-  dev_info(&card->dev, "MMC test done...\n");
-}
-
-static DEVICE_ATTR(test, S_IWUSR | S_IRUGO, mmc_test_show, mmc_test_store);
-static int mmc_test_probe(struct mmc_card *card)
-{
-	int ret;
-
-	if ((card->type != MMC_TYPE_MMC) && (card->type != MMC_TYPE_SD))
-		return -ENODEV;
-
-	ret = device_create_file(&card->dev, &dev_attr_test);
-	if (ret)
-		return ret;
-
-	dev_info(&card->dev, "Card claimed for testing.\n");
-  test_now(card);
-
-	return 0;
-}
-
-static void mmc_test_remove(struct mmc_card *card)
-{
-	device_remove_file(&card->dev, &dev_attr_test);
 }
 
 static struct mmc_driver mmc_driver = {
-	.drv		= {
-		.name	= "mmc_test",
-	},
-	.probe		= mmc_test_probe,
-	.remove		= mmc_test_remove,
+  .drv = {
+    .name = "ucore_mmcblk",
+  },
+  .probe = ucore_mmcblk_probe,
+  .remove = ucore_mmcblk_remove,
 };
 
-static int __init mmc_test_init(void)
+static int __init ucore_mmcblk_init(void)
 {
-	return mmc_register_driver(&mmc_driver);
+  return mmc_register_driver(&mmc_driver);
 }
 
-static void __exit mmc_test_exit(void)
+static void __exit ucore_mmcblk_exit(void)
 {
-	mmc_unregister_driver(&mmc_driver);
+  mmc_unregister_driver(&mmc_driver);
 }
 
-module_init(mmc_test_init);
-module_exit(mmc_test_exit);
+module_init(ucore_mmcblk_init);
+module_exit(ucore_mmcblk_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("Multimedia Card (MMC) host test driver");
 MODULE_AUTHOR("Chen Yuheng");

@@ -16,7 +16,6 @@
  * =====================================================================================
  */
 
-#include <ramdisk.h>
 #include <string.h>
 #include <memlayout.h>
 #include <board.h>
@@ -24,6 +23,7 @@
 #include <stdio.h>
 #include <kio.h>
 #include <fs.h>
+#include <ramdisk.h>
 
 #define MIN(x,y) (((x)<(y))?(x):(y))
 
@@ -38,19 +38,19 @@ bool check_initrd(){
 }
 
 
-static int ramdisk_read(struct ide_device* dev, size_t secno, void *dst, size_t nsecs)
+static int ramdisk_read(struct ide_device* dev, unsigned long secno, void *dst, unsigned long nsecs)
 {
-  nsecs = MIN(nsecs, dev->size-secno);
+  nsecs = MIN(nsecs, dev->lba-secno);
   if(nsecs<0)
     return -1;
   memcpy(dst, (void*)(dev->iobase+secno*SECTSIZE), nsecs*SECTSIZE); 
   return 0;
 }
 
-static int ramdisk_write(struct ide_device* dev, size_t secno,const  void *src, size_t nsecs)
+static int ramdisk_write(struct ide_device* dev, unsigned long secno,const  void *src, unsigned long nsecs)
 {
-  //kprintf("%08x(%d) %08x(%d)\n", dev->size, dev->size, secno, secno);
-  nsecs = MIN(nsecs, dev->size-secno);
+  //kprintf("%08x(%d) %08x(%d)\n", dev->lba, dev->lba, secno, secno);
+  nsecs = MIN(nsecs, dev->lba-secno);
   if(nsecs<0)
     return -1;
   memcpy( (void*)(dev->iobase+secno*SECTSIZE),src, nsecs*SECTSIZE); 
@@ -58,7 +58,7 @@ static int ramdisk_write(struct ide_device* dev, size_t secno,const  void *src, 
 }
 
 static void ramdisk_init(struct ide_device* dev){
-  kprintf("ramdisk_init(): initrd found, magic: 0x%08x, 0x%08x secs\n", *(uint32_t*)(dev->iobase), dev->size);
+  kprintf("ramdisk_init(): initrd found, magic: 0x%08x, 0x%08x secs\n", *(uint32_t*)(dev->iobase), dev->lba);
 
 }
 
@@ -70,8 +70,9 @@ void ramdisk_init_struct(struct ide_device* dev)
   if(CHECK_INITRD_EXIST()){
     dev->valid = 1;
     dev->sets = ~0;
-    dev->size = INITRD_SIZE()/SECTSIZE;
+    dev->lba = INITRD_SIZE()/SECTSIZE;
     dev->iobase = (uintptr_t)DISK_FS_VBASE;
+    dev->if_type = IF_TYPE_IDE;
     strcpy(dev->model, "KERN_INITRD");
     dev->init = ramdisk_init;
     dev->read_secs = ramdisk_read;

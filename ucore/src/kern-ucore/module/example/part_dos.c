@@ -83,7 +83,7 @@ int test_part_dos (struct ide_device *dev_desc)
 {
 	unsigned char buffer[dev_desc->blksz];
 
-	if ((dev_desc->read_secs(dev_desc, 0, (unsigned long *) buffer, 1) != 1) ||
+	if ((dev_desc->read_secs(dev_desc, 0, (unsigned long *) buffer, 1) != 0) ||
 	    (buffer[DOS_PART_MAGIC_OFFSET + 0] != 0x55) ||
 	    (buffer[DOS_PART_MAGIC_OFFSET + 1] != 0xaa) ) {
 		return (-1);
@@ -100,7 +100,7 @@ static void print_partition_extended (struct ide_device *dev_desc, int ext_part_
 	dos_partition_t *pt;
 	int i;
 
-	if (dev_desc->read_secs(dev_desc, ext_part_sector,  (unsigned long *) buffer, 1) != 1) {
+	if (dev_desc->read_secs(dev_desc, ext_part_sector,  (unsigned long *) buffer, 1) != 0) {
 		printk ("** Can't read partition table on %d:%d **\n",
 			dev_desc->dev, ext_part_sector);
 		return;
@@ -164,7 +164,7 @@ static int get_partition_info_extended (struct ide_device *dev_desc, int ext_par
 	dos_partition_t *pt;
 	int i;
 
-	if (dev_desc->read_secs(dev_desc, ext_part_sector, (unsigned long *) buffer, 1) != 1) {
+	if (dev_desc->read_secs(dev_desc, ext_part_sector, (unsigned long *) buffer, 1) != 0) {
 		printk ("** Can't read partition table on %d:%d **\n",
 			dev_desc->dev, ext_part_sector);
 		return -1;

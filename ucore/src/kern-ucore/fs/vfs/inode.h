@@ -5,6 +5,7 @@
 #include <dev.h>
 #include <pipe.h>
 #include <sfs.h>
+#include <fatfs/ffs.h>
 #include <yaffs2_direct/yaffs_vfs.h>
 #include <atomic.h>
 #include <assert.h>
@@ -34,14 +35,24 @@ struct inode {
         struct pipe_root __pipe_root_info;
         struct pipe_inode __pipe_inode_info;
         struct sfs_inode __sfs_inode_info;
+#ifdef UCONFIG_HAVE_YAFFS2
         struct yaffs2_inode __yaffs2_inode_info;
+#endif
+#ifdef UCONFIG_HAVE_FATFS
+        struct ffs_inode __ffs_inode_info;
+#endif
     } in_info;
     enum {
         inode_type_device_info = 0x1234,
         inode_type_pipe_root_info,
         inode_type_pipe_inode_info,
         inode_type_sfs_inode_info,
+#ifdef UCONFIG_HAVE_YAFFS2
         inode_type_yaffs2_inode_info,
+#endif
+#ifdef UCONFIG_HAVE_FATFS
+        inode_type_ffs_inode_info,
+#endif
     } in_type;
     atomic_t ref_count;
     atomic_t open_count;

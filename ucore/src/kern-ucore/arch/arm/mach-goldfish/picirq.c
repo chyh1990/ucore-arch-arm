@@ -95,6 +95,7 @@ void irq_handler(){
     if(actions[irq].handler){
       (*actions[irq].handler)(irq, actions[irq].opaque);
     }else{
+      panic("unknown irq\n");
       pic_disable(irq);
     }
     pending = inw(VIC_VBASE+INTERRUPT_STATUS);

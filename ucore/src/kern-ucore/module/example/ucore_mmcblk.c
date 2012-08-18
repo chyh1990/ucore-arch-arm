@@ -239,25 +239,28 @@ static int mmc_test_simple_transfer(struct mmc_ucore_card *test,
 	return mmc_test_check_result(test, &mrq);
 }
 
-
-
-static int mmc_disk_read(struct ide_device* dev, unsigned long secno, void *dst, unsigned long nsecs)
+static int mmc_disk_do_io(struct ide_device* dev, unsigned long secno, 
+    void *dst, unsigned long nsecs, int wr)
 {
   struct mmc_ucore_card* ucard = (struct mmc_ucore_card*)dev->dev_data;
   int ret = 0;
 	struct scatterlist sg;
-  pr_debug("mmc_disk_read: secno %d, nsces %d\n", secno, nsecs);
+  //pr_debug("mmc_disk_%s: secno %d, nsces %d\n", wr?"write":"read", secno, nsecs);
   sg_init_one(&sg, dst, nsecs*512);
-	ret = mmc_test_simple_transfer(ucard, &sg, 1, 0, 1, 512, 0);
+	ret = mmc_test_simple_transfer(ucard, &sg, 1, secno<<9, nsecs, 512, wr);
 	if (ret)
 		return ret;
-  return nsecs;
+  return 0;
+}
+
+static int mmc_disk_read(struct ide_device* dev, unsigned long secno, void *dst, unsigned long nsecs)
+{
+  return mmc_disk_do_io(dev,secno,dst, nsecs,0); 
 }
 
 static int mmc_disk_write(struct ide_device* dev, unsigned long secno,const  void *src, unsigned long nsecs)
 {
-  pr_debug("mmc_disk_write: secno %d, nsces %d\n", secno, nsecs);
-  return 0;
+  return mmc_disk_do_io(dev,secno,src, nsecs,1); 
 }
 
 static void mmc_disk_init(struct ide_device* dev)
@@ -287,7 +290,7 @@ static void __init_mmc_ide_device(struct ide_device* dev)
     dev->lba = card->csd.capacity << (card->csd.read_blkbits - 9);
 	}
   printk("ucore_mmcblk: lba: %d\n", dev->lba);
-  strcpy(dev->model, "MMC");
+  strcpy(dev->model, "mmcblk");
   dev->init = mmc_disk_init;
   dev->read_secs = mmc_disk_read;
   dev->write_secs = mmc_disk_write;
@@ -321,17 +324,27 @@ static int ucore_mmcblk_probe(struct mmc_card *card)
 
   __init_mmc_ide_device(ucore_dev); 
   dev_info(&card->dev, "init MMC partitions for ucore\n");
-  ret = test_part_dos(ucore_dev);
-  /* only pbr supported */
+
+#define MMC0_DEV_NO        3 /* fs.h */
+  ret = ide_register_device(MMC0_DEV_NO, ucore_dev);
+  if(ret)
+    goto error;
+  extern void dev_init_mmc0(void);
+  dev_init_mmc0();
+
 #define DOS_PBR 1
+  ret = test_part_dos(ucore_dev);
   if(ret == DOS_PBR){
     print_part_dos(ucore_dev);
+#ifdef UCONFIG_HAVE_FATFS
+    extern void ffs_init();
+    ffs_init();
+#endif
   }else{
   /* dos mbr or other types */
-    ret = -EINVAL;
-    goto error;
+    printk(KERN_WARNING "Unknown partition type for mmc0\n");
+    return 0;
   }
-
 
   return 0;
 error:

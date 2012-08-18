@@ -90,6 +90,8 @@ typedef struct ucore_disk_partition {
   unsigned char type[32];	/* string type description		*/
 } ucore_disk_partition_t;
 
+int
+ide_register_device(unsigned short ideno, struct ide_device* dev);
 
 #endif /* !__KERN_DRIVER_RAMDISK_H__ */
 

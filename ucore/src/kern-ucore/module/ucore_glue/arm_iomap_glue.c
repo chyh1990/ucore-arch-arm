@@ -112,7 +112,7 @@ int dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
                 dma_unmap_page(dev, sg_dma_address(s), sg_dma_len(s), dir);
         return 0;
 #endif
-        printk("TODO %s\n", __func__);
+        //printk("TODO %s\n", __func__);
         return nents;
 }
 EXPORT_SYMBOL(dma_map_sg);

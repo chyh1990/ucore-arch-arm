@@ -5,6 +5,7 @@
 #include <fs.h>
 #include <pipe.h>
 #include <sfs.h>
+#include <fatfs/ffs.h>
 #include <yaffs2_direct/yaffs_vfs.h>
 
 struct inode;   // abstract structure for an on-disk file (inode.h)
@@ -38,12 +39,22 @@ struct fs {
     union {
         struct pipe_fs __pipe_info;
         struct sfs_fs __sfs_info;
+#ifdef UCONFIG_HAVE_YAFFS2
         struct yaffs2_fs __yaffs2_info;
+#endif
+#ifdef UCONFIG_HAVE_FATFS
+        struct ffs_fs __ffs_info;
+#endif
     } fs_info;
     enum {
-        fs_type_pipe_info = 0x5678,
-        fs_type_sfs_info,
-        fs_type_yaffs2_info,
+      fs_type_pipe_info = 0x5678,
+      fs_type_sfs_info,
+#ifdef UCONFIG_HAVE_YAFFS2
+      fs_type_yaffs2_info,
+#endif
+#ifdef UCONFIG_HAVE_FATFS
+      fs_type_ffs_info,
+#endif
     } fs_type;
     int (*fs_sync)(struct fs *fs);
     struct inode *(*fs_get_root)(struct fs *fs);

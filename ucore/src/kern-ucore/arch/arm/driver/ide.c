@@ -12,16 +12,16 @@
 #include <ramdisk.h>
 #include <memlayout.h>
 
-#define VALID_IDE(ideno)        (((ideno) >= 0) && ((ideno) < MAX_IDE) && (ide_devices[ideno].valid))
+#define VALID_IDE(ideno)        (((ideno) >= 0) && ((ideno) < MAX_IDE) && (ide_devices[ideno] && ide_devices[ideno]->valid))
 
-#define MAX_IDE 4
+#define MAX_IDE 8
 
-#define CHECK_CALL(ideno, func) (VALID_IDE(ideno) && ide_devices[ideno].func)
+#define CHECK_CALL(ideno, func) (VALID_IDE(ideno) && ide_devices[ideno]->func)
 
 
 //#define _CHECK_NANDFLASH
 
-static struct ide_device ide_devices[MAX_IDE];
+static struct ide_device *ide_devices[MAX_IDE];
 
 static void check_nandflash_blk()
 {
@@ -91,13 +91,14 @@ ide_wait_ready(unsigned short iobase, bool check_error) {
 void
 ide_init(void) {
   int i;
-  for(i=0;i<MAX_IDE;i++) ide_devices[i].valid = 0;
 #ifdef UCONFIG_HAVE_RAMDISK
   int devno = DISK0_DEV_NO;
   assert(devno<MAX_IDE);
-  ramdisk_init_struct(&ide_devices[devno]);
+  ide_devices[devno] = kmalloc(sizeof(struct ide_device));
+  assert(ide_devices[devno] != NULL);
+  ramdisk_init_struct(ide_devices[devno]);
   if(CHECK_CALL(devno, init))
-    ide_devices[devno].init(&ide_devices[devno]);
+    ide_devices[devno]->init(ide_devices[devno]);
 #endif
 #ifdef _CHECK_NANDFLASH
   check_nandflash_blk();
@@ -113,7 +114,7 @@ ide_device_valid(unsigned short ideno) {
 unsigned long
 ide_device_size(unsigned short ideno) {
     if (ide_device_valid(ideno)) {
-        return ide_devices[ideno].lba;
+        return ide_devices[ideno]->lba;
     }
     return 0;
 }
@@ -121,14 +122,26 @@ ide_device_size(unsigned short ideno) {
 int
 ide_read_secs(unsigned short ideno, unsigned long secno, void *dst, unsigned long nsecs) {
   if(CHECK_CALL(ideno, read_secs))
-    return ide_devices[ideno].read_secs(&ide_devices[ideno], secno, dst, nsecs);
+    return ide_devices[ideno]->read_secs(ide_devices[ideno], secno, dst, nsecs);
   return 0;
 }
 
 int
 ide_write_secs(unsigned short ideno, unsigned long secno, const void *src, unsigned long nsecs) {
   if(CHECK_CALL(ideno, write_secs))
-    return ide_devices[ideno].write_secs(&ide_devices[ideno], secno, src, nsecs);
+    return ide_devices[ideno]->write_secs(ide_devices[ideno], secno, src, nsecs);
+  return 0;
+}
+
+int
+ide_register_device(unsigned short ideno, struct ide_device* dev)
+{
+  assert(dev!=NULL);
+  if(ide_devices[ideno]){
+    kprintf("ide_register_device: dev %d exists\n", ideno);
+    return -1;
+  }
+  ide_devices[ideno] = dev;
   return 0;
 }
 

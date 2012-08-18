@@ -18,4 +18,8 @@ config HAVE_YAFFS2_RAMDISK
   bool "Enable YAFFS2 Ramdisk (for debugging)"
   default n
 
+config HAVE_FATFS
+  bool "Enable Fat32"
+  default n
+
 endmenu

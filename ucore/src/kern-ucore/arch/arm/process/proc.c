@@ -133,11 +133,13 @@ forkret(void) {
 int
 ucore_kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags) {
   struct trapframe tf_struct;
+  uint32_t sr = 0;
+  asm volatile ("mrs %0, cpsr" : "=r" (sr)); // get spsr to be restored
   memset(&tf_struct, 0, sizeof(struct trapframe));
   tf_struct.tf_regs.reg_r[2] = (uint32_t)arg;
   tf_struct.tf_regs.reg_r[1] = (uint32_t)fn; // address to jump to (fn) is in r1, arg is in r0
   tf_struct.tf_epc = (uint32_t)kernel_thread_entry; // look at entry.S
-  asm volatile ("mrs %0, cpsr" : "=r" (tf_struct.tf_sr)); // get spsr to be restored
+  tf_struct.tf_sr = ARM_SR_F|ARM_SR_MODE_SVC; //svc mode, interrput
   //kprintf("kernel_thread: writing spsr %08x\n", tf_struct.tf_sr);
   return do_fork(clone_flags | CLONE_VM, 0, &tf_struct);
 }
@@ -231,7 +233,7 @@ init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char**
   memset(tf, 0, sizeof(struct trapframe));
   tf->tf_esp = stacktop;
   tf->tf_epc = elf->e_entry;
-  tf->tf_sr = ARM_SR_I|ARM_SR_MODE_USR; //user mode, interrput
+  tf->tf_sr = ARM_SR_F|ARM_SR_MODE_USR; //user mode, interrput
 	/* r3 = argc, r1 = argv 
    * initcode in user mode should copy r3 to r0
    */

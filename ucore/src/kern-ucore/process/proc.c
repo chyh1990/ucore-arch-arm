@@ -1681,7 +1681,7 @@ proc_init(void) {
     }
 
     initproc = find_proc(pid);
-    set_proc_name(initproc, "init");
+    set_proc_name(initproc, "kinit");
 
     assert(idleproc != NULL && idleproc->pid == lcpu_idx);
     assert(initproc != NULL && initproc->pid == lcpu_count);

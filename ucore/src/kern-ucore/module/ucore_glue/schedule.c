@@ -26,7 +26,6 @@
 #include <linux/wait.h>
 
 
-
 #define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
 //#define _TODO_()
 
@@ -87,15 +86,6 @@ signed long schedule_timeout(signed long timeout)
   return 0;
 }
 
-int schedule_work(struct work_struct *work)
-{
-  int ret = 1;
-  pr_debug("TODO schedule_work()\n");
-  work_func_t f = work->func;
-  f(work);
-  return 0;
-}
-
 pid_t pid_vnr(struct pid *pid)
 {
   return -1;
@@ -109,13 +99,13 @@ int _cond_resched(void)
 
 void wait_for_completion(struct completion *x)
 {
-//    uint32_t sr = 0;
-//  asm volatile ("mrs %0, cpsr" : "=r" (sr)); // get spsr to be restored
-  //kprintf("DDD %08x\n", sr);
+  uint32_t sr = 0;
+  asm volatile ("mrs %0, cpsr" : "=r" (sr)); // get spsr to be restored
+  kprintf("DDD %08x\n", sr);
   extern schedule();
   while(!(x->done)){
     //FIXME
-    intr_enable();
+    //intr_enable();
     schedule();
   }
 }

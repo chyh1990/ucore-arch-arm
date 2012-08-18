@@ -147,16 +147,22 @@ kern_init(void) {
   proc_init();                // init process table
   _PROBE_();
     sync_init();                // init sync struct
-#ifdef UCONFIG_HAVE_LINUX_DDE_BASE
-  dde_init();
-#endif
 
+  
   ide_init();                 // init ide devices
   _PROBE_();
   //swap_init();                // init swap
   _PROBE_();
   fs_init();                  // init fs
   _PROBE_();
+
+  intr_enable();              // enable irq interrupt
+
+#ifdef UCONFIG_HAVE_LINUX_DDE_BASE
+  calibrate_delay();
+  dde_init();
+#endif
+
 
 #ifdef UCONFIG_HAVE_YAFFS2
 #ifdef HAS_NANDFLASH
@@ -185,11 +191,6 @@ kern_init(void) {
 #endif
 
 
-  intr_enable();              // enable irq interrupt
-
-#ifdef UCONFIG_HAVE_LINUX_DDE_BASE
-  calibrate_delay();
-#endif
 
   enable_timer_list();
   cpu_idle();                 // run idle process

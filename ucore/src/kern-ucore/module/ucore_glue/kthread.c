@@ -25,7 +25,7 @@
 
 #define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
 
-extern int ucore_kernel_thread(int (*fn)(void *), void *arg, u32 clone_flags);
+extern int __ucore_kernel_thread(int (*fn)(void *), const char* name, void *arg, u32 clone_flags);
 
 struct task_struct *kthread_create(int (*threadfn)(void *data),
                                    void *data,
@@ -40,7 +40,7 @@ struct task_struct *kthread_create(int (*threadfn)(void *data),
   vsnprintf(ts->comm, sizeof(ts->comm),
       namefmt, args);
   va_end(args);
-  int pid = ucore_kernel_thread(threadfn, data, 0);
+  int pid = __ucore_kernel_thread(threadfn, ts->comm, data, 0);
   if(pid <= 0){
     kfree(ts);
     return ERR_PTR(-EINVAL);

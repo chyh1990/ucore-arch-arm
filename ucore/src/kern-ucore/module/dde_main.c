@@ -19,6 +19,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/kobject.h>
+#include <linux/workqueue.h>
 #include <linux/err.h>
 #include <linux/gfp.h>
 #include <linux/init.h>
@@ -90,6 +91,11 @@ static void loadable_module_init()
 
 void dde_init()
 {
+  extern init_dde_workqueue();
+  /* default workqueue */
+  if(init_dde_workqueue())
+    panic("fail to create default workqueue");
+
   /* invoked in vfs_cache_init in Linux */
   chrdev_init();
 

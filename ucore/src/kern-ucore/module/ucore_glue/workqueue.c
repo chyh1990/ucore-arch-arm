@@ -58,9 +58,6 @@ struct workqueue_struct {
         int singlethread;
         int freezeable;         /* Freeze threads during suspend */
         int rt;
-#ifdef CONFIG_LOCKDEP
-        struct lockdep_map lockdep_map;
-#endif
 };
 
 /* If it's single threaded, it isn't in the list of workqueues. */
@@ -344,4 +341,19 @@ create_thread_failed:
   kfree(wq);
   return NULL;
 }
+
+/* ucore */
+static struct workqueue_struct *__dde_def_workqueue;
+int init_dde_workqueue(){
+  __dde_def_workqueue = create_singlethread_workqueue("kworkqueue");
+  if(!__dde_def_workqueue)
+    return -ENOMEM;
+  return 0;
+}
+
+int schedule_work(struct work_struct *work)
+{
+  return queue_delayed_work(__dde_def_workqueue, work, 0);
+}
+
 

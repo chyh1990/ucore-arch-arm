@@ -1,5 +1,5 @@
 obj-y := dev2devfs.o dev2devfs_glue_helper.o fcntl.o kmalloc.o \
-	pmm.o resource.o schedule.o timer.o uaccess.o ucore_stat2linux_stat.o irq.o kthread.o workqueue.o timer_helper.o
+	pmm.o resource.o schedule.o timer.o uaccess.o ucore_stat2linux_stat.o irq.o kthread.o workqueue.o timer_helper.o kthread_helper.o
 
 obj-y += idr.o scatterlist.o
 

@@ -217,7 +217,7 @@ __trapret:
 	ldmfd sp!,{pc}^
 
 __restore_user:
-  msr spsr_c, r1
+  msr spsr, r1
 	# restoring the registers to the user banks, including sp,lr
 	ldmfd sp, {r0-r12, sp, lr}^
 	add   sp, sp, #60

@@ -76,10 +76,9 @@ relocated:
 
     .data
 # There might be a alignment problem, as should be aligned to a page size
-
-    irq_stack:
-    .space KSTACKSIZE
-    irq_stacktop:
+irq_stack:
+.space KSTACKSIZE
+irq_stacktop:
 fiq_stack:
 .space KSTACKSIZE
 fiq_stacktop:

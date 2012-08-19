@@ -1348,6 +1348,7 @@ out_unlock:
 //      time is jiffies
 int
 do_sleep(unsigned int time) {
+    assert(!ucore_in_interrupt());
     if (time == 0) {
         return 0;
     }

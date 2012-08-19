@@ -22,15 +22,7 @@
 
 //handle hw irq, should be implemented in mach_xxx
 void irq_handler(void);
-
-#if 0
-static void print_ticks() {
-  //kprintf("%d ticks\n",ticks);
-  kprintf(".");
-  kprintf("End of Test.\n");
-  panic("EOT: kernel seems ok.");
-}
-#endif
+static int __irq_level = 0;
 
 static const char *
 trapname(int trapno) {
@@ -73,8 +65,6 @@ static const char * const modenames[] = {
 /* trap_in_kernel - test if trap happened in kernel */
 bool
 trap_in_kernel(struct trapframe *tf) {
-  //return (tf->tf_cs == (uint16_t)KERNEL_CS);
-  //kprintf("trap_in_kernel: at pc:0x%08x\n", tf->tf_epc);
   return (tf->tf_sr & 0xF)!=0;
 }
 
@@ -190,7 +180,6 @@ trap_dispatch(struct trapframe *tf) {
     // Data Abort service routine
     case T_PABT:
     case T_DABT:
-
       if ((ret = pgfault_handler(tf)) != 0) {
         print_pgfault(tf);
         print_trapframe(tf);
@@ -222,18 +211,31 @@ trap_dispatch(struct trapframe *tf) {
       break;
       */
       // SWI Service Routine
+#if 0
     case T_SWITCH_TOK: // a random System call
       kprintf("Random system call\n") ;
       print_cur_status();
       //print_stackframe();
       break;
+#endif
     case T_IRQ:
+      __irq_level++;
+#if 0
+      if(!trap_in_kernel(tf)){
+        uint32_t sp;
+        asm volatile("mov %0, sp":"=r"(sp));
+        kprintf("### iRQnotK %08x\n", sp);
+      }
+#endif
       irq_handler();
+      __irq_level--;
       break;
+#if 0
     case T_PANIC:
       print_cur_status();
       //print_stackframe();
       break;
+#endif
       /* for debugging */
     case T_UNDEF:
       udef_handler(tf);
@@ -248,17 +250,21 @@ trap_dispatch(struct trapframe *tf) {
   }
 }
 
+static int __is_irq(struct trapframe *tf){
+  return (tf->tf_trapno == T_IRQ);
+}
+
 /* *
  * trap - handles or dispatches an exception/interrupt. if and when trap() returns,
  * the code in kern/trap/trapentry.S will restore the state before the exception.
  * */
 void
 trap(struct trapframe *tf) {
-  // used for previous projects
   if (pls_read(current) == NULL) {
     trap_dispatch(tf);
   }
-  else {
+  else
+  {
     // keep a trapframe chain in stack
     struct trapframe *otf = pls_read(current)->tf;
     pls_read(current)->tf = tf;
@@ -283,3 +289,7 @@ void raise(void){
   return ;
 }
 
+int ucore_in_interrupt()
+{
+  return __irq_level;
+}

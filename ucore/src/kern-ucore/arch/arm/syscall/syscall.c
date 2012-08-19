@@ -497,7 +497,7 @@ __sys_linux_stat(uint32_t args[])
 {
   char *fn = (char*)args[0];
   struct linux_stat *st = (struct linux_stat*)args[1];
-  kprintf("TODO __sys_linux_stat, %s %d\n", fn, sizeof(struct linux_stat));
+  //kprintf("TODO __sys_linux_stat, %s %d\n", fn, sizeof(struct linux_stat));
   return sysfile_linux_stat(fn, st);
 }
 

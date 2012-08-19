@@ -25,6 +25,7 @@
 #include <serial.h>
 #include <intr.h>
 #include <kio.h>
+#include <assert.h>
 #include <memlayout.h>
 
 

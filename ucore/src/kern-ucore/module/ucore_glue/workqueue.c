@@ -92,7 +92,7 @@ static void insert_work(struct cpu_workqueue_struct *cwq,
                         struct work_struct *work, struct list_head *head)
 {
         //trace_workqueue_insertion(cwq->thread, work);
-        pr_debug("## insert_work\n\n");
+        //pr_debug("## insert_work\n\n");
 
         set_wq_data(work, cwq);
         /*
@@ -268,7 +268,7 @@ static int worker_thread(void *__cwq)
                 //run_workqueue(cwq);
                 run_workqueue(cwq);
                 extern do_sleep(int);
-                do_sleep(2);
+                do_sleep(3);
         }
 
         return 0;

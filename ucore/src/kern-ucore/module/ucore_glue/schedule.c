@@ -99,14 +99,11 @@ int _cond_resched(void)
 
 void wait_for_completion(struct completion *x)
 {
-  uint32_t sr = 0;
-  asm volatile ("mrs %0, cpsr" : "=r" (sr)); // get spsr to be restored
-  kprintf("DDD %08x\n", sr);
-  extern schedule();
   while(!(x->done)){
     //FIXME
     //intr_enable();
-    schedule();
+    //schedule();
+    do_sleep(1);
   }
 }
 

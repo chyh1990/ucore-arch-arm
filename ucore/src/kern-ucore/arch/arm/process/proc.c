@@ -137,9 +137,9 @@ ucore_kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags) {
   asm volatile ("mrs %0, cpsr" : "=r" (sr)); // get spsr to be restored
   memset(&tf_struct, 0, sizeof(struct trapframe));
   tf_struct.tf_regs.reg_r[2] = (uint32_t)arg;
-  tf_struct.tf_regs.reg_r[1] = (uint32_t)fn; // address to jump to (fn) is in r1, arg is in r0
+  tf_struct.tf_regs.reg_r[1] = (uint32_t)fn; // address to jump to (fn) is in r1, arg is in r2
   tf_struct.tf_epc = (uint32_t)kernel_thread_entry; // look at entry.S
-  tf_struct.tf_sr = ARM_SR_I|ARM_SR_F|ARM_SR_MODE_SVC; //svc mode, interrput
+  tf_struct.tf_sr = ARM_SR_F|ARM_SR_MODE_SVC; //svc mode, interrput
   //kprintf("kernel_thread: writing spsr %08x\n", tf_struct.tf_sr);
   return do_fork(clone_flags | CLONE_VM, 0, &tf_struct);
 }
@@ -158,6 +158,7 @@ do_execve_arch_hook (int argc, char** kargv) {
 int
 copy_thread(uint32_t clone_flags, struct proc_struct *proc, 
     uintptr_t esp, struct trapframe *tf) {
+  assert(!ucore_in_interrupt());
   //~ kprintf("copy_thread: source %s sp:%08x tf:%08x\n", proc->name, esp, tf);
   proc->tf = (struct trapframe *)(proc->kstack + KSTACKSIZE) - 1;
  // kprintf("copy_thread: src %s copy stack:%08x-%08x tf:%08x\n", proc->name, proc->kstack, proc->kstack + KSTACKSIZE, proc->tf);
@@ -167,6 +168,7 @@ copy_thread(uint32_t clone_flags, struct proc_struct *proc,
   // the return value of a fork in child
   proc->tf->tf_regs.reg_r[0] = 0;
   //proc->tf->tf_regs.reg_r[11] = proc->tf; // fp
+  /* kernel thread never use this esp */
   proc->tf->tf_esp = esp;
   //proc->tf->tf_eflags |= FL_IF; // set interrupt flag
 
@@ -179,7 +181,7 @@ copy_thread(uint32_t clone_flags, struct proc_struct *proc,
   // setting sp to a trapframe, located on stack
   proc->context.epc = (uintptr_t)forkret;
   proc->context.esp = (uintptr_t)(proc->tf);
-  proc->context.e_cpsr = read_psrflags();
+  proc->context.e_cpsr = ARM_SR_MODE_SVC|ARM_SR_I|ARM_SR_F;
     return 0;
 }
 
@@ -237,11 +239,9 @@ init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char**
 	/* r3 = argc, r1 = argv 
    * initcode in user mode should copy r3 to r0
    */
-	//tf->tf_regs.reg_r[3] = argc;
-	//tf->tf_regs.reg_r[1] = (uintptr_t)uargv;
+  /* return 0 for child */
   tf->tf_regs.reg_r[0] = 0;
 
-  //panic("UNIMPLEMENTED");
 	return 0;
 }
 

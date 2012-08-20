@@ -1,4 +1,4 @@
-#modified by Chen Yuheng 2012/3
+#by Chen Yuheng 2012/8
 
 #include <glue_intr.h>
 
@@ -129,7 +129,7 @@ __switrap:
 #if __LINUX_ARM_ARCH__ >= 7
 /* Error code: fsr for dabt */
 /* c5[11] == r/w */
-  MRC p15, 0, r0, c5, c0, 1
+  mrc p15, 0, r0, c5, c0, 0
   str   r0, [sp, #S_TF_ERR]
 #else
   MRC p15, 0, r1, c5, c0, 1
@@ -150,7 +150,6 @@ __switrap:
 
 	.align	5
 __dabt_svc:
-  b __dabt_svc
 	svc_entry
   read_dabt_fsr
   do_trap T_DABT
@@ -253,7 +252,7 @@ real_vector_\name:
 	movs	pc, lr			@ branch to handler in SVC mode
 	.endm
 
-	.globl	__stubs_start
+@	.globl	__stubs_start
 __stubs_start:
 /*
  * Interrupt dispatcher

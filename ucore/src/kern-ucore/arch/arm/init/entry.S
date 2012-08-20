@@ -35,6 +35,7 @@ kern_entry:
 	msr cpsr, r0
 
 # Stack inititialization - starts in SVC mode
+# only 12bytes are used in these stacks, see trapentry.S
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|IRQ_MOD)
 	ldr sp,=irq_stack
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|FIQ_MOD)
@@ -75,6 +76,7 @@ relocated:
     b spin
 
     .data
+    .align 6
 # There might be a alignment problem, as should be aligned to a page size
 irq_stack:
 .space 64

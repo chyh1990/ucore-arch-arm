@@ -36,13 +36,13 @@ kern_entry:
 
 # Stack inititialization - starts in SVC mode
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|IRQ_MOD)
-	ldr sp,=irq_stacktop
+	ldr sp,=irq_stack
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|FIQ_MOD)
-	ldr sp,=fiq_stacktop
+	ldr sp,=fiq_stack
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|ABT_MOD)
-	ldr sp,=abt_stacktop
+	ldr sp,=abt_stack
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|UND_MOD)
-	ldr sp,=und_stacktop
+	ldr sp,=und_stack
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|SYS_MOD)
 	ldr sp,=sys_stacktop
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|SVC_MOD)
@@ -77,19 +77,19 @@ relocated:
     .data
 # There might be a alignment problem, as should be aligned to a page size
 irq_stack:
-.space KSTACKSIZE
+.space 64
 irq_stacktop:
 fiq_stack:
-.space KSTACKSIZE
+.space 64
 fiq_stacktop:
 abt_stack:
-.space KSTACKSIZE
+.space 64
 abt_stacktop:
 und_stack:
-.space KSTACKSIZE
+.space 64
 und_stacktop:
 sys_stack:
-    .space KSTACKSIZE
+.space 64
 sys_stacktop:
     .globl bootstack
 bootstack:

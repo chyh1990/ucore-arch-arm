@@ -169,6 +169,11 @@ copy_thread(uint32_t clone_flags, struct proc_struct *proc,
   proc->tf->tf_regs.reg_r[0] = 0;
   //proc->tf->tf_regs.reg_r[11] = proc->tf; // fp
   /* kernel thread never use this esp */
+
+  if( (tf->tf_sr & 0x1F) == ARM_SR_MODE_SVC)
+    esp = proc->kstack + KSTACKSIZE;
+
+  assert(esp != 0);
   proc->tf->tf_esp = esp;
   //proc->tf->tf_eflags |= FL_IF; // set interrupt flag
 
@@ -235,7 +240,7 @@ init_new_context (struct proc_struct *proc, struct elfhdr *elf, int argc, char**
   memset(tf, 0, sizeof(struct trapframe));
   tf->tf_esp = stacktop;
   tf->tf_epc = elf->e_entry;
-  tf->tf_sr = ARM_SR_I|ARM_SR_F|ARM_SR_MODE_USR; //user mode, interrput
+  tf->tf_sr = ARM_SR_F|ARM_SR_MODE_USR; //user mode, interrput
 	/* r3 = argc, r1 = argv 
    * initcode in user mode should copy r3 to r0
    */
@@ -261,7 +266,7 @@ kernel_execve(const char *name, const char **argv, const char **kenvp) {
   "mov\t%0,r0"                                                        
         : "=r" (ret)
         : "r" ((long)(name)),"r" ((long)argv),"r" ((long)(kenvp))
-        : "r0","r1","r2","lr");
+        : "r0","r1","r2","sp","lr");
    //ret = do_execve(name, argc, argv);
     return ret;
 }

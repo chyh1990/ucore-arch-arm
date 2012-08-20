@@ -86,16 +86,16 @@ __vector_reset:
 .globl irq_proc
 # Exception modes
 __vector_undefined:
-	b __undtrap
+	b real_vector_und
 __vector_swi:
 	b __switrap
 __vector_prefetch_abort:
-	b __pretrap
+	b real_vector_pabt
 __vector_data_abort:
-	b __dattrap
+	b real_vector_dabt
 __vector_reserved:
 	b __vector_reserved
 __vector_irq:
-	b __irqtrap
+	b real_vector_irq
 __vector_fiq:
 	b __vector_fiq

@@ -90,6 +90,7 @@ struct linux_timespec {
 #define WT_MBOX_RECV                (0x00000121 | WT_INTERRUPTED)  // wait the recving mbox
 #define WT_PIPE                     (0x00000200 | WT_INTERRUPTED)  // wait the pipe
 #define WT_SIGNAL					          (0x00000400 | WT_INTERRUPTED)  // wait the signal
+#define WT_KERNEL_SIGNAL            (0x00000800| WT_INTERRUPTED)
 #define WT_INTERRUPTED               0x80000000                    // the wait state could be interrupted
 
 #define TIF_SIGPENDING				0x00010000

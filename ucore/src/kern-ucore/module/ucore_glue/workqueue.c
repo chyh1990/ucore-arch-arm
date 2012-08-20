@@ -101,7 +101,8 @@ static void insert_work(struct cpu_workqueue_struct *cwq,
          */
         smp_wmb();
         list_add_tail(&work->entry, head);
-        wake_up(&cwq->more_work);
+        //wake_up(&cwq->more_work);
+        __ucore_wakeup_by_pid(cwq->thread->pid);
 }
 
 static void __queue_work(struct cpu_workqueue_struct *cwq,
@@ -264,11 +265,13 @@ static void run_workqueue(struct cpu_workqueue_struct *cwq)
 static int worker_thread(void *__cwq)
 {
         struct cpu_workqueue_struct *cwq = __cwq;
+        BUG_ON(cwq->thread->pid == 0);
         for (;;) {
                 //run_workqueue(cwq);
                 run_workqueue(cwq);
-                extern do_sleep(int);
-                do_sleep(3);
+                //extern do_sleep(int);
+                //do_sleep(3);
+                __ucore_wait_self();
         }
 
         return 0;

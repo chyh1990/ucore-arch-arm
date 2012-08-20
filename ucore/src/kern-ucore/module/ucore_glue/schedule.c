@@ -25,6 +25,7 @@
 #include <linux/completion.h>
 #include <linux/wait.h>
 
+#include "ucore_helper.h"
 
 #define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
 //#define _TODO_()

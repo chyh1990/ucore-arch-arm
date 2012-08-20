@@ -23,6 +23,8 @@
 #include <linux/completion.h>
 #include <linux/wakelock.h>
 
+#include "ucore_helper.h"
+
 #define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
 
 extern int __ucore_kernel_thread(int (*fn)(void *), const char* name, void *arg, u32 clone_flags);

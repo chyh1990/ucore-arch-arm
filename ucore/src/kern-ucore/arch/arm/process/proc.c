@@ -76,6 +76,10 @@ extern void forkrets(struct trapframe*tf);
 
 void switch_to(struct context *from, struct context *to);
 
+void tls_switch(struct proc_struct *proc) {
+		asm("mcr p15, 0, %0, c13, c0, 3"::"r"(proc->tls_pointer));
+}
+
 static void proc_signal_init(struct proc_signal* ps)
 {
 		sigset_initwith(ps->pending.signal, 0);
@@ -119,6 +123,8 @@ alloc_proc(void) {
         proc->tid = -1;
         proc->gid = -1;
         proc_signal_init(&proc->signal_info);
+
+		proc->tls_pointer = NULL;
     }
     return proc;
 }

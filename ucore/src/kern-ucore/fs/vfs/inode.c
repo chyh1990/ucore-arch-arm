@@ -30,6 +30,9 @@ inode_init(struct inode *node, const struct inode_ops *ops, struct fs *fs) {
     atomic_set(&(node->ref_count), 0);
     atomic_set(&(node->open_count), 0);
     node->in_ops = ops, node->in_fs = fs;
+
+	list_init(&(node->mapped_addr_list));
+
     vop_ref_inc(node);
 }
 

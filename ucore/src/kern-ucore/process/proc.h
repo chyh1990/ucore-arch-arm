@@ -67,6 +67,8 @@ struct proc_struct {
   struct fs_struct *fs_struct;                // the file related info(pwd, files_count, files_array, fs_semaphore) of process
 
   struct proc_signal signal_info;
+
+  void *tls_pointer;
 };
 
 struct linux_timespec {
@@ -134,6 +136,9 @@ int do_linux_waitpid(int pid, int *code_store);
 /* Implemented by archs */
 struct proc_struct * alloc_proc(void);
 void switch_to(struct context *from, struct context *to);
+
+void tls_switch(struct proc_struct *proc);
+
 void de_thread_arch_hook (struct proc_struct *proc);
 int copy_thread(uint32_t clone_flags, struct proc_struct *proc,
     uintptr_t user_stack, struct trapframe *tf);

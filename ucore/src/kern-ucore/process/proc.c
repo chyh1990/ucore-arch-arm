@@ -185,6 +185,9 @@ proc_run(struct proc_struct *proc) {
             pls_write(current, proc);
             load_rsp0(next->kstack + KSTACKSIZE);
             mp_set_mm_pagetable(next->mm);
+
+			// for tls switch
+			tls_switch(next);
             switch_to(&(prev->context), &(next->context));
         }
         local_intr_restore(intr_flag);
@@ -1749,6 +1752,74 @@ do_munmap(uintptr_t addr, size_t len) {
     }
     unlock_mm(mm);
     return ret;
+}
+
+/* porting from the previous work */
+int
+do_mprotect(void *addr, size_t len, int prot) {
+	
+/*	return 0; */
+
+
+	struct mm_struct *mm = current->mm;
+	assert(mm != NULL);
+	if(len == 0) {
+		return -E_INVAL;
+	}
+	uintptr_t start = ROUNDDOWN(addr, PGSIZE);
+	uintptr_t end = ROUNDUP(addr + len, PGSIZE);
+
+	int ret = -E_INVAL;
+	lock_mm(mm);
+	
+	while(1) {
+		struct vma_struct *vma = find_vma(mm, start);
+		uintptr_t last_end;
+		if(vma != NULL) {
+			last_end = vma->vm_end;
+		}
+		if(vma == NULL) {
+			goto out;
+		} else if(vma->vm_start == start && vma->vm_end == end) {
+			if(prot & PROT_WRITE) {
+				vma->vm_flags |= VM_WRITE;
+			} else {
+				vma->vm_flags &= ~VM_WRITE;
+			}
+		} else {
+			uintptr_t this_end = (end <= vma->vm_end) ? end : vma->vm_end;
+			uintptr_t this_start = (start >= vma->vm_start) ? start : vma->vm_start;
+
+			struct mapped_file_struct mfile = vma->mfile;
+			mfile.offset += this_start - vma->vm_start;
+			uint32_t flags = vma->vm_flags;
+			if((ret = mm_unmap_keep_pages(mm, this_start, this_end - this_start)) != 0) {
+				goto out;
+			}
+			if(prot & PROT_WRITE) {
+				flags |= VM_WRITE;
+			} else {
+				flags &= ~VM_WRITE;
+			}
+			if((ret = mm_map(mm, this_start, this_end - this_start, flags, &vma)) != 0) {
+				goto out;
+			}
+			vma->mfile = mfile;
+			if(vma->mfile.file != NULL) {
+				filemap_open(mfile.file);
+			}
+		}
+		
+		ret = 0;
+
+		if(end <= last_end)
+			break;
+		start = last_end;
+	}
+
+out:
+	unlock_mm(mm);
+	return ret;
 }
 
 // do_shmem - create a share memory with addr, len, flags(VM_READ/M_WRITE/VM_STACK)

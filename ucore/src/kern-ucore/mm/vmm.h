@@ -15,6 +15,11 @@
 //pre define
 struct mm_struct;
 
+struct mapped_file_struct {
+	struct file *file;
+	off_t offset;
+};
+
 // the virtual continuous memory area(vma)
 struct vma_struct {
     struct mm_struct *vm_mm; // the set of vma using the same PDT 
@@ -25,6 +30,7 @@ struct vma_struct {
     list_entry_t list_link;  // linear list link which sorted by start addr of vma
     struct shmem_struct *shmem;
     size_t shmem_off;
+	struct mapped_file_struct mfile;
 };
 
 #define le2vma(le, member)                  \
@@ -38,6 +44,8 @@ struct vma_struct {
 #define VM_EXEC                 0x00000004
 #define VM_STACK                0x00000008
 #define VM_SHARE                0x00000010
+
+#define VM_ANONYMOUS			0x00000020
 /* must the same as Linux */
 #define VM_IO           0x00004000
 
@@ -47,6 +55,12 @@ struct vma_struct {
 #define MAP_TYPE        0x0f            /* Mask for type of mapping */
 #define MAP_FIXED       0x10            /* Interpret addr exactly */
 #define MAP_ANONYMOUS   0x20            /* don't use a file */
+
+#define MAP_STACK		0x20000
+
+
+
+
 
 #define PROT_READ       0x1             /* page can be read */
 #define PROT_WRITE      0x2             /* page can be written */
@@ -100,6 +114,9 @@ int mm_map(struct mm_struct *mm, uintptr_t addr, size_t len, uint32_t vm_flags,
 int mm_map_shmem(struct mm_struct *mm, uintptr_t addr, uint32_t vm_flags,
         struct shmem_struct *shmem, struct vma_struct **vma_store);
 int mm_unmap(struct mm_struct *mm, uintptr_t addr, size_t len);
+
+int mm_unmap_keep_pages(struct mm_struct *mm, uintptr_t addr, size_t len);
+
 int dup_mmap(struct mm_struct *to, struct mm_struct *from);
 void exit_mmap(struct mm_struct *mm);
 uintptr_t get_unmapped_area(struct mm_struct *mm, size_t len);

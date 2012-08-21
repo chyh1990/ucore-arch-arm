@@ -35,6 +35,16 @@ asm volatile(" MCR p15,0,%0,c7,c5,0"::"r"(c7format):"memory" ); /* flush D-cache
 }
 
 
+uint32_t
+do_set_tls(struct user_tls_desc *tlsp) {
+	void *tp = (void*)tlsp;
+	pls_read(current)->tls_pointer = tp;
+	asm("mcr p15, 0, %0, c13, c0, 3"::"r"(tp));
+	kprintf("set tls: 0x%08x\n", tp);
+	return 0;
+}
+
+
 static Pagetable masterPT = {0,0,0,MASTER,0};
 static struct memmap masterMemmap = {1,
   { 

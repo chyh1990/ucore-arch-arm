@@ -25,6 +25,8 @@ int sysfile_dup(int fd1, int fd2);
 int sysfile_pipe(int *fd_store);
 int sysfile_mkfifo(const char *name, uint32_t open_flags);
 
+//int sysfile_stat64(const char *path, struct linux_stat64 *stat);
+
 int sysfile_ioctl(int fd, unsigned int cmd, unsigned long arg);
 void *sysfile_linux_mmap2(void *addr, size_t len, int prot, int flags, int fd, size_t pgoff);
 

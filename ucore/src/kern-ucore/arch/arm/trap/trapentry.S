@@ -159,11 +159,11 @@ __dattrap:
 	mov		r6, r14
 	mrs 	r7, spsr
 	mrc     p15, 0, r4, c5, c0, 0           @ get FSR
-	mrc     p15, 0, r5, c6, c0, 0           @ get FAR
-	ldreq   r7, [r6]                        @ read aborted ARM instruction
-	bic     r4, r4, #1 << 11 | 1 << 10      @ clear bits 11 and 10 of FSR
-	tst     r7, #1 << 20                    @ check write
-	orreq   r4, r4, #1 << 11
+#mrc     p15, 0, r5, c6, c0, 0           @ get FAR
+#	ldreq   r7, [r6]                        @ read aborted ARM instruction
+#	bic     r4, r4, #1 << 11 | 1 << 10      @ clear bits 11 and 10 of FSR
+#	tst     r7, #1 << 20                    @ check write
+#	orreq   r4, r4, #1 << 11
 	
 	# Error code: modified fsr
 	stmfd sp!, {r4}

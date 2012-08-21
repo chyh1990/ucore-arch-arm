@@ -76,6 +76,7 @@ sys_kill(uint32_t arg[]) {
 
 static uint32_t
 sys_getpid(uint32_t arg[]) {
+	kprintf("getpid -> %d\n", pls_read(current)->pid);
     return pls_read(current)->pid;
 }
 
@@ -350,7 +351,7 @@ sys_linux_mmap(uint32_t arg[])
   size_t len = arg[1];
   int fd = (int)arg[2];
   size_t off = (size_t)arg[3];
-  return (uint32_t)sysfile_linux_mmap2(addr, len, 0,0,fd, off);
+  return (uint32_t)sysfile_linux_mmap2(addr, len, 0, 0, fd, off);
 }
 
 static uint32_t
@@ -435,6 +436,7 @@ static uint32_t __sys_linux_ioctl(uint32_t args[])
 static uint32_t __sys_linux_mmap2(uint32_t arg[])
 {
   //TODO
+	kprintf("mmap call!\n");
   void *addr = (void*)arg[0];
   size_t len = arg[1];
   int prot = (int)arg[2];
@@ -455,6 +457,7 @@ static uint32_t __sys_linux_mmap2(uint32_t arg[])
     kprintf("__sys_linux_mmap2 ret=%08x\n", addr);
     return addr;
   }else{
+	kprintf("another branch\n");
     return (uint32_t)sysfile_linux_mmap2(addr, len, prot, flags,fd, off);
   }
 }
@@ -469,6 +472,15 @@ static uint32_t
 __sys_linux_fcntl(uint32_t arg[])
 {
   return -E_INVAL;
+}
+
+static uint32_t
+__sys_linux_mprotect(uint32_t arg[])
+{
+	void *addr = (void*)arg[0];
+	size_t len = arg[1];
+	int prot = arg[2];
+	return do_mprotect(addr, len, prot);
 }
 
 static uint32_t 
@@ -641,10 +653,42 @@ __sys_linux_gettimeofday(uint32_t arg[])
   return ucore_gettimeofday(tv,tz);
 }
 
+static uint32_t
+__sys_linux_gettid(uint32_t arg[])
+{
+	return pls_read(current)->tid;
+}
+
+static uint32_t
+__sys_arm_linux_set_tls(uint32_t arg[])
+{
+	struct user_tls_desc *tlsp = (struct user_tls_desc*)arg[0];
+	return do_set_tls(tlsp);
+}
+
+static uint32_t
+__sys_linux_stat64(uint32_t arg[])
+{
+	char *path = (char*)arg[0];
+	struct linux_stat64 *filestat = arg[1];
+	return sysfile_stat64(path, filestat);
+}
+
+static uint32_t 
+__sys_linux_madvise(uint32_t arg[])
+{
+	void *addr = (void*)arg[0];
+	size_t len = arg[1];
+	int advice = arg[2];
+	return do_madvise(addr, len, advice);
+}
+
 
 
 #define __UCORE_SYSCALL(x) [__NR_##x]  sys_##x
 #define __LINUX_SYSCALL(x) [__NR_##x]  __sys_linux_##x
+
+#define __ARM_LINUX_SYSCALL(x) [__ARM_NR_##x] __sys_arm_linux_##x
 
 #define sys_dup2 sys_dup
 
@@ -723,7 +767,12 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __LINUX_SYSCALL(getgid32),
   __LINUX_SYSCALL(getegid32),
   __LINUX_SYSCALL(gettimeofday),
+  __LINUX_SYSCALL(mprotect),
+  __LINUX_SYSCALL(gettid),
 
+  __ARM_LINUX_SYSCALL(set_tls),
+  __LINUX_SYSCALL(stat64),
+  __LINUX_SYSCALL(madvise),
 };
 
 #define NUM_LINUX_SYSCALLS        ((sizeof(_linux_syscalls)) / (sizeof(_linux_syscalls[0])))

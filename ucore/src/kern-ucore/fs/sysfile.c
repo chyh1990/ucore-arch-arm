@@ -43,6 +43,7 @@ sysfile_open(const char *__path, uint32_t open_flags) {
     if ((ret = copy_path(&path, __path)) != 0) {
         return ret;
     }
+	kprintf("open path: %s\n", path);
     ret = file_open(path, open_flags);
     kfree(path);
     return ret;
@@ -225,6 +226,43 @@ sysfile_linux_fstat(int fd, struct linux_stat __user *buf)
   return ret;
 }
 
+int
+sysfile_linux_fstat64(int fd, struct linux_stat64 __user *buf)
+{
+  struct mm_struct *mm = pls_read(current)->mm;
+  int ret;
+  struct stat __local_stat, *kstat = &__local_stat;
+  if ((ret = file_fstat(fd, kstat)) != 0) {
+    return -1;
+  }
+  struct linux_stat64 *kls = kmalloc(sizeof(struct linux_stat64));
+  if(!kls){
+    return -1;
+  }
+  memset(kls, 0, sizeof(struct linux_stat64));
+  kls->st_ino = 1;
+  /* ucore never check access permision */
+  kls->st_mode = kstat->st_mode|0777;
+  kls->st_nlink = kstat->st_nlinks;
+  kls->st_blksize = 512;
+  kls->st_blocks = kstat->st_blocks;
+  kls->st_size = kstat->st_size;
+
+  ret = 0;
+  lock_mm(mm);
+  {
+	kprintf("stat64 size: %d\n", sizeof(struct linux_stat64));
+    if (!copy_to_user(mm, buf, kls, sizeof(struct linux_stat64))) {
+      ret = -1;
+    }
+  }
+  unlock_mm(mm);
+  kfree(kls);
+  return ret;
+}
+
+
+
   int 
 sysfile_linux_stat(const char __user *fn,struct linux_stat* __user buf)
 {
@@ -235,6 +273,18 @@ sysfile_linux_stat(const char __user *fn,struct linux_stat* __user buf)
   sysfile_close(fd);
 
   return ret;
+}
+
+int sysfile_stat64(const char __user *path, struct linux_stat64* __user buf)
+{
+	int fd = sysfile_open(path, O_RDONLY);
+	if(fd < 0)
+		return -1;
+	int ret = sysfile_linux_fstat64(fd, buf);
+
+	sysfile_close(fd);
+
+	return ret;
 }
 
 int
@@ -469,15 +519,18 @@ int sysfile_ioctl(int fd, unsigned int cmd, unsigned long arg)
   return linux_devfile_ioctl(fd, cmd, arg);
 }
 
+
 void* sysfile_linux_mmap2(void *addr, size_t len, int prot, int flags,
       int fd, size_t pgoff)
 {
   if (!file_testfd(fd, 1, 0)) {
     return MAP_FAILED;
   }
-  if(!__is_linux_devfile(fd)){
-    return MAP_FAILED;
+  if(__is_linux_devfile(fd)){
+	return linux_devfile_mmap2(addr, len, prot, flags, fd, pgoff);
+  } else {
+	return linux_regfile_mmap2(addr, len, prot, flags, fd, pgoff);
   }
-  return linux_devfile_mmap2(addr, len, prot, flags, fd, pgoff);
+  return MAP_FAILED;
 }
 

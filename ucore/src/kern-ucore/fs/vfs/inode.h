@@ -47,6 +47,8 @@ struct inode {
     atomic_t open_count;
     struct fs *in_fs;
     const struct inode_ops *in_ops;
+
+	list_entry_t mapped_addr_list;
 };
 
 #define __in_type(type)                                             inode_type_##type##_info

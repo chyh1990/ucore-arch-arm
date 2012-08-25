@@ -1,0 +1,83 @@
+Build ucore for goldfish
+
+A setup building environment
+----------------------------------------------
+0 download java 7 from Oracle  http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html. now is  jdk-7u5-linux-x64.tar.gz. unzip it to /opt.
+Now, java, javac, etc. will be in /opt/jdk1.7.0_05/bin
+set env variable in /etc/profile
+------------------------------------
+export JAVA_HOME=/opt/jdk1.7.0_05
+export JRE_HOME=${JAVA_HOME}/jre
+export CLASSPATH=.:${JAVA_HOME}/lib:$JRE_HOME/lib:$CLASSPATH 
+export PATH=$PATH:$JAVA_HOME/bin
+-------------------------------------
+1 setup arm-linux-gcc using arm-linux-gcc-4.4.3-20100728.tar.gz, and unzip it to /opt . 
+Now, arm-linux-gcc,etc. will be in /opt/FriendlyARM/toolschain/4.4.3/bin
+
+
+2 setup android-SDK
+Download android-sdk_r20-linux.tgz from http://developer.android.com/sdk/index.html
+unzip it to /opt. Now android, emulator-arm, etc. wil be in /opt/android-sdk-linux-r20/tools
+
+set env variable in ~/.bashrc
+------------------------------
+export PATH=/home/devel/bin:$PATH:/opt/FriendlyARM/toolschain/4.4.3/bin:/opt/android-sdk-linux-r20/tools
+------------------------------
+
+$ android  //download some more SDKs. such as Android SDK Tools, Android SDK Platform-tools, SDK Platform, ARM EABI v7a System Image
+$ android list  //find avalable targets
+
+Available Android targets:
+----------
+id: 1 or "android-16"
+     Name: Android 4.1
+     Type: Platform
+     API level: 16
+     Revision: 2
+     Skins: QVGA, WXGA800, WXGA720, WSVGA, WQVGA400, WXGA800-7in, WVGA854, WVGA800 (default), HVGA, WQVGA432
+     ABIs : armeabi-v7a
+Available Android Virtual Devices:
+    Name: tester
+    Path: /home2/chy/.android/avd/tester.avd
+  Target: Android 4.1 (API level 16)
+     ABI: armeabi-v7a
+    Skin: WVGA800
+
+//create a AVD, will be in ~/.android/avd/tester.avd/
+$ android create avd --name tester --target 1
+
+
+3 install related tools from ubuntu 12.04 ,and setup libGL.so
+
+$ sudo apt-get install git-core gnupg flex bison gperf build-essential \
+  zip curl libc6-dev libncurses5-dev x11proto-core-dev \
+  libx11-dev libreadline6-dev libgl1-mesa-glx \
+  libgl1-mesa-dev g++-multilib mingw32  tofrodos \
+  python-markdown libxml2-utils xsltproc zlib1g-dev
+$ sudo ln -s /usr/lib/i386-linux-gnu/mesa/libGL.so.1 /usr/lib/i386-linux-gnu/libGL.so
+
+-----------------------------------------------------------------------
+B build ucore for goldfish
+------------------------------------------------------------------------
+
+4 get newest ucore from github
+$ git clone git://github.com/chyh1990/ucore-arch-arm.git
+
+5 compile ucore
+
+$ cd ucore; cp config.goldfishv7 .config ; make menuconfig
+
+NOTICE:
+RAMDISK_FILE="/home2/chy/develop/github/chyh/ucore-arch-arm/ucore/sfs.img"
+LIBGCC_PATH="/opt/FriendlyARM/toolschain/4.4.3/lib/gcc/arm-none-linux-gnueabi/4.4.3/"
+
+YOU should save the config
+
+$ make sfsimg
+YOU should get sfs.img in 
+$ make 
+
+
+6 run ucore for goldfish
+$ emulator-arm -avd tester -kernel obj/kernel/kernel-arm.elf -qemu -serial stdio
+

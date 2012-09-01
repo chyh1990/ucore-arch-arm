@@ -262,7 +262,7 @@ kern_init(void) {
   intr_enable();              // enable irq interrupt
 
 #ifdef HAVE_VFP
-  vfp_enable();
+  //vfp_enable();
 #endif
 
 

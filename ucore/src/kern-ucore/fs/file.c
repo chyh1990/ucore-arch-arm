@@ -134,6 +134,17 @@ filemap_dup(struct file *to, struct file *from) {
     filemap_open(to);
 }
 
+void
+filemap_dup_close(struct file *to, struct file *from) {
+	assert(to->status == FD_CLOSED && from->status == FD_CLOSED);
+	to->pos = from->pos;
+	to->readable = from->readable;
+	to->writable = from->writable;
+	struct inode *node = from->node;
+	vop_ref_inc(node), vop_open_inc(node);
+	to->node = node;
+}
+
 static inline int
 fd2file(int fd, struct file **file_store) {
     if (testfd(fd)) {
@@ -151,7 +162,7 @@ fd2file_onfs(int fd, struct fs_struct *fs_struct) {
 	if(testfd(fd)) {
 		assert(fs_struct != NULL && fs_count(fs_struct) > 0);
 		struct file *file = fs_struct->filemap + fd;
-		if(file->status == FD_OPENED && file->fd == fd) {
+		if((file->status == FD_OPENED || file->status == FD_CLOSED) && file->fd == fd) {
 			return file;
 		}
 	} else {

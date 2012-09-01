@@ -586,6 +586,7 @@ remapfile(struct mm_struct *mm, struct proc_struct *proc) {
 	while((le = list_prev(le)) != list) {
 		struct vma_struct *vma = le2vma(le, list_link);
 		if(vma->mfile.file != NULL) {
+			kprintf("remap:0x%08x fd:%d\n", vma->mfile.file, vma->mfile.file->fd);
 			vma_mapfile(vma, vma->mfile.file->fd, vma->mfile.offset, proc->fs_struct);
 		}
 	}

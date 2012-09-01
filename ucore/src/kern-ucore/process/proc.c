@@ -754,10 +754,11 @@ load_icode_read(int fd, void *buf, size_t len, off_t offset) {
 
 // This function is extracted from load_icode().
 static int
-map_ph(int fd, struct proghdr *ph, struct mm_struct *mm, uint32_t bias) {
+map_ph(int fd, struct proghdr *ph, struct mm_struct *mm, uint32_t *pbias) {
 	int ret = 0;
 	struct Page *page;
 	uint32_t vm_flags = 0;
+	uint32_t bias = 0;
 	pte_perm_t perm = 0;
 	ptep_set_u_read(&perm);
 
@@ -765,6 +766,17 @@ map_ph(int fd, struct proghdr *ph, struct mm_struct *mm, uint32_t bias) {
 	if(ph->p_flags & ELF_PF_W) vm_flags |= VM_WRITE;
 	if(ph->p_flags & ELF_PF_R) vm_flags |= VM_READ;
 	if(vm_flags & VM_WRITE) ptep_set_u_write(&perm);
+
+	if(pbias) {
+		bias = *pbias;
+	}
+
+	if(!bias && !ph->p_va) {
+		bias = get_unmapped_area(mm, ph->p_memsz + PGSIZE);
+		bias = ROUNDUP(bias, PGSIZE);
+		if(pbias)
+			*pbias = bias;
+	}
 
 	if((ret = mm_map(mm, ph->p_va + bias, ph->p_memsz, vm_flags, NULL)) != 0) {
 		goto bad_cleanup_mmap;
@@ -873,6 +885,7 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
     uint32_t vm_flags, phnum;
 	uint32_t is_dynamic = 0, interp_idx;
     pte_perm_t perm = 0;
+	uint32_t bias = 0;
     for (phnum = 0; phnum < elf->e_phnum; phnum ++) {
       off_t phoff = elf->e_phoff + sizeof(struct proghdr) * phnum;
 	  /*
@@ -946,13 +959,6 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
         continue ;
       }
 
-	  /*
-		 The first segment with ELF_PT_LOAD property always contains the PHDR segment
-		 */
-	  if(load_address_flag == 0)
-		  load_address = ph->p_va;
-	  ++load_address_flag;
-
       if (ph->p_filesz > ph->p_memsz) {
         ret = -E_INVAL_ELF;
         goto bad_cleanup_mmap;
@@ -966,10 +972,18 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 	  /*
 	  kprintf("normal segment map_ph\n");
 	  */
-	  if((ret = map_ph(fd, ph, mm, 0)) != 0) {
+	  if((ret = map_ph(fd, ph, mm, &bias)) != 0) {
 		kprintf("load address: 0x%08x size: %d\n", ph->p_va, ph->p_memsz);
 		goto bad_cleanup_mmap;
 	  }
+
+	  /*
+		 The first segment with ELF_PT_LOAD property always contains the PHDR segment
+		 */
+	  if(load_address_flag == 0)
+		  load_address = ph->p_va + bias;
+	  ++load_address_flag;
+
 
 
 	  /*********************************************************/
@@ -1060,8 +1074,11 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 
 
 	/* load the dynamic linker */
-	uint32_t bias;
 	if(is_dynamic) {
+		elf->e_entry += bias;
+
+		bias = 0;
+
 		off_t phoff = elf->e_phoff + sizeof(struct proghdr) * interp_idx;
 		/*
 		kprintf("reading phnum: %d\n", interp_idx);
@@ -1114,7 +1131,7 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 				continue;
 			}
 			
-			assert((ret = map_ph(interp_fd, interp_ph, mm, bias)) == 0);
+			assert((ret = map_ph(interp_fd, interp_ph, mm, &bias)) == 0);
 		}
 
 		/*
@@ -1157,6 +1174,10 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
     set_pgdir(current, mm->pgdir);
     mm->lapic = pls_read(lapic_id);
     mp_set_mm_pagetable(mm);
+
+	if(!is_dynamic) {
+		real_entry += bias;
+	}
 
     if (init_new_context_dynamic (current, elf, argc, kargv, envc, kenvp, 
 							is_dynamic, real_entry, load_address, bias) < 0)

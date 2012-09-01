@@ -151,8 +151,6 @@ pgfault_handler(struct trapframe *tf) {
   //kprintf("rrr %08x   %08x\n", error_code, *(volatile uint32_t*)(VPT_BASE+4*0xe00));
   uint32_t ttt = 0;
   asm volatile ("mrc p15, 0, %0, c5,c0,0":"=r"(ttt));
-  kprintf("#### %08x\n\n", ttt);
-  print_pgdir(kprintf);
   return do_pgfault(mm, error_code, far());
 }
 

@@ -290,7 +290,6 @@ init_new_context_dynamic (struct proc_struct *proc, struct elfhdr *elf, int argc
   *esp++ = 0;
   for(i=0;i<envc;i++)
     *esp++ = strcpy((char *)(envbase + i * PGSIZE), kenvp[i]);
-  kprintf("env:%d\nc", envc);
   *esp++ = 0;
 
   if(is_dynamic) {
@@ -309,7 +308,9 @@ init_new_context_dynamic (struct proc_struct *proc, struct elfhdr *elf, int argc
 
   //*(int *)stacktop = argc;
 
+  /*
   kprintf("stacktop: 0x%08x\n", stacktop);
+  */
 
   struct trapframe *tf = proc->tf;
   memset(tf, 0, sizeof(struct trapframe));

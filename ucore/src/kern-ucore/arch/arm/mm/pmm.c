@@ -40,7 +40,9 @@ do_set_tls(struct user_tls_desc *tlsp) {
 	void *tp = (void*)tlsp;
 	pls_read(current)->tls_pointer = tp;
 	asm("mcr p15, 0, %0, c13, c0, 3"::"r"(tp));
+	/*
 	kprintf("set tls: 0x%08x\n", tp);
+	*/
 	return 0;
 }
 

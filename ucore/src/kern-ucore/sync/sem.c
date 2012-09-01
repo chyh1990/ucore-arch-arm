@@ -54,8 +54,17 @@ void
 sem_init(semaphore_t *sem, int value) {
     sem->value = value;
     sem->valid = 1;
+	sem->addr = 0;// -1; // Not for futex
     set_sem_count(sem, 0);
     wait_queue_init(&(sem->wait_queue));
+}
+
+void sem_init_with_address(semaphore_t *sem, uintptr_t addr, int value) {
+	sem->value = value;
+	sem->addr = addr;
+	sem->valid = 1;
+	set_sem_count(sem, 0);
+	wait_queue_init(&(sem->wait_queue));
 }
 
 static void __attribute__ ((noinline)) __up(semaphore_t *sem, uint32_t wait_state) {
@@ -160,6 +169,24 @@ sem_queue_destroy(sem_queue_t *sem_queue) {
 }
 
 sem_undo_t *
+semu_create_with_address(semaphore_t *sem, uintptr_t addr, int value) {
+	sem_undo_t *semu;
+	if((semu = kmalloc(sizeof(sem_undo_t))) != NULL) {
+		if(sem == NULL && (sem = kmalloc(sizeof(semaphore_t))) != NULL) {
+			sem_init_with_address(sem, addr, value);
+		}
+		if(sem != NULL) {
+			sem_count_inc(sem);
+			semu->sem = sem;
+			return semu;
+		}
+		kfree(semu);
+	}
+	return NULL;
+}
+
+
+sem_undo_t *
 semu_create(semaphore_t *sem, int value) {
     sem_undo_t *semu;
     if ((semu = kmalloc(sizeof(sem_undo_t))) != NULL) {
@@ -233,6 +260,42 @@ semu_list_search(list_entry_t *list, sem_t sem_id) {
     return NULL;
 }
 
+
+static int
+semu_search_with_addr(list_entry_t *list, uintptr_t addr) {
+	list_entry_t *le = list;
+	while((le = list_next(le)) != list) {
+		sem_undo_t *semu = le2semu(le, semu_link);
+		if(semu->sem->addr == addr)
+			return sem2semid(semu->sem);
+	}
+	return -1;
+}
+
+static int
+ipc_sem_find_or_init_with_address(uintptr_t addr ,int value, int create) {
+	assert(current->sem_queue != NULL);
+
+	sem_queue_t *sem_queue = pls_read(current)->sem_queue;
+	down(&(sem_queue->sem));
+	sem_t sem_id = semu_search_with_addr(&(sem_queue->semu_list), addr);
+	up(&(sem_queue->sem));
+	if(sem_id != -1)
+		return sem_id;
+
+	if(!create)
+		return -E_NO_MEM;
+	sem_undo_t *semu;
+	if((semu = semu_create_with_address(NULL, addr, value)) == NULL) {
+		return -E_NO_MEM;
+	}
+
+	down(&(sem_queue->sem));
+	list_add_after(&(sem_queue->semu_list), &(semu->semu_link));
+	up(&(sem_queue->sem));
+	return sem2semid(semu->sem);
+}
+
 int
 ipc_sem_init(int value) {
     assert(current->sem_queue != NULL);
@@ -263,6 +326,31 @@ ipc_sem_post(sem_t sem_id) {
     }
     return -E_INVAL;
 }
+
+
+static int
+ipc_sem_post_max(sem_t sem_id, int max) {
+	assert(pls_read(current)->sem_queue != NULL);
+
+	sem_undo_t *semu;
+	sem_queue_t *sem_queue = pls_read(current)->sem_queue;
+	down(&(sem_queue->sem));
+	semu = semu_list_search(&(sem_queue->semu_list), sem_id);
+	up(&(sem_queue->sem));
+	if(semu != NULL) {
+		int i;
+		int ret = 0;
+		for(i = 0; i < max; ++i) {
+			if(wait_queue_empty(&(semu->sem->wait_queue)))
+				break;
+			usem_up(semu->sem);
+			++ret;
+		}
+		return ret;
+	}
+	return -E_INVAL;
+}
+
 
 int
 ipc_sem_wait(sem_t sem_id, unsigned int timeout) {
@@ -333,5 +421,33 @@ ipc_sem_get_value(sem_t sem_id, int *value_store) {
         unlock_mm(mm);
     }
     return ret;
+}
+
+#define FUTEX_WAIT		0
+#define FUTEX_WAKE		1
+
+int
+do_futex(uintptr_t uaddr, int op, int val) {
+	int ret = 0;
+	/*
+	kprintf("do_futex!!!!!!!!\n");
+	*/
+	if(FUTEX_WAIT == op) {
+		if(*((int*)uaddr) != val) {
+			panic("FUTEX_WAIT: unexpected val, *uaddr = %d, val = %d\n", *((int*)uaddr), val);
+		}
+		sem_t sem_id = ipc_sem_find_or_init_with_address(uaddr, 0, 1);
+
+		ret = ipc_sem_wait(sem_id, 100000);
+	} else if(FUTEX_WAKE == op) {
+		sem_t sem_id = ipc_sem_find_or_init_with_address(uaddr, val, 0);
+		if(-E_NO_MEM == sem_id) {
+		} else {
+			ret = ipc_sem_post_max(sem_id, val);
+		}
+	} else {
+		panic("unexpected futex op: %d\n", op);
+	}
+	return ret;
 }
 

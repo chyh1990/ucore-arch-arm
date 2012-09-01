@@ -43,7 +43,9 @@ sysfile_open(const char *__path, uint32_t open_flags) {
     if ((ret = copy_path(&path, __path)) != 0) {
         return ret;
     }
+	/*
 	kprintf("open path: %s\n", path);
+	*/
     ret = file_open(path, open_flags);
     kfree(path);
     return ret;
@@ -251,7 +253,9 @@ sysfile_linux_fstat64(int fd, struct linux_stat64 __user *buf)
   ret = 0;
   lock_mm(mm);
   {
+	/*
 	kprintf("stat64 size: %d\n", sizeof(struct linux_stat64));
+	*/
     if (!copy_to_user(mm, buf, kls, sizeof(struct linux_stat64))) {
       ret = -1;
     }

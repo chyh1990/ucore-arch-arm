@@ -76,7 +76,6 @@ sys_kill(uint32_t arg[]) {
 
 static uint32_t
 sys_getpid(uint32_t arg[]) {
-	kprintf("getpid -> %d\n", pls_read(current)->pid);
     return pls_read(current)->pid;
 }
 
@@ -436,17 +435,25 @@ static uint32_t __sys_linux_ioctl(uint32_t args[])
 static uint32_t __sys_linux_mmap2(uint32_t arg[])
 {
   //TODO
+	/*
 	kprintf("mmap call!\n");
+	*/
   void *addr = (void*)arg[0];
   size_t len = arg[1];
   int prot = (int)arg[2];
   int flags = (int)arg[3];
   int fd = (int)arg[4];
   size_t off = (size_t)arg[5];
+  /*
   kprintf("TODO __sys_linux_mmap2 addr=%08x len=%08x prot=%08x flags=%08x fd=%d off=%08x\n",
       addr,len,prot,flags, fd, off);
+	*/
   if(fd == -1 || flags & MAP_ANONYMOUS){
   //print_trapframe(pls_read(current)->tf);
+	if(flags & MAP_FIXED) {
+		return linux_regfile_mmap2(addr, len, prot, flags, fd, off);
+	}
+
     uint32_t ucoreflags = 0;
     if(prot & PROT_WRITE)
       ucoreflags |= MMAP_WRITE;
@@ -454,10 +461,14 @@ static uint32_t __sys_linux_mmap2(uint32_t arg[])
     //kprintf("@@@ ret=%d %e %08x\n", ret,ret, addr);
     if(ret)
       return MAP_FAILED;
+	/*
     kprintf("__sys_linux_mmap2 ret=%08x\n", addr);
+	*/
     return addr;
   }else{
+	/*
 	kprintf("another branch\n");
+	*/
     return (uint32_t)sysfile_linux_mmap2(addr, len, prot, flags,fd, off);
   }
 }
@@ -486,7 +497,10 @@ __sys_linux_mprotect(uint32_t arg[])
 static uint32_t 
 __sys_linux_brk(uint32_t arg[]){
 	uintptr_t brk = (uintptr_t)arg[0];
-	return do_linux_brk(brk);
+	/*
+	kprintf("**************brk:0x%08x\n", brk);
+	*/
+	return do_brk(brk);
 }
 
 static uint32_t
@@ -683,6 +697,34 @@ __sys_linux_madvise(uint32_t arg[])
 	return do_madvise(addr, len, advice);
 }
 
+static uint32_t
+__sys_linux_futex(uint32_t arg[])
+{
+	uintptr_t uaddr = (uintptr_t)arg[0];
+	int op = arg[1] & 127;
+	int val = arg[2];
+	return do_futex(uaddr, op, val);
+}
+
+static uint32_t 
+__sys_linux_clock_gettime(uint32_t arg[])
+{
+	struct linux_timespec *time = (struct linux_timespec*)arg[1];
+	return do_clock_gettime(time);
+}
+
+static uint32_t
+__sys_linux_fstat64(uint32_t args[])
+{
+  int fd = (int)args[0];
+  struct linux_stat64 *st = (struct linux_stat*)args[1];
+  /*
+  kprintf("TODO __sys_linux_fstat64, %d %d\n", fd, sizeof(struct linux_stat));
+  */
+  return sysfile_linux_fstat64(fd, st);
+}
+
+
 
 
 #define __UCORE_SYSCALL(x) [__NR_##x]  sys_##x
@@ -773,6 +815,9 @@ static uint32_t (*_linux_syscalls[])(uint32_t arg[]) = {
   __ARM_LINUX_SYSCALL(set_tls),
   __LINUX_SYSCALL(stat64),
   __LINUX_SYSCALL(madvise),
+  __LINUX_SYSCALL(futex),
+  __LINUX_SYSCALL(clock_gettime),
+  __LINUX_SYSCALL(fstat64),
 };
 
 #define NUM_LINUX_SYSCALLS        ((sizeof(_linux_syscalls)) / (sizeof(_linux_syscalls[0])))

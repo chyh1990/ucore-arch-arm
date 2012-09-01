@@ -206,28 +206,40 @@ vma_compare(rb_node *node1, rb_node *node2) {
 
 void
 vma_mapfile(struct vma_struct *vma, int fd, off_t off, struct fs_struct *fs_struct) {
+
 	if(fs_struct == NULL) {
 		fs_struct = pls_read(current)->fs_struct;
 	}
+
+	kprintf("mapfile:0x%08x fs_struct:0x%08x\n", vma->mfile.file, fs_struct);
+
 	vma->mfile.offset = off;
 	assert((vma->mfile.file = fd2file_onfs(fd, fs_struct)) != NULL);
-	filemap_open(vma->mfile.file);
+	filemap_acquire(vma->mfile.file);
 }
 
 static void
 vma_unmapfile(struct vma_struct *vma) {
+	/*
+	kprintf("un_mapfile:0x%08x\n", vma->mfile.file);
+	*/
+
 	if(vma->mfile.file != NULL) {
-		filemap_close(vma->mfile.file);
+		filemap_release(vma->mfile.file);
 	}
 	vma->mfile.file = NULL;
 }
 
 static void
 vma_copymapfile(struct vma_struct *to, struct vma_struct *from) {
+	/*
+	kprintf("copy_mapfile:0x%08x\n", from->mfile.file);
+	*/
+
 	to->mfile = from->mfile;
 	if(to->mfile.file != NULL) {
 		to->mfile.offset += to->vm_start - from->vm_start;
-		filemap_open(to->mfile.file);
+		filemap_acquire(to->mfile.file);
 	}
 }
 
@@ -567,7 +579,8 @@ dup_mmap(struct mm_struct *to, struct mm_struct *from) {
   return 0;
 }
 
-int remapfile(struct mm_struct *mm, struct proc_struct *proc) {
+int 
+remapfile(struct mm_struct *mm, struct proc_struct *proc) {
 	assert(mm != NULL);
 	list_entry_t *list = &(mm->mmap_list), *le = list;
 	while((le = list_prev(le)) != list) {
@@ -823,7 +836,6 @@ int
 do_pgfault(struct mm_struct *mm, machine_word_t error_code, uintptr_t addr) {
   struct proc_struct *current = pls_read(current);
 
-  kprintf("@@@@@@@   0x%08x\n", error_code);
   if (mm == NULL) {
     assert(current != NULL);
     /* Chen Yuheng 
@@ -904,10 +916,10 @@ do_pgfault(struct mm_struct *mm, machine_word_t error_code, uintptr_t addr) {
 		struct file *file = vma->mfile.file;
 		off_t old_pos = file->pos, new_pos = vma->mfile.offset + addr - vma->vm_start;
 
-//#ifdef SHARE_MAPPED_FILE
+#ifdef SHARE_MAPPED_FILE
 		struct mapped_addr *maddr = find_maddr(file, new_pos, NULL);
 		if(maddr == NULL) {
-//#endif // SHARE_MAPPED_FILE
+#endif // SHARE_MAPPED_FILE
 			struct Page *page;
 			if((page = alloc_page()) == NULL) {
 				assert(false);
@@ -925,7 +937,7 @@ do_pgfault(struct mm_struct *mm, machine_word_t error_code, uintptr_t addr) {
 				goto failed;
 			}
 
-//#ifdef SHARE_MAPPED_FILE
+#ifdef SHARE_MAPPED_FILE
 			if((maddr = (struct mapped_addr*)kmalloc(sizeof(struct mapped_addr))) != NULL) {
 				maddr->page = page;
 				maddr->offset = new_pos;
@@ -938,7 +950,7 @@ do_pgfault(struct mm_struct *mm, machine_word_t error_code, uintptr_t addr) {
 		} else{
 			page_insert_pte(mm->pgdir, maddr->page, ptep, addr, perm & ~PTE_W);
 		}
-//#endif //SHARE_MAPPED_FILE
+#endif //SHARE_MAPPED_FILE
 
 	} else if (!(vma->vm_flags & VM_SHARE)) {
       if (pgdir_alloc_page(mm->pgdir, addr, perm) == NULL) {

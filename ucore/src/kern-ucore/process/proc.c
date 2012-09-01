@@ -337,6 +337,12 @@ copy_mm(uint32_t clone_flags, struct proc_struct *proc) {
     }
     unlock_mm(oldmm);
 
+	lock_mm(mm);
+	{
+		ret = remapfile(mm, proc);
+	}
+	unlock_mm(mm);
+
     if (ret != 0) {
         goto bad_dup_cleanup_mmap;
     }
@@ -594,6 +600,8 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
       goto bad_fork_cleanup_sighand;
     }
 
+	proc->tls_pointer = current->tls_pointer;
+
     bool intr_flag;
     local_intr_save(intr_flag);
     {
@@ -818,7 +826,9 @@ map_ph(int fd, struct proghdr *ph, struct mm_struct *mm, uint32_t bias) {
 normal_exit:
 	return 0;
 bad_cleanup_mmap:
+	/*
 	kprintf("bad cleanup mmap!!!\n");
+	*/
 	return ret;
 }
 
@@ -865,7 +875,9 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
     pte_perm_t perm = 0;
     for (phnum = 0; phnum < elf->e_phnum; phnum ++) {
       off_t phoff = elf->e_phoff + sizeof(struct proghdr) * phnum;
+	  /*
 	  kprintf("reading phnum: %d\n", phnum);
+	  */
       if ((ret = load_icode_read(fd, ph, sizeof(struct proghdr), phoff)) != 0) {
         goto bad_cleanup_mmap;
       }
@@ -951,7 +963,9 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 		continue;
 	  }
 
+	  /*
 	  kprintf("normal segment map_ph\n");
+	  */
 	  if((ret = map_ph(fd, ph, mm, 0)) != 0) {
 		kprintf("load address: 0x%08x size: %d\n", ph->p_va, ph->p_memsz);
 		goto bad_cleanup_mmap;
@@ -1031,13 +1045,17 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 
 	mm->brk_start = mm->brk = ROUNDUP(mm->brk_start, PGSIZE);
 
+	/*
 	kprintf("before stack mmap, 0x%08x\n", USTACKTOP - USTACKSIZE);
+	*/
     /* setup user stack */
     vm_flags = VM_READ | VM_WRITE | VM_STACK;
     if ((ret = mm_map(mm, USTACKTOP - USTACKSIZE, USTACKSIZE, vm_flags, NULL)) != 0) {
       goto bad_cleanup_mmap;
     }
+	/*
 	kprintf("after stack mmap\n");
+	*/
 
 
 
@@ -1045,7 +1063,9 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 	uint32_t bias;
 	if(is_dynamic) {
 		off_t phoff = elf->e_phoff + sizeof(struct proghdr) * interp_idx;
+		/*
 		kprintf("reading phnum: %d\n", interp_idx);
+		*/
 		if ((ret = load_icode_read(fd, ph, sizeof(struct proghdr), phoff)) != 0) {
 			goto bad_cleanup_mmap;
 		}
@@ -1053,7 +1073,9 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 		char *interp_path = (char*) kmalloc(ph->p_filesz);
 		load_icode_read(fd, interp_path, ph->p_filesz, ph->p_offset);
 		
+		/*
 		kprintf("Interpreter path: %s\n", interp_path);
+		*/
 
 		int interp_fd = sysfile_open(interp_path, O_RDONLY);
 		assert(interp_fd >= 0);
@@ -1079,7 +1101,9 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 
 		bias = get_unmapped_area(mm, va_max - va_min + 1 + PGSIZE);
 		bias = ROUNDUP(bias, PGSIZE);
+		/*
 		kprintf("my bias address: 0x%08x\n", bias);
+		*/
 
 		for(interp_phnum = 0; interp_phnum < interp_elf->e_phnum; ++interp_phnum) {
 			off_t interp_phoff = interp_elf->e_phoff + sizeof(struct proghdr) * interp_phnum;
@@ -1093,9 +1117,13 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
 			assert((ret = map_ph(interp_fd, interp_ph, mm, bias)) == 0);
 		}
 
+		/*
 		kprintf("entry: 0x%08x bias: 0x%08x\n", interp_elf->e_entry, bias);
+		*/
 		real_entry = interp_elf->e_entry + bias;
+		/*
 		kprintf("real entry: 0x%08x\n", real_entry);
+		*/
 
 		sysfile_close(interp_fd);
 		kfree(interp_path);
@@ -1130,15 +1158,12 @@ load_icode(int fd, int argc, char **kargv, int envc, char **kenvp) {
     mm->lapic = pls_read(lapic_id);
     mp_set_mm_pagetable(mm);
 
-	kprintf("before init context\n");
     if (init_new_context_dynamic (current, elf, argc, kargv, envc, kenvp, 
 							is_dynamic, real_entry, load_address, bias) < 0)
 		goto bad_cleanup_mmap;
-	kprintf("after init context: 0x%08x\n", bias);
 
     ret = 0;
 out:
-	kprintf("all right!\n");
     return ret;
 bad_cleanup_mmap:
     exit_mmap(mm);
@@ -1297,11 +1322,9 @@ do_execve(const char *filename, const char **argv, const char **envp) {
     }
     sem_queue_count_inc(current->sem_queue);
 
-	kprintf("before load_icode\n");
     if ((ret = load_icode(fd, argc, kargv, envc, kenvp)) != 0) {
       goto execve_exit;
     }
-	kprintf("after load_icode\n");
 
     set_proc_name(current, local_name);
 
@@ -1600,7 +1623,9 @@ do_linux_brk(uintptr_t brk) {
     }
     mm->brk = newbrk;
 out_unlock:
+	kprintf("ret brk:0x%08x\n", newbrk);
     unlock_mm(mm);
+	kprintf("newbrk");
     return newbrk;
 }
 
@@ -1678,6 +1703,11 @@ __do_linux_mmap(uintptr_t __user *addr_store, size_t len, uint32_t mmap_flags) {
     addr = start, len = end - start;
 
     uint32_t vm_flags = VM_READ;
+
+	/* set anonymouse flag */
+	vm_flags |= VM_ANONYMOUS;
+
+
     if (mmap_flags & MMAP_WRITE) vm_flags |= VM_WRITE;
     if (mmap_flags & MMAP_STACK) vm_flags |= VM_STACK;
 
@@ -1758,8 +1788,9 @@ do_munmap(uintptr_t addr, size_t len) {
 int
 do_mprotect(void *addr, size_t len, int prot) {
 	
-/*	return 0; */
-
+		/*
+	return 0; 
+*/
 
 	struct mm_struct *mm = current->mm;
 	assert(mm != NULL);
@@ -1806,7 +1837,7 @@ do_mprotect(void *addr, size_t len, int prot) {
 			}
 			vma->mfile = mfile;
 			if(vma->mfile.file != NULL) {
-				filemap_open(mfile.file);
+				filemap_acquire(mfile.file);
 			}
 		}
 		

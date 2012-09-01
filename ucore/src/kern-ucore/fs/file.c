@@ -63,31 +63,46 @@ found:
 
 static void
 filemap_free(struct file *file) {
+	/*
+	kprintf("filemap_free:0x%08x\n", file);
+	*/
+
     assert(file->status == FD_INIT || file->status == FD_CLOSED);
     assert(fopen_count(file) == 0);
     if (file->status == FD_CLOSED) {
         vfs_close(file->node);
     }
     file->status = FD_NONE;
+
 }
 
-static void
+void
 filemap_acquire(struct file *file) {
-    assert(file->status == FD_OPENED);
+    assert(file->status == FD_OPENED || file->status == FD_CLOSED);
     fopen_count_inc(file);
+	/*
+	kprintf("filemap_acquire:0x%08x\n", file);
+	*/
 }
 
-static void
+void
 filemap_release(struct file *file) {
     assert(file->status == FD_OPENED || file->status == FD_CLOSED);
     assert(fopen_count(file) > 0);
     if (fopen_count_dec(file) == 0) {
         filemap_free(file);
     }
+	/*
+	kprintf("filemap_release:0x%08x\n", file);
+	*/
 }
 
 void
 filemap_open(struct file *file) {
+	/*
+	kprintf("filemap_open:0x%08x count:%d\n", file, fopen_count(file));
+	*/
+
     assert((file->status == FD_INIT || file->status == FD_OPENED) && file->node != NULL);
     file->status = FD_OPENED;
     fopen_count_inc(file);
@@ -95,6 +110,10 @@ filemap_open(struct file *file) {
 
 void
 filemap_close(struct file *file) {
+	/*
+	kprintf("filemap_close:0x%08x count:%d\n", file, fopen_count(file));
+	*/
+
     assert(file->status == FD_OPENED);
     assert(fopen_count(file) > 0);
     file->status = FD_CLOSED;
@@ -532,7 +551,9 @@ void *linux_devfile_mmap2(void *addr, size_t len, int prot, int flags, int fd, s
 
 void *linux_regfile_mmap2(void *addr, size_t len, int prot, int flags, int fd, size_t off)
 {
+	/*
 	kprintf("linux mmap2\n");
+	*/
 	int subret = -E_INVAL;
 	struct mm_struct *mm = pls_read(current)->mm;
 	assert(mm != NULL);
@@ -584,11 +605,15 @@ void *linux_regfile_mmap2(void *addr, size_t len, int prot, int flags, int fd, s
 		goto out_unlock;
 	}
 	if(!(flags & MAP_ANONYMOUS)) {
-		vma_mapfile(vma, fd, off, NULL);
+		vma_mapfile(vma, fd, off << 12, NULL);
 	}
 	subret = 0;
 out_unlock:
 	unlock_mm(mm);
+	/*
+	if(subret == 0)
+			kprintf("regfile ret:0x%08x\n", start);
+	*/
 	return subret == 0 ? start : -1;
 }
 

@@ -119,20 +119,6 @@ get_page(pgd_t *pgdir, uintptr_t la, pte_t **ptep_store) {
     return NULL;
 }
 
-void
-page_insert_pte(pgd_t *pgdir, struct Page *page, pte_t *ptep, uintptr_t la, uint32_t perm) {
-	page_ref_inc(page);
-	if(*ptep != 0) {
-		if((*ptep & PTE_P) && pte2page(*ptep) == page) {
-			page_ref_dec(page);
-		} else {
-			page_remove_pte(pgdir, la, ptep);
-		}
-	}
-	*ptep = page2pa(page) | PTE_P | perm;
-	mp_tlb_invalidate(pgdir, la);
-}
-
 
 /**
  * page_remove_pte - free an Page sturct which is related linear address la
@@ -199,6 +185,26 @@ out:
   mp_tlb_update(pgdir, la);
   return 0;
 }
+
+void
+page_insert_pte(pgd_t *pgdir, struct Page *page, pte_t *ptep, uintptr_t la, pte_perm_t perm) {
+	page_ref_inc(page);
+	if(*ptep != 0) {
+		if((*ptep & PTE_P) && pte2page(*ptep) == page) {
+			page_ref_dec(page);
+		} else {
+			page_remove_pte(pgdir, la, ptep);
+		}
+	}
+	ptep_map(ptep, page2pa(page));
+	ptep_set_perm(ptep, perm);
+	/*
+	 *ptep = page2pa(page) | PTE_P | perm;
+	*/
+	mp_tlb_update(pgdir, la);
+}
+
+
 
 /**
  * page_remove - free an Page which is related linear address la and has an validated pte

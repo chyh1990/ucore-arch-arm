@@ -10,6 +10,7 @@ typedef struct semaphore{
     bool valid;
     atomic_t count;
     wait_queue_t wait_queue;
+	uintptr_t addr;		// for bionic porting from previous work
 } semaphore_t;
 
 // The sem_undo_t is used to permit semaphore manipulations that can be undone. If a process
@@ -50,6 +51,10 @@ int ipc_sem_post(sem_t sem_id);
 int ipc_sem_wait(sem_t sem_id, unsigned int timeout);
 int ipc_sem_free(sem_t sem_id);
 int ipc_sem_get_value(sem_t sem_id, int *value_store);
+
+/* porting from previous work */
+int do_futex(uintptr_t uaddr, int op, int val);
+
 
 static inline int
 sem_count(semaphore_t *sem) {

@@ -39,6 +39,19 @@
 #define _PROBE_()
 #endif
 
+#define HAVE_VFP
+
+#define isb() __asm__ __volatile__ ("isb" : : : "memory")
+#define CPACC_FULL(n)		(3 << (n * 2))
+
+#define vfpreg(_vfp_)	#_vfp_
+#define FPEXC		cr8
+#define fmxr(_vfp_,_var_)		\
+		asm("mcr p10, 7, %0, " vfpreg(_vfp_) ", cr0, 0 @ fmxr   " #_vfp_ ", %0" \
+		: : "r" (_var_) : "cc")
+
+
+
 // Very important:
 // At the boot, exceptions handlers have not been defined
 // Copy the address of exceptions handlers (defined in vectors.S) to 0x24 
@@ -106,6 +119,65 @@ static void check_bp()
   kprintf("check bp done...\n");
 }
 
+static inline unsigned int get_copro_access(void)
+{
+	unsigned int val;
+	asm("mrc p15, 0, %0, c1, c0, 2 @ get copro access"
+		: "=r" (val) : : "cc");
+	return val;
+}
+
+static inline void set_copro_access(unsigned int val)
+{
+	asm volatile("mcr p15, 0, %0, c1, c0, 2 @ set copro access"
+		: : "r" (val) : "cc");
+	isb();
+}
+
+static void vfp_enable(void)
+{
+	uint32_t access = get_copro_access();
+
+	kprintf("*************access:0x%08x\n", access);
+	access |= CPACC_FULL(10) | CPACC_FULL(11);
+	access &= ~(3 << 30);
+
+	set_copro_access(access);
+
+	access = get_copro_access();
+	kprintf("*************access:0x%08x\n", access);
+
+	access = 1 << 30;
+
+	asm("mcr p10, 7, %0, cr8, cr0, 0"
+		: : "r" (access) : "cc");
+	/*
+	fmrx(FPEXC, access);
+	asm volatile("VMSR FPEXC, %0"
+		: : "r" (access) : "cc");
+	*/
+	
+	/*
+	int ret = 0;
+	unsigned int value;
+	asm volatile ("mrc p15, 0, %0, c1, c0, 2"
+					:"=r"(value)
+					:);
+	value |= 0xf00000;
+	asm volatile ("mrc p15, 0, %0, c1, c0, 2"
+					:
+					:"r"(value));
+	asm volatile ("fmrx %0, fpexc"
+					:"=r"(value));
+	value |= (1 << 30);
+	asm volatile ("fmrx fpexc, %0"
+					:
+					:"r"(value));
+	*/
+}
+
+
+
 int
 kern_init(void) {
   extern char edata[], end[];
@@ -139,6 +211,8 @@ kern_init(void) {
 
   vmm_init();                 // init virtual memory management
   _PROBE_();
+
+
 
   cons_init();                // init the console
 
@@ -186,6 +260,12 @@ kern_init(void) {
 
 
   intr_enable();              // enable irq interrupt
+
+#ifdef HAVE_VFP
+  vfp_enable();
+#endif
+
+
 
 #ifdef UCONFIG_HAVE_LINUX_DDE_BASE
   calibrate_delay();
